@@ -35,6 +35,7 @@ export {
   DIAGNOSTIC_CATALOG,
   DIAGNOSTIC_CODES
 } from "./diagnostics.js";
+export { parse } from "./parser.js";
 export { serialize } from "./serializer.js";
 export {
   compareFixtureAst,
@@ -53,6 +54,7 @@ export type {
   DiagnosticCatalogEntry,
   DiagnosticCode
 } from "./diagnostics.js";
+export type { ParseOptions } from "./parser.js";
 export type { SerializeOptions } from "./serializer.js";
 export type {
   ExpectedDiagnostic,
