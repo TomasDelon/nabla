@@ -96,6 +96,143 @@ test("wiki link parser handles heading-only links and leaves transclusion syntax
   });
 });
 
+test("wiki link parser leaves syntax inside inline HTML containers literal", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(parse("See <span>[[Algebra]]</span> inside span."), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "text",
+            value: "See <span>[[Algebra]]</span> inside span."
+          }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+});
+
+test("wiki link parser leaves syntax inside inline HTML with attributes literal", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(
+    parse('See <span class="foo">[[Algebra]]</span> inside span with attributes.'),
+    {
+      type: "document",
+      children: [
+        {
+          type: "paragraph",
+          children: [
+            {
+              type: "text",
+              value: 'See <span class="foo">[[Algebra]]</span> inside span with attributes.'
+            }
+          ]
+        }
+      ],
+      diagnostics: []
+    }
+  );
+});
+
+test("wiki link parser leaves syntax inside inline HTML with multiple attributes literal", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(
+    parse('See <span class="foo" id="bar">[[Algebra]]</span> inside span with multiple attributes.'),
+    {
+      type: "document",
+      children: [
+        {
+          type: "paragraph",
+          children: [
+            {
+              type: "text",
+              value: 'See <span class="foo" id="bar">[[Algebra]]</span> inside span with multiple attributes.'
+            }
+          ]
+        }
+      ],
+      diagnostics: []
+    }
+  );
+});
+
+test("wiki link parser leaves syntax inside different inline HTML containers literal", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(parse("See <div>[[Algebra]]</div> inside div."), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "text",
+            value: "See <div>[[Algebra]]</div> inside div."
+          }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+});
+
+test("wiki link parser parses normal wiki link outside inline HTML", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(parse("See <span>literal</span> and [[Analyse]] outside."), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          { type: "text", value: "See <span>literal</span> and " },
+          {
+            type: "wikiLink",
+            target: "Analyse",
+            syntax: "canonical",
+            raw: "[[Analyse]]"
+          },
+          { type: "text", value: " outside." }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+});
+
+test("wiki link parser handles inline HTML and wiki links mixed in same input", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(
+    parse("Text <span>[[hidden]]</span> and [[visible]] and <div>[[also hidden]]</div> end."),
+    {
+      type: "document",
+      children: [
+        {
+          type: "paragraph",
+          children: [
+            { type: "text", value: "Text <span>[[hidden]]</span> and " },
+            {
+              type: "wikiLink",
+              target: "visible",
+              syntax: "canonical",
+              raw: "[[visible]]"
+            },
+            { type: "text", value: " and <div>[[also hidden]]</div> end." }
+          ]
+        }
+      ],
+      diagnostics: []
+    }
+  );
+});
+
 test("wiki link parser leaves syntax inside protected regions literal", async () => {
   const { parse } = await loadParserModule();
 
