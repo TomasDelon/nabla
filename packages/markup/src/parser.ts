@@ -1,9 +1,10 @@
-import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode } from "./ast.js";
 import type { ParseMode } from "./parse-mode.js";
 import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
 import { parseWikiLink } from "./extensions/wiki-links.js";
 import { parseTag } from "./extensions/tags.js";
 import { parseHighlight } from "./extensions/highlights.js";
+import { parsePrivateCommentBlock } from "./extensions/comments.js";
 
 export type ParseOptions = {
   mode?: ParseMode;
@@ -52,7 +53,9 @@ type BlockSpec =
   | { kind: "heading"; depth: number; content: string }
   | { kind: "foldableHeading"; content: string }
   | { kind: "code"; lang: string; value: string }
-  | { kind: "paragraph"; text: string };
+  | { kind: "paragraph"; text: string }
+  | { kind: "privateComment"; value: string; raw: string }
+  | { kind: "html"; value: string };
 
 function parseBlocks(source: string): BlockSpec[] {
   const lines = source.split("\n");
@@ -109,6 +112,35 @@ function parseBlocks(source: string): BlockSpec[] {
     if (headingMatch) {
       flushParagraph();
       blocks.push({ kind: "heading", depth: headingMatch[1].length, content: headingMatch[2] });
+      continue;
+    }
+
+    const privateMatch = parsePrivateCommentBlock(lines, i);
+    if (privateMatch !== null) {
+      flushParagraph();
+      blocks.push({ kind: "privateComment", value: privateMatch.value, raw: privateMatch.raw });
+      i = privateMatch.endIndex;
+      continue;
+    }
+
+    if (line.startsWith("<!--")) {
+      flushParagraph();
+      const closingIndex = line.indexOf("-->");
+      if (closingIndex !== -1) {
+        blocks.push({ kind: "html", value: line.slice(0, closingIndex + 3) });
+        continue;
+      }
+
+      const htmlLines: string[] = [line];
+      i += 1;
+      while (i < lines.length) {
+        const nextLine = lines[i];
+        htmlLines.push(nextLine);
+        const closeIdx = nextLine.indexOf("-->");
+        if (closeIdx !== -1) break;
+        i += 1;
+      }
+      blocks.push({ kind: "html", value: htmlLines.join("\n") });
       continue;
     }
 
@@ -300,6 +332,17 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
       docChildren.push(createHeading(block.depth, block.content));
     } else if (block.kind === "foldableHeading") {
       docChildren.push(createFoldableHeading(block.content));
+    } else if (block.kind === "privateComment") {
+      docChildren.push({
+        type: "privateComment",
+        value: block.value,
+        raw: block.raw
+      } as PrivateCommentNode);
+    } else if (block.kind === "html") {
+      docChildren.push({
+        type: "html",
+        value: block.value
+      } as MarkdownNode);
     }
   }
 

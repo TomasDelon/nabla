@@ -1,4 +1,4 @@
-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode } from "./ast.js";
 import { serializeWikiLink } from "./extensions/wiki-links.js";
 import { serializeTag } from "./extensions/tags.js";
 import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
@@ -68,6 +68,14 @@ function serializeBlockNode(node: MarkdownNode) {
       .map((child) => serializeInlineNode(child as MarkdownNode))
       .join("");
     return `${marker} ${content}`;
+  }
+
+  if (node.type === "privateComment") {
+    return (node as unknown as PrivateCommentNode).raw;
+  }
+
+  if (node.type === "html") {
+    return typeof node.value === "string" ? node.value : "";
   }
 
   return "";
