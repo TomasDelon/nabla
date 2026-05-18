@@ -5,6 +5,10 @@ export type FixtureLoaderOptions = {
   fixturesRoot?: string;
 };
 
+export type ExpectedDiagnostic = Pick<Diagnostic, "severity" | "code" | "message"> & {
+  position?: Diagnostic["position"];
+};
+
 export type FixturePaths = {
   directory: string;
   input: string;
@@ -38,8 +42,19 @@ export type WorkspaceFixtureMetadata = {
 
 export type MarkupFixture = ParserFixture | WorkspaceFixtureMetadata;
 
+export type ParserFixtureExpectation = {
+  input: string;
+  ast: NablaDocument;
+  output: string;
+  diagnostics: Diagnostic[];
+};
+
 type FsPromisesModule = {
   access(filePath: string): Promise<void>;
+  readdir(
+    filePath: string,
+    options: { withFileTypes: true }
+  ): Promise<Array<{ name: string; isDirectory(): boolean }>>;
   readFile(filePath: string, encoding: string): Promise<string>;
 };
 
@@ -129,6 +144,11 @@ async function pathExists(filePath: string) {
   }
 }
 
+async function readDirectoryEntries(filePath: string) {
+  const fs = await importFsPromises();
+  return fs.readdir(filePath, { withFileTypes: true });
+}
+
 async function readText(filePath: string) {
   const fs = await importFsPromises();
   return fs.readFile(filePath, "utf8");
@@ -157,6 +177,24 @@ function assertDiagnostics(filePath: string, value: unknown): asserts value is D
   if (!Array.isArray(value)) {
     throw new Error(`Fixture diagnostics must be an array in ${filePath}`);
   }
+}
+
+function formatComparisonError(label: string, details: string) {
+  return new Error(`${label} comparison failed: ${details}`);
+}
+
+function stringifyForComparison(value: unknown) {
+  return JSON.stringify(value, null, 2);
+}
+
+function compareStructuredValue(label: string, actual: unknown, expected: unknown) {
+  if (stringifyForComparison(actual) !== stringifyForComparison(expected)) {
+    throw formatComparisonError(label, `expected ${stringifyForComparison(expected)} but received ${stringifyForComparison(actual)}`);
+  }
+}
+
+function hasPosition(value: ExpectedDiagnostic) {
+  return value.position !== undefined;
 }
 
 export async function resolveSpecFixturesRoot(options: FixtureLoaderOptions = {}) {
@@ -237,4 +275,88 @@ export async function loadParserFixture(
     throw new Error(`Fixture ${fixtureId} is a workspace fixture; parser fixture data is not available.`);
   }
   return fixture;
+}
+
+export async function listParserFixtureIds(options: FixtureLoaderOptions = {}) {
+  const fixturesRoot = await resolveSpecFixturesRoot(options);
+  const featureEntries = await readDirectoryEntries(fixturesRoot);
+  const fixtureIds: string[] = [];
+
+  for (const featureEntry of featureEntries) {
+    if (!featureEntry.isDirectory()) continue;
+    const featureDirectory = joinPath(fixturesRoot, featureEntry.name);
+    const fixtureEntries = await readDirectoryEntries(featureDirectory);
+
+    for (const fixtureEntry of fixtureEntries) {
+      if (!fixtureEntry.isDirectory()) continue;
+      const fixtureId = `${featureEntry.name}/${fixtureEntry.name}`;
+      const parserPaths = getParserFixturePaths(joinPath(featureDirectory, fixtureEntry.name));
+      if (await pathExists(parserPaths.input)) {
+        fixtureIds.push(fixtureId);
+      }
+    }
+  }
+
+  return fixtureIds.sort();
+}
+
+export async function loadAllParserFixtures(options: FixtureLoaderOptions = {}) {
+  const fixtureIds = await listParserFixtureIds(options);
+  return Promise.all(fixtureIds.map((fixtureId) => loadParserFixture(fixtureId, options)));
+}
+
+export function compareFixtureInput(actual: string, expected: string) {
+  if (actual !== expected) {
+    throw formatComparisonError("input", `expected ${JSON.stringify(expected)} but received ${JSON.stringify(actual)}`);
+  }
+}
+
+export function compareFixtureAst(actual: NablaDocument, expected: NablaDocument) {
+  compareStructuredValue("ast", actual, expected);
+}
+
+export function compareFixtureOutput(actual: string, expected: string) {
+  if (actual !== expected) {
+    throw formatComparisonError("output", `expected ${JSON.stringify(expected)} but received ${JSON.stringify(actual)}`);
+  }
+}
+
+export function compareFixtureDiagnostics(actual: Diagnostic[], expected: ExpectedDiagnostic[]) {
+  if (actual.length !== expected.length) {
+    throw formatComparisonError(
+      "diagnostics",
+      `expected ${expected.length} entries but received ${actual.length}`
+    );
+  }
+
+  for (const [index, actualDiagnostic] of actual.entries()) {
+    const expectedDiagnostic = expected[index];
+    compareStructuredValue(`diagnostics[${index}].core`, {
+      severity: actualDiagnostic.severity,
+      code: actualDiagnostic.code,
+      message: actualDiagnostic.message
+    }, {
+      severity: expectedDiagnostic.severity,
+      code: expectedDiagnostic.code,
+      message: expectedDiagnostic.message
+    });
+
+    if (hasPosition(expectedDiagnostic)) {
+      compareStructuredValue(
+        `diagnostics[${index}].position`,
+        actualDiagnostic.position,
+        expectedDiagnostic.position
+      );
+    }
+  }
+}
+
+export function compareParserFixtureExpectation(
+  actual: ParserFixtureExpectation,
+  expected: ParserFixture
+) {
+  compareFixtureInput(actual.input, expected.input);
+  compareFixtureAst(actual.ast, expected.ast);
+  compareFixtureOutput(actual.output, expected.output);
+  compareFixtureDiagnostics(actual.diagnostics, expected.diagnostics);
 }

@@ -36,6 +36,13 @@ export {
   DIAGNOSTIC_CODES
 } from "./diagnostics.js";
 export {
+  compareFixtureAst,
+  compareFixtureDiagnostics,
+  compareFixtureInput,
+  compareFixtureOutput,
+  compareParserFixtureExpectation,
+  listParserFixtureIds,
+  loadAllParserFixtures,
   loadMarkupFixture,
   loadParserFixture,
   resolveSpecFixturesRoot
@@ -46,9 +53,11 @@ export type {
   DiagnosticCode
 } from "./diagnostics.js";
 export type {
+  ExpectedDiagnostic,
   FixtureLoaderOptions,
   FixturePaths,
   MarkupFixture,
+  ParserFixtureExpectation,
   ParserFixture,
   WorkspaceFixtureMetadata
 } from "./fixtures.js";

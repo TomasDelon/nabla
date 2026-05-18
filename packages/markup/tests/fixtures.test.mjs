@@ -45,6 +45,18 @@ test("fixture loader resolves parser fixtures from the spec pack", async () => {
   assert.match(fixture.paths.input, /\/fixtures\/tags\/basic\/input\.md$/);
 });
 
+test("fixture runner can iterate parser fixtures without including workspace fixtures", async () => {
+  const { listParserFixtureIds, loadAllParserFixtures } = await loadFixturesModule();
+  const fixtureIds = await listParserFixtureIds();
+  const fixtures = await loadAllParserFixtures();
+
+  assert.ok(fixtureIds.length > 0);
+  assert.ok(fixtureIds.includes("tags/basic"));
+  assert.ok(!fixtureIds.some((fixtureId) => fixtureId.startsWith("workspace/")));
+  assert.equal(fixtures.length, fixtureIds.length);
+  assert.ok(fixtures.every((fixture) => fixture.kind === "parser"));
+});
+
 test("fixture loader detects workspace fixtures as metadata only", async () => {
   const { loadMarkupFixture } = await loadFixturesModule();
   const fixture = await loadMarkupFixture("workspace/missing-target");
@@ -76,4 +88,88 @@ test("fixture loader reports invalid JSON with the source file path", async () =
   } finally {
     await rm(tempRoot, { recursive: true, force: true });
   }
+});
+
+test("fixture runner comparison helpers accept loaded parser fixture expectations", async () => {
+  const {
+    compareFixtureAst,
+    compareFixtureDiagnostics,
+    compareFixtureInput,
+    compareFixtureOutput,
+    compareParserFixtureExpectation,
+    loadParserFixture
+  } = await loadFixturesModule();
+  const fixture = await loadParserFixture("tags/basic");
+
+  compareFixtureInput(fixture.input, fixture.input);
+  compareFixtureAst(fixture.ast, fixture.ast);
+  compareFixtureOutput(fixture.output, fixture.output);
+  compareFixtureDiagnostics(fixture.diagnostics, fixture.diagnostics);
+  compareParserFixtureExpectation(
+    {
+      input: fixture.input,
+      ast: fixture.ast,
+      output: fixture.output,
+      diagnostics: fixture.diagnostics
+    },
+    fixture
+  );
+});
+
+test("fixture runner diagnostics comparison ignores position when the fixture omits it", async () => {
+  const { compareFixtureDiagnostics } = await loadFixturesModule();
+
+  compareFixtureDiagnostics(
+    [
+      {
+        severity: "warning",
+        code: "NABLA_LINK_MISSING_TARGET",
+        message: "missing wiki target",
+        position: {
+          start: { line: 1, column: 1, offset: 0 },
+          end: { line: 1, column: 2, offset: 1 }
+        }
+      }
+    ],
+    [
+      {
+        severity: "warning",
+        code: "NABLA_LINK_MISSING_TARGET",
+        message: "missing wiki target"
+      }
+    ]
+  );
+});
+
+test("fixture runner diagnostics comparison requires exact position when the fixture includes it", async () => {
+  const { compareFixtureDiagnostics } = await loadFixturesModule();
+
+  assert.throws(
+    () =>
+      compareFixtureDiagnostics(
+        [
+          {
+            severity: "warning",
+            code: "NABLA_LINK_MISSING_TARGET",
+            message: "missing wiki target",
+            position: {
+              start: { line: 1, column: 1, offset: 0 },
+              end: { line: 1, column: 2, offset: 1 }
+            }
+          }
+        ],
+        [
+          {
+            severity: "warning",
+            code: "NABLA_LINK_MISSING_TARGET",
+            message: "missing wiki target",
+            position: {
+              start: { line: 2, column: 1, offset: 2 },
+              end: { line: 2, column: 2, offset: 3 }
+            }
+          }
+        ]
+      ),
+    /diagnostics\[0\]\.position comparison failed/
+  );
 });

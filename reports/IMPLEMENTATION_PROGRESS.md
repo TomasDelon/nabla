@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-005 fixture loader`
+`P1-006 fixture runner`
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Fixture loading utilities implemented for parser fixtures and workspace fixture metadata.
+Fixture runner utilities implemented for parser fixture iteration and snapshot comparison.
 
 ## Scope Guardrails
 
@@ -63,20 +63,23 @@ Fixture loading utilities implemented for parser fixtures and workspace fixture 
 - Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
 - Fixture loader resolves the canonical spec-pack fixture root without modifying fixtures
 - Parser fixtures load `input.md`, `ast.json`, `output.md`, and `diagnostics.json`
+- Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
+- Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
+- Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
 - Workspace fixtures are detected as metadata only, without workspace implementation
 - JSON fixture parse failures report the source file path clearly
 
 ## Verification Summary
 
-- `pnpm test` passed (6 tests)
-- `pnpm test:markup` passed (6 tests)
+- `pnpm test` passed (10 tests)
+- `pnpm test:markup` passed (10 tests)
 - `pnpm typecheck` passed
 - `pnpm build` passed
 - `pnpm validate:fixtures` passed
 - `pnpm validate:spec-version` passed
 - `pnpm check:boundaries` passed
 - `pnpm lint` passed via bootstrap placeholder
-- `pnpm audit:bundle -- --task P1-005 --base 5493de5 --head <implementation-commit>` will generate a text-only audit bundle for the fixture loader task
+- `pnpm audit:bundle -- --task P1-006 --base a1d592e --head <implementation-commit>` will generate a text-only audit bundle for the fixture runner task
 
 ## Active Blockers
 
@@ -84,4 +87,4 @@ None.
 
 ## Next Recommended Task
 
-P1-006 fixture runner
+P1-007 serializer skeleton
