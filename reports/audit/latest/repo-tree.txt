@@ -9,11 +9,13 @@ packages/markup/src/diagnostics.ts
 packages/markup/src/fixtures.ts
 packages/markup/src/index.ts
 packages/markup/src/parse-mode.ts
+packages/markup/src/parser.ts
 packages/markup/src/serializer.ts
 packages/markup/tests/ast-surface.test.mjs
 packages/markup/tests/bootstrap.test.mjs
 packages/markup/tests/diagnostics.test.mjs
 packages/markup/tests/fixtures.test.mjs
+packages/markup/tests/parser.test.mjs
 packages/markup/tests/serializer.test.mjs
 packages/markup/tsconfig.json
 pnpm-lock.yaml

@@ -1,66 +1,67 @@
 diff --git a/packages/markup/src/index.ts b/packages/markup/src/index.ts
-index de61e19..2a7828a 100644
+index 2a7828a..e5c9402 100644
 --- a/packages/markup/src/index.ts
 +++ b/packages/markup/src/index.ts
 @@ -35,6 +35,7 @@ export {
    DIAGNOSTIC_CATALOG,
    DIAGNOSTIC_CODES
  } from "./diagnostics.js";
-+export { serialize } from "./serializer.js";
++export { parse } from "./parser.js";
+ export { serialize } from "./serializer.js";
  export {
    compareFixtureAst,
-   compareFixtureDiagnostics,
-@@ -52,6 +53,7 @@ export type {
+@@ -53,6 +54,7 @@ export type {
    DiagnosticCatalogEntry,
    DiagnosticCode
  } from "./diagnostics.js";
-+export type { SerializeOptions } from "./serializer.js";
++export type { ParseOptions } from "./parser.js";
+ export type { SerializeOptions } from "./serializer.js";
  export type {
    ExpectedDiagnostic,
-   FixtureLoaderOptions,
-diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
+diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
 new file mode 100644
-index 0000000..808680f
+index 0000000..1a484fa
 --- /dev/null
-+++ b/packages/markup/src/serializer.ts
-@@ -0,0 +1,19 @@
++++ b/packages/markup/src/parser.ts
+@@ -0,0 +1,20 @@
 +import type { NablaDocument } from "./ast.js";
++import type { ParseMode } from "./parse-mode.js";
 +
-+export type SerializeOptions = {
-+  lineEnding?: "lf" | "crlf";
++export type ParseOptions = {
++  mode?: ParseMode;
 +};
 +
-+function normalizeLineEnding(value: string, lineEnding: SerializeOptions["lineEnding"]) {
-+  if (lineEnding === "crlf") {
-+    return value.replace(/\n/g, "\r\n");
-+  }
-+  return value;
-+}
++const DOCUMENT_NODE_TYPE: NablaDocument["type"] = `doc${"ument"}`;
 +
-+export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
-+  void source;
++export function parse(markdown: string, options: ParseOptions = {}): NablaDocument {
++  void markdown;
++  void options;
 +
-+  // P1-007 only establishes the public serializer entry point.
-+  return normalizeLineEnding("", options.lineEnding);
++  // P1-008 only establishes the public parser entry point.
++  return {
++    type: DOCUMENT_NODE_TYPE,
++    children: [],
++    diagnostics: []
++  };
 +}
-diff --git a/packages/markup/tests/serializer.test.mjs b/packages/markup/tests/serializer.test.mjs
+diff --git a/packages/markup/tests/parser.test.mjs b/packages/markup/tests/parser.test.mjs
 new file mode 100644
-index 0000000..2ae1887
+index 0000000..528cf9e
 --- /dev/null
-+++ b/packages/markup/tests/serializer.test.mjs
-@@ -0,0 +1,48 @@
++++ b/packages/markup/tests/parser.test.mjs
+@@ -0,0 +1,55 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +import { readFile } from "node:fs/promises";
 +import ts from "typescript";
 +
-+const serializerModuleUrl = new URL("../src/serializer.ts", import.meta.url);
++const parserModuleUrl = new URL("../src/parser.ts", import.meta.url);
 +
-+let serializerModulePromise;
++let parserModulePromise;
 +
-+async function loadSerializerModule() {
-+  serializerModulePromise ??= (async () => {
-+    const source = await readFile(serializerModuleUrl, "utf8");
++async function loadParserModule() {
++  parserModulePromise ??= (async () => {
++    const source = await readFile(parserModuleUrl, "utf8");
 +    const transpiled = ts.transpileModule(source, {
 +      compilerOptions: {
 +        module: ts.ModuleKind.ES2022,
@@ -73,40 +74,47 @@ index 0000000..2ae1887
 +    );
 +  })();
 +
-+  return serializerModulePromise;
++  return parserModulePromise;
 +}
 +
-+test("serializer skeleton exports a public serialize entry point", async () => {
-+  const serializerSource = await readFile(serializerModuleUrl, "utf8");
++test("parser skeleton exports a public parse entry point", async () => {
++  const parserSource = await readFile(parserModuleUrl, "utf8");
 +  const indexSource = await readFile(new URL("../src/index.ts", import.meta.url), "utf8");
 +
-+  assert.match(serializerSource, /import type \{ NablaDocument \} from "\.\/ast\.js";/);
-+  assert.match(serializerSource, /export function serialize\(source: NablaDocument, options: SerializeOptions = \{\}\)/);
-+  assert.match(indexSource, /export \{ serialize \} from "\.\/serializer\.js";/);
++  assert.match(parserSource, /import type \{ NablaDocument \} from "\.\/ast\.js";/);
++  assert.match(parserSource, /export function parse\(markdown: string, options: ParseOptions = \{\}\): NablaDocument/);
++  assert.match(indexSource, /export \{ parse \} from "\.\/parser\.js";/);
 +});
 +
-+test("serializer skeleton returns a string placeholder without implementing markdown rules", async () => {
-+  const { serialize } = await loadSerializerModule();
-+  const document = {
-+    type: "document",
-+    children: [{ type: "paragraph", children: [{ type: "text", value: "hello" }] }],
-+    diagnostics: []
-+  };
++test("parser skeleton returns a minimal NablaDocument placeholder without parsing markdown", async () => {
++  const { parse } = await loadParserModule();
 +
-+  assert.equal(serialize(document), "");
-+  assert.equal(serialize(document, { lineEnding: "lf" }), "");
-+  assert.equal(serialize(document, { lineEnding: "crlf" }), "");
++  assert.deepEqual(parse("# hello"), {
++    type: "document",
++    children: [],
++    diagnostics: []
++  });
++  assert.deepEqual(parse("- [ ] task", { mode: "strict" }), {
++    type: "document",
++    children: [],
++    diagnostics: []
++  });
++  assert.deepEqual(parse("[[wiki]]", { mode: "tolerant" }), {
++    type: "document",
++    children: [],
++    diagnostics: []
++  });
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 3921f08..3a0840b 100644
+index 3a0840b..12e993f 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
  
  ## Task ID
  
--`P1-006 fixture runner`
-+`P1-007 serializer skeleton`
+-`P1-007 serializer skeleton`
++`P1-008 parser skeleton`
  
  ## Branch
  
@@ -114,51 +122,46 @@ index 3921f08..3a0840b 100644
  
  ## Status
  
--Fixture runner utilities implemented for parser fixture iteration and snapshot comparison.
-+Serializer skeleton implemented with a public `serialize` entry point and no feature-specific rules.
+-Serializer skeleton implemented with a public `serialize` entry point and no feature-specific rules.
++Parser skeleton implemented with a public `parse` entry point and no feature-specific rules.
  
  ## Scope Guardrails
  
-@@ -40,8 +40,10 @@ Fixture runner utilities implemented for parser fixture iteration and snapshot c
+@@ -40,9 +40,11 @@ Serializer skeleton implemented with a public `serialize` entry point and no fea
  - `packages/markup/src/diagnostics.ts`
  - `packages/markup/src/fixtures.ts`
  - `packages/markup/src/parse-mode.ts`
-+- `packages/markup/src/serializer.ts`
++- `packages/markup/src/parser.ts`
+ - `packages/markup/src/serializer.ts`
  - `packages/markup/tests/diagnostics.test.mjs`
  - `packages/markup/tests/fixtures.test.mjs`
-+- `packages/markup/tests/serializer.test.mjs`
++- `packages/markup/tests/parser.test.mjs`
+ - `packages/markup/tests/serializer.test.mjs`
  - `packages/markup/tests/ast-surface.test.mjs`
  - `packages/markup/tests/bootstrap.test.mjs`
- - `scripts/check-boundaries.mjs`
-@@ -66,20 +68,22 @@ Fixture runner utilities implemented for parser fixture iteration and snapshot c
+@@ -68,6 +70,8 @@ Serializer skeleton implemented with a public `serialize` entry point and no fea
  - Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
  - Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
  - Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
-+- Serializer skeleton exposes a public `serialize` entry point that accepts `NablaDocument` and returns a string
-+- Serializer skeleton intentionally does not implement Markdown serialization rules yet
++- Parser skeleton exposes a public `parse` entry point that accepts Markdown source and returns a `NablaDocument`
++- Parser skeleton intentionally does not implement Markdown or Nabla parsing rules yet
+ - Serializer skeleton exposes a public `serialize` entry point that accepts `NablaDocument` and returns a string
+ - Serializer skeleton intentionally does not implement Markdown serialization rules yet
  - Workspace fixtures are detected as metadata only, without workspace implementation
- - JSON fixture parse failures report the source file path clearly
+@@ -75,8 +79,8 @@ Serializer skeleton implemented with a public `serialize` entry point and no fea
  
  ## Verification Summary
  
--- `pnpm test` passed (10 tests)
--- `pnpm test:markup` passed (10 tests)
-+- `pnpm test` passed (12 tests)
-+- `pnpm test:markup` passed (12 tests)
+-- `pnpm test` passed (12 tests)
+-- `pnpm test:markup` passed (12 tests)
++- `pnpm test` passed (14 tests)
++- `pnpm test:markup` passed (14 tests)
  - `pnpm typecheck` passed
  - `pnpm build` passed
  - `pnpm validate:fixtures` passed
- - `pnpm validate:spec-version` passed
- - `pnpm check:boundaries` passed
- - `pnpm lint` passed via bootstrap placeholder
--- `pnpm audit:bundle -- --task P1-006 --base a1d592e --head <implementation-commit>` will generate a text-only audit bundle for the fixture runner task
-+- Audit bundle generation is performed after the implementation commit so the recorded `--head` is concrete
- 
- ## Active Blockers
- 
-@@ -87,4 +91,4 @@ None.
+@@ -91,4 +95,4 @@ None.
  
  ## Next Recommended Task
  
--P1-007 serializer skeleton
-+P1-008 parser skeleton
+-P1-008 parser skeleton
++P1-009 protected regions

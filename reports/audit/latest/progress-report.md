@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-007 serializer skeleton`
+`P1-008 parser skeleton`
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Serializer skeleton implemented with a public `serialize` entry point and no feature-specific rules.
+Parser skeleton implemented with a public `parse` entry point and no feature-specific rules.
 
 ## Scope Guardrails
 
@@ -40,9 +40,11 @@ Serializer skeleton implemented with a public `serialize` entry point and no fea
 - `packages/markup/src/diagnostics.ts`
 - `packages/markup/src/fixtures.ts`
 - `packages/markup/src/parse-mode.ts`
+- `packages/markup/src/parser.ts`
 - `packages/markup/src/serializer.ts`
 - `packages/markup/tests/diagnostics.test.mjs`
 - `packages/markup/tests/fixtures.test.mjs`
+- `packages/markup/tests/parser.test.mjs`
 - `packages/markup/tests/serializer.test.mjs`
 - `packages/markup/tests/ast-surface.test.mjs`
 - `packages/markup/tests/bootstrap.test.mjs`
@@ -68,6 +70,8 @@ Serializer skeleton implemented with a public `serialize` entry point and no fea
 - Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
 - Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
 - Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
+- Parser skeleton exposes a public `parse` entry point that accepts Markdown source and returns a `NablaDocument`
+- Parser skeleton intentionally does not implement Markdown or Nabla parsing rules yet
 - Serializer skeleton exposes a public `serialize` entry point that accepts `NablaDocument` and returns a string
 - Serializer skeleton intentionally does not implement Markdown serialization rules yet
 - Workspace fixtures are detected as metadata only, without workspace implementation
@@ -75,8 +79,8 @@ Serializer skeleton implemented with a public `serialize` entry point and no fea
 
 ## Verification Summary
 
-- `pnpm test` passed (12 tests)
-- `pnpm test:markup` passed (12 tests)
+- `pnpm test` passed (14 tests)
+- `pnpm test:markup` passed (14 tests)
 - `pnpm typecheck` passed
 - `pnpm build` passed
 - `pnpm validate:fixtures` passed
@@ -91,4 +95,4 @@ None.
 
 ## Next Recommended Task
 
-P1-008 parser skeleton
+P1-009 protected regions
