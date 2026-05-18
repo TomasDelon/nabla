@@ -35,8 +35,20 @@ export {
   DIAGNOSTIC_CATALOG,
   DIAGNOSTIC_CODES
 } from "./diagnostics.js";
+export {
+  loadMarkupFixture,
+  loadParserFixture,
+  resolveSpecFixturesRoot
+} from "./fixtures.js";
 export type {
   DiagnosticCatalog,
   DiagnosticCatalogEntry,
   DiagnosticCode
 } from "./diagnostics.js";
+export type {
+  FixtureLoaderOptions,
+  FixturePaths,
+  MarkupFixture,
+  ParserFixture,
+  WorkspaceFixtureMetadata
+} from "./fixtures.js";
