@@ -1,4 +1,5 @@
-packages/markup/src/extensions/comments.ts
+packages/markup/src/extensions/task-states.ts
 packages/markup/src/parser.ts
 packages/markup/src/serializer.ts
-packages/markup/tests/wiki-links.test.mjs
+packages/markup/tests/parser.test.mjs
+packages/markup/tests/task-states.test.mjs

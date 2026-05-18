@@ -1,5 +1,6 @@
- packages/markup/src/extensions/comments.ts | 29 ++++++++++++++++++
- packages/markup/src/parser.ts              | 47 ++++++++++++++++++++++++++++--
- packages/markup/src/serializer.ts          | 10 ++++++-
- packages/markup/tests/wiki-links.test.mjs  | 26 +++++++++++++++++
- 4 files changed, 109 insertions(+), 3 deletions(-)
+ packages/markup/src/extensions/task-states.ts |  44 +++++++++++
+ packages/markup/src/parser.ts                 |  47 +++++++++++-
+ packages/markup/src/serializer.ts             |  29 +++++++-
+ packages/markup/tests/parser.test.mjs         |  16 +++-
+ packages/markup/tests/task-states.test.mjs    | 103 ++++++++++++++++++++++++++
+ 5 files changed, 233 insertions(+), 6 deletions(-)

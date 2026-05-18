@@ -1,1 +1,1 @@
-9585e37 feat(markup): implement comment parsing
+9108fb6 feat(markup): implement task state parsing

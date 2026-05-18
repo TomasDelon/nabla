@@ -1,26 +1,27 @@
 {
-  "taskId": "P1-013",
-  "baseCommit": "70599ff",
-  "headCommit": "9585e37",
+  "taskId": "P1-014",
+  "baseCommit": "8cc78ba",
+  "headCommit": "9108fb6",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-18T22:25:48.983Z",
-  "currentHead": "9585e370703619bf2857ef94d5faecdbed0c292b",
+  "timestamp": "2026-05-18T22:35:58.070Z",
+  "currentHead": "9108fb6c102a93c5f0eb8bbb2f4fba5dc6500e4e",
   "currentWorkingTreeStatus": "",
   "changedFiles": [
-    "packages/markup/src/extensions/comments.ts",
+    "packages/markup/src/extensions/task-states.ts",
     "packages/markup/src/parser.ts",
     "packages/markup/src/serializer.ts",
-    "packages/markup/tests/wiki-links.test.mjs"
+    "packages/markup/tests/parser.test.mjs",
+    "packages/markup/tests/task-states.test.mjs"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 70599ff..9585e37",
-    "git diff --stat 70599ff..9585e37",
-    "git diff 70599ff..9585e37",
-    "git log --oneline 70599ff..9585e37",
-    "git ls-tree -r --name-only 9585e37",
+    "git diff --name-only 8cc78ba..9108fb6",
+    "git diff --stat 8cc78ba..9108fb6",
+    "git diff 8cc78ba..9108fb6",
+    "git log --oneline 8cc78ba..9108fb6",
+    "git ls-tree -r --name-only 9108fb6",
     "git remote get-url origin"
   ],
   "rawUrls": {

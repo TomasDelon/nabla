@@ -9,6 +9,7 @@ packages/markup/src/diagnostics.ts
 packages/markup/src/extensions/comments.ts
 packages/markup/src/extensions/highlights.ts
 packages/markup/src/extensions/tags.ts
+packages/markup/src/extensions/task-states.ts
 packages/markup/src/extensions/wiki-links.ts
 packages/markup/src/fixtures.ts
 packages/markup/src/index.ts
@@ -24,6 +25,7 @@ packages/markup/tests/helpers/load-ts-module.mjs
 packages/markup/tests/parser.test.mjs
 packages/markup/tests/protected-regions.test.mjs
 packages/markup/tests/serializer.test.mjs
+packages/markup/tests/task-states.test.mjs
 packages/markup/tests/wiki-links.test.mjs
 packages/markup/tsconfig.json
 pnpm-lock.yaml

@@ -1,166 +1,262 @@
-diff --git a/packages/markup/src/extensions/comments.ts b/packages/markup/src/extensions/comments.ts
+diff --git a/packages/markup/src/extensions/task-states.ts b/packages/markup/src/extensions/task-states.ts
 new file mode 100644
-index 0000000..f00ca2d
+index 0000000..b22b777
 --- /dev/null
-+++ b/packages/markup/src/extensions/comments.ts
-@@ -0,0 +1,29 @@
-+import type { PrivateCommentNode } from "../ast.js";
++++ b/packages/markup/src/extensions/task-states.ts
+@@ -0,0 +1,44 @@
++import type { TaskState } from "../ast.js";
 +
-+export function parsePrivateCommentBlock(
-+  lines: string[],
-+  startIndex: number
-+): { value: string; raw: string; endIndex: number } | null {
-+  const firstLine = lines[startIndex];
-+  if (!firstLine.startsWith("%%")) return null;
++const TASK_STATE_MAP: Record<string, TaskState> = {
++  " ": "unchecked",
++  x: "checked",
++  "-": "cancelled",
++  "!": "important"
++};
 +
-+  for (let i = startIndex; i < lines.length; i++) {
-+    const line = lines[i];
-+    const closeIdx = line.lastIndexOf("%%");
-+    if (closeIdx > 0) {
-+      const afterClose = line.slice(closeIdx + 2);
-+      if (afterClose.trim() !== "") continue;
++const TASK_STATE_TO_MARKER: Record<TaskState, string> = {
++  unchecked: " ",
++  checked: "x",
++  cancelled: "-",
++  important: "!"
++};
 +
-+      const commentLines = lines.slice(startIndex, i + 1);
-+      const raw = commentLines.join("\n");
-+      const value = raw.slice(2, -2).trim();
-+      return { value, raw, endIndex: i };
-+    }
-+  }
++export function parseTaskStateMarker(line: string): {
++  state: TaskState;
++  text: string;
++} | null {
++  const match = line.match(/^- \[(.)\] (.*)$/);
++  if (!match) return null;
 +
-+  return null;
++  const marker = match[1];
++  const state = TASK_STATE_MAP[marker];
++  if (state === undefined) return null;
++
++  return { state, text: match[2] };
 +}
 +
-+export function serializePrivateComment(node: PrivateCommentNode): string {
-+  return node.raw;
++export function parseListMarkerPrefix(line: string): {
++  rest: string;
++} | null {
++  if (!line.startsWith("- ")) return null;
++  return { rest: line.slice(2) };
++}
++
++export function hasBracketMarker(rest: string): boolean {
++  return /^\[.\] /.test(rest);
++}
++
++export function taskStateToMarker(state: TaskState): string {
++  return TASK_STATE_TO_MARKER[state];
 +}
 diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index 0de58be..4f695dc 100644
+index 4f695dc..c4fa68e 100644
 --- a/packages/markup/src/parser.ts
 +++ b/packages/markup/src/parser.ts
-@@ -1,9 +1,10 @@
--import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode } from "./ast.js";
+@@ -1,10 +1,11 @@
+-import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode } from "./ast.js";
++import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState } from "./ast.js";
  import type { ParseMode } from "./parse-mode.js";
  import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
  import { parseWikiLink } from "./extensions/wiki-links.js";
  import { parseTag } from "./extensions/tags.js";
  import { parseHighlight } from "./extensions/highlights.js";
-+import { parsePrivateCommentBlock } from "./extensions/comments.js";
+ import { parsePrivateCommentBlock } from "./extensions/comments.js";
++import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
  
  export type ParseOptions = {
    mode?: ParseMode;
-@@ -52,7 +53,9 @@ type BlockSpec =
-   | { kind: "heading"; depth: number; content: string }
-   | { kind: "foldableHeading"; content: string }
+@@ -55,7 +56,8 @@ type BlockSpec =
    | { kind: "code"; lang: string; value: string }
--  | { kind: "paragraph"; text: string };
-+  | { kind: "paragraph"; text: string }
-+  | { kind: "privateComment"; value: string; raw: string }
-+  | { kind: "html"; value: string };
+   | { kind: "paragraph"; text: string }
+   | { kind: "privateComment"; value: string; raw: string }
+-  | { kind: "html"; value: string };
++  | { kind: "html"; value: string }
++  | { kind: "listItem"; taskState?: TaskState; text: string };
  
  function parseBlocks(source: string): BlockSpec[] {
    const lines = source.split("\n");
-@@ -112,6 +115,35 @@ function parseBlocks(source: string): BlockSpec[] {
+@@ -123,6 +125,21 @@ function parseBlocks(source: string): BlockSpec[] {
        continue;
      }
  
-+    const privateMatch = parsePrivateCommentBlock(lines, i);
-+    if (privateMatch !== null) {
++    const listPrefix = parseListMarkerPrefix(line);
++    if (listPrefix !== null) {
 +      flushParagraph();
-+      blocks.push({ kind: "privateComment", value: privateMatch.value, raw: privateMatch.raw });
-+      i = privateMatch.endIndex;
-+      continue;
-+    }
-+
-+    if (line.startsWith("<!--")) {
-+      flushParagraph();
-+      const closingIndex = line.indexOf("-->");
-+      if (closingIndex !== -1) {
-+        blocks.push({ kind: "html", value: line.slice(0, closingIndex + 3) });
++      const taskState = parseTaskStateMarker(line);
++      if (taskState !== null) {
++        blocks.push({ kind: "listItem", taskState: taskState.state, text: taskState.text });
++      } else if (hasBracketMarker(listPrefix.rest)) {
++        blocks.push({ kind: "listItem", text: listPrefix.rest });
++      } else {
++        paragraphLines.push(line);
 +        continue;
 +      }
-+
-+      const htmlLines: string[] = [line];
-+      i += 1;
-+      while (i < lines.length) {
-+        const nextLine = lines[i];
-+        htmlLines.push(nextLine);
-+        const closeIdx = nextLine.indexOf("-->");
-+        if (closeIdx !== -1) break;
-+        i += 1;
-+      }
-+      blocks.push({ kind: "html", value: htmlLines.join("\n") });
 +      continue;
 +    }
 +
-     paragraphLines.push(line);
-   }
+     if (line.startsWith("<!--")) {
+       flushParagraph();
+       const closingIndex = line.indexOf("-->");
+@@ -317,7 +334,8 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
+   const blocks = parseBlocks(source);
+   const docChildren: Array<MarkdownNode | NablaBlockNode> = [];
  
-@@ -300,6 +332,17 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
-       docChildren.push(createHeading(block.depth, block.content));
-     } else if (block.kind === "foldableHeading") {
-       docChildren.push(createFoldableHeading(block.content));
-+    } else if (block.kind === "privateComment") {
+-  for (const block of blocks) {
++  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
++    const block = blocks[blockIndex];
+     if (block.kind === "paragraph") {
+       const { children, diagnostics } = parseParagraphChildren(block.text);
+       allDiagnostics.push(...diagnostics);
+@@ -343,6 +361,29 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
+         type: "html",
+         value: block.value
+       } as MarkdownNode);
++    } else if (block.kind === "listItem") {
++      const items: Array<{ taskState?: TaskState; text: string }> = [
++        { taskState: block.taskState, text: block.text }
++      ];
++      while (blockIndex + 1 < blocks.length && blocks[blockIndex + 1].kind === "listItem") {
++        blockIndex++;
++        const nextBlock = blocks[blockIndex] as BlockSpec & { kind: "listItem" };
++        items.push({ taskState: nextBlock.taskState, text: nextBlock.text });
++      }
 +      docChildren.push({
-+        type: "privateComment",
-+        value: block.value,
-+        raw: block.raw
-+      } as PrivateCommentNode);
-+    } else if (block.kind === "html") {
-+      docChildren.push({
-+        type: "html",
-+        value: block.value
++        type: "list",
++        ordered: false,
++        children: items.map((item) => ({
++          type: "listItem",
++          ...(item.taskState ? { data: { nablaTaskState: item.taskState } } : {}),
++          children: [
++            {
++              type: "paragraph",
++              children: [{ type: "text", value: item.text }]
++            }
++          ]
++        }))
 +      } as MarkdownNode);
      }
    }
  
 diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
-index c0a23a0..b984220 100644
+index b984220..612547a 100644
 --- a/packages/markup/src/serializer.ts
 +++ b/packages/markup/src/serializer.ts
-@@ -1,4 +1,4 @@
--import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode } from "./ast.js";
+@@ -1,7 +1,8 @@
+-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode } from "./ast.js";
++import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState } from "./ast.js";
  import { serializeWikiLink } from "./extensions/wiki-links.js";
  import { serializeTag } from "./extensions/tags.js";
  import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
-@@ -70,6 +70,14 @@ function serializeBlockNode(node: MarkdownNode) {
-     return `${marker} ${content}`;
++import { taskStateToMarker } from "./extensions/task-states.js";
+ 
+ export type SerializeOptions = {
+   lineEnding?: "lf" | "crlf";
+@@ -78,9 +79,35 @@ function serializeBlockNode(node: MarkdownNode) {
+     return typeof node.value === "string" ? node.value : "";
    }
  
-+  if (node.type === "privateComment") {
-+    return (node as unknown as PrivateCommentNode).raw;
-+  }
-+
-+  if (node.type === "html") {
-+    return typeof node.value === "string" ? node.value : "";
++  if (node.type === "list" && Array.isArray(node.children)) {
++    return node.children
++      .map((child) => serializeListItem(child as MarkdownNode))
++      .join("\n");
 +  }
 +
    return "";
  }
  
-diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
-index 3a5ade0..d87da1f 100644
---- a/packages/markup/tests/wiki-links.test.mjs
-+++ b/packages/markup/tests/wiki-links.test.mjs
-@@ -29,6 +29,12 @@ const highlightFixtureIds = [
-   "highlights/unclosed"
- ];
- 
-+const commentFixtureIds = [
-+  "comments/basic",
-+  "comments/multiline-private",
-+  "comments/protected-region"
++function serializeListItem(node: MarkdownNode): string {
++  const data = node.data as { nablaTaskState?: TaskState } | undefined;
++  const taskState = data?.nablaTaskState;
++
++  const paragraph = (Array.isArray(node.children) ? node.children : [])
++    .find((child) => (child as MarkdownNode).type === "paragraph") as MarkdownNode | undefined;
++  const text = paragraph
++    ? (Array.isArray(paragraph.children) ? paragraph.children : [])
++        .map((child) => serializeInlineNode(child as MarkdownNode))
++        .join("")
++    : "";
++
++  if (taskState) {
++    const marker = taskStateToMarker(taskState);
++    return `- [${marker}] ${text}`;
++  }
++
++  return `- ${text}`;
++}
++
+ export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
+   const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n");
+   const normalizedOutput = output === "" ? "" : `${output}\n`;
+diff --git a/packages/markup/tests/parser.test.mjs b/packages/markup/tests/parser.test.mjs
+index 57a7c18..ad944a9 100644
+--- a/packages/markup/tests/parser.test.mjs
++++ b/packages/markup/tests/parser.test.mjs
+@@ -40,8 +40,20 @@ test("parser returns a minimal paragraph document when no wiki link grammar appl
+     type: "document",
+     children: [
+       {
+-        type: "paragraph",
+-        children: [{ type: "text", value: "- [ ] task" }]
++        type: "list",
++        ordered: false,
++        children: [
++          {
++            type: "listItem",
++            data: { nablaTaskState: "unchecked" },
++            children: [
++              {
++                type: "paragraph",
++                children: [{ type: "text", value: "task" }]
++              }
++            ]
++          }
++        ]
+       }
+     ],
+     diagnostics: []
+diff --git a/packages/markup/tests/task-states.test.mjs b/packages/markup/tests/task-states.test.mjs
+new file mode 100644
+index 0000000..110ca78
+--- /dev/null
++++ b/packages/markup/tests/task-states.test.mjs
+@@ -0,0 +1,103 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { loadTsModule as loadRuntimeTsModule } from "./helpers/load-ts-module.mjs";
++
++const parserModuleUrl = new URL("../src/parser.ts", import.meta.url);
++const serializerModuleUrl = new URL("../src/serializer.ts", import.meta.url);
++const fixturesModuleUrl = new URL("../src/fixtures.ts", import.meta.url);
++
++const taskStateFixtureIds = [
++  "task-states/basic",
++  "task-states/unsupported-marker"
 +];
 +
- let parserModulePromise;
- let serializerModulePromise;
- let fixturesModulePromise;
-@@ -92,6 +98,26 @@ test("highlight fixtures parse and serialize according to the checked-in contrac
-   }
- });
- 
-+test("comment fixtures parse and serialize according to the checked-in contracts", async () => {
++let parserPromise;
++let serializerPromise;
++let fixturesPromise;
++
++async function loadTsModule(moduleUrl) {
++  return loadRuntimeTsModule(moduleUrl);
++}
++
++async function loadParserModule() {
++  parserPromise ??= loadTsModule(parserModuleUrl);
++  return parserPromise;
++}
++
++async function loadSerializerModule() {
++  serializerPromise ??= loadTsModule(serializerModuleUrl);
++  return serializerPromise;
++}
++
++async function loadFixturesModule() {
++  fixturesPromise ??= loadTsModule(fixturesModuleUrl);
++  return fixturesPromise;
++}
++
++test("task state fixtures parse and serialize according to the checked-in contracts", async () => {
 +  const { parse } = await loadParserModule();
 +  const { serialize } = await loadSerializerModule();
 +  const {
@@ -170,7 +266,7 @@ index 3a5ade0..d87da1f 100644
 +    loadParserFixture
 +  } = await loadFixturesModule();
 +
-+  for (const fixtureId of commentFixtureIds) {
++  for (const fixtureId of taskStateFixtureIds) {
 +    const fixture = await loadParserFixture(fixtureId);
 +    const parsed = parse(fixture.input);
 +
@@ -180,5 +276,50 @@ index 3a5ade0..d87da1f 100644
 +  }
 +});
 +
- test("tag parser handles single and nested tag values", async () => {
-   const { parse } = await loadParserModule();
++test("parse unmaps task state markers to data.nablaTaskState", async () => {
++  const { parse } = await loadParserModule();
++
++  const result = parse("- [ ] a\n- [x] b\n- [-] c\n- [!] d");
++  const list = result.children[0];
++  const items = list.children;
++
++  assert.equal(items[0].data.nablaTaskState, "unchecked");
++  assert.equal(items[1].data.nablaTaskState, "checked");
++  assert.equal(items[2].data.nablaTaskState, "cancelled");
++  assert.equal(items[3].data.nablaTaskState, "important");
++});
++
++test("parse leaves unsupported markers as literal text without task state", async () => {
++  const { parse } = await loadParserModule();
++
++  const result = parse("- [?] maybe");
++  const list = result.children[0];
++  const item = list.children[0];
++
++  assert.equal(item.data, undefined);
++  const paragraph = item.children[0];
++  const text = paragraph.children[0];
++  assert.equal(text.value, "[?] maybe");
++});
++
++test("serialize emits canonical task state markers", async () => {
++  const { parse } = await loadParserModule();
++  const { serialize } = await loadSerializerModule();
++
++  const input = "- [ ] a\n- [x] b\n- [-] c\n- [!] d";
++  const parsed = parse(input);
++  const output = serialize(parsed).trimEnd();
++
++  assert.equal(output, input);
++});
++
++test("serialize emits literal text for unsupported markers", async () => {
++  const { parse } = await loadParserModule();
++  const { serialize } = await loadSerializerModule();
++
++  const input = "- [?] maybe";
++  const parsed = parse(input);
++  const output = serialize(parsed).trimEnd();
++
++  assert.equal(output, input);
++});
