@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-001-repo-bootstrap`
+`P1-002 @nabla/markup setup`
 
 ## Branch
 
@@ -14,10 +14,12 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-P1-001 bootstrap implemented.
+P1-002 markup package setup finalized.
 
 ## Scope Guardrails
 
+- No AST type implementation
+- No diagnostics catalog implementation
 - No parser implementation
 - No serializer implementation
 - No spec changes
@@ -39,16 +41,33 @@ P1-001 bootstrap implemented.
 - `scripts/report-unavailable.mjs`
 - `scripts/validate-fixtures.mjs`
 - `scripts/validate-spec-version.mjs`
+- `pnpm-lock.yaml`
+
+## Files Verified
+
+- `@nabla/markup` package metadata correct
+- TypeScript config extends base correctly
+- Package exports prepared (main, types, exports)
+- Root scripts call markup package scripts correctly
 
 ## Verification Summary
 
-- `node --test packages/markup/tests/**/*.test.mjs` passed
-- `node scripts/check-boundaries.mjs` passed
-- `node scripts/validate-fixtures.mjs` passed
-- `node scripts/validate-spec-version.mjs` passed
-- `pnpm` command entrypoints are defined in `package.json`, but execution is blocked because `pnpm` is not installed on this machine
+- `pnpm install` passed
+- `pnpm test` passed (1 test: markup package skeleton exists)
+- `pnpm test:markup` passed (1 test)
+- `pnpm typecheck` passed
+- `pnpm build` passed
+- `pnpm validate:fixtures` passed
+- `pnpm validate:spec-version` passed
+- `pnpm check:boundaries` passed
+- `pnpm lint` exits 1 with expected message (not bootstrapped in P1-001)
+- `pnpm -F @nabla/markup build` passed
+- `pnpm -F @nabla/markup typecheck` passed
 
 ## Active Blockers
 
-- `pnpm` is not available on PATH, so `pnpm test`, `pnpm test:markup`, `pnpm test:workspace`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm validate:fixtures`, `pnpm validate:spec-version`, and `pnpm check:boundaries` cannot run yet
-- `tsc` is not available on PATH yet; it will be provided after installing workspace dependencies with `pnpm`
+None - pnpm tooling enabled via corepack cache.
+
+## Next Recommended Task
+
+P1-003 @nabla/markup types - implement AST types (out of scope for P1-002)
