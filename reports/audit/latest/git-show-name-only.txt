@@ -1,7 +1,3 @@
-packages/markup/package.json
-packages/markup/src/extensions/frontmatter.ts
 packages/markup/src/parser.ts
 packages/markup/src/serializer.ts
 packages/markup/tests/frontmatter.test.mjs
-packages/markup/tests/helpers/load-ts-module.mjs
-pnpm-lock.yaml

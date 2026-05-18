@@ -1,372 +1,81 @@
-diff --git a/packages/markup/package.json b/packages/markup/package.json
-index 7c6bcd7..08876a3 100644
---- a/packages/markup/package.json
-+++ b/packages/markup/package.json
-@@ -17,5 +17,8 @@
-   "scripts": {
-     "build": "tsc -p tsconfig.json",
-     "typecheck": "tsc -p tsconfig.json --noEmit"
-+  },
-+  "dependencies": {
-+    "yaml": "^2.9.0"
-   }
- }
-diff --git a/packages/markup/src/extensions/frontmatter.ts b/packages/markup/src/extensions/frontmatter.ts
-new file mode 100644
-index 0000000..127823d
---- /dev/null
-+++ b/packages/markup/src/extensions/frontmatter.ts
-@@ -0,0 +1,40 @@
-+import { parse as parseYaml } from "yaml";
-+
-+export function parseFrontmatterBlock(
-+  lines: string[],
-+  startIndex: number
-+): {
-+  raw: string;
-+  data: Record<string, unknown> | null;
-+  endIndex: number;
-+} | null {
-+  if (lines[startIndex] !== "---") return null;
-+
-+  let endIndex = -1;
-+  for (let i = startIndex + 1; i < lines.length; i++) {
-+    if (lines[i] === "---") {
-+      endIndex = i;
-+      break;
-+    }
-+  }
-+
-+  if (endIndex === -1) return null;
-+
-+  const raw = lines.slice(startIndex + 1, endIndex).join("\n");
-+
-+  let data: Record<string, unknown> | null = null;
-+  try {
-+    const parsed = parseYaml(raw);
-+    if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-+      data = parsed as Record<string, unknown>;
-+    }
-+  } catch {
-+    /* data remains null — invalid YAML */
-+  }
-+
-+  return { raw, data, endIndex };
-+}
-+
-+export function serializeFrontmatter(raw: string): string {
-+  return `---\n${raw}\n---`;
-+}
 diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index c4fa68e..0b6fd19 100644
+index 0b6fd19..6b877de 100644
 --- a/packages/markup/src/parser.ts
 +++ b/packages/markup/src/parser.ts
-@@ -1,4 +1,4 @@
--import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic } from "./ast.js";
- import type { ParseMode } from "./parse-mode.js";
- import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
- import { parseWikiLink } from "./extensions/wiki-links.js";
-@@ -6,6 +6,7 @@ import { parseTag } from "./extensions/tags.js";
- import { parseHighlight } from "./extensions/highlights.js";
- import { parsePrivateCommentBlock } from "./extensions/comments.js";
- import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
-+import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
- 
- export type ParseOptions = {
-   mode?: ParseMode;
-@@ -57,7 +58,8 @@ type BlockSpec =
-   | { kind: "paragraph"; text: string }
+@@ -59,7 +59,8 @@ type BlockSpec =
    | { kind: "privateComment"; value: string; raw: string }
    | { kind: "html"; value: string }
--  | { kind: "listItem"; taskState?: TaskState; text: string };
-+  | { kind: "listItem"; taskState?: TaskState; text: string }
-+  | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic };
+   | { kind: "listItem"; taskState?: TaskState; text: string }
+-  | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic };
++  | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic }
++  | { kind: "thematicBreak" };
  
  function parseBlocks(source: string): BlockSpec[] {
    const lines = source.split("\n");
-@@ -74,6 +76,29 @@ function parseBlocks(source: string): BlockSpec[] {
-   for (let i = 0; i < lines.length; i++) {
-     const line = lines[i];
+@@ -128,6 +129,12 @@ function parseBlocks(source: string): BlockSpec[] {
+       continue;
+     }
  
-+    if (i === 0 && line === "---") {
-+      const fmResult = parseFrontmatterBlock(lines, 0);
-+      if (fmResult !== null) {
-+        const isInvalid = fmResult.data === null;
-+        blocks.push({
-+          kind: "frontmatter",
-+          raw: fmResult.raw,
-+          data: fmResult.data,
-+          ...(isInvalid
-+            ? {
-+                diagnostic: {
-+                  severity: "warning" as const,
-+                  code: "NABLA_FRONTMATTER_INVALID",
-+                  message: "Frontmatter could not be parsed."
-+                }
-+              }
-+            : {})
-+        });
-+        i = fmResult.endIndex;
-+        continue;
-+      }
++    if (line === "---" && i !== 0) {
++      flushParagraph();
++      blocks.push({ kind: "thematicBreak" });
++      continue;
 +    }
 +
-     const fenceMatch = line.match(FENCE_PATTERN);
-     if (fenceMatch) {
+     const foldMatch = line.match(FOLDABLE_HEADING_PATTERN);
+     if (foldMatch) {
        flushParagraph();
-@@ -361,6 +386,15 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
-         type: "html",
-         value: block.value
-       } as MarkdownNode);
-+    } else if (block.kind === "frontmatter") {
-+      if (block.diagnostic) {
-+        allDiagnostics.push(block.diagnostic);
-+      }
+@@ -395,6 +402,10 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
+         raw: block.raw,
+         data: block.data
+       } as FrontmatterNode);
++    } else if (block.kind === "thematicBreak") {
 +      docChildren.push({
-+        type: "frontmatter",
-+        raw: block.raw,
-+        data: block.data
-+      } as FrontmatterNode);
++        type: "thematicBreak"
++      } as MarkdownNode);
      } else if (block.kind === "listItem") {
        const items: Array<{ taskState?: TaskState; text: string }> = [
          { taskState: block.taskState, text: block.text }
 diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
-index 612547a..4b7f023 100644
+index 4b7f023..f88248d 100644
 --- a/packages/markup/src/serializer.ts
 +++ b/packages/markup/src/serializer.ts
-@@ -1,8 +1,9 @@
--import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode } from "./ast.js";
- import { serializeWikiLink } from "./extensions/wiki-links.js";
- import { serializeTag } from "./extensions/tags.js";
- import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
- import { taskStateToMarker } from "./extensions/task-states.js";
-+import { serializeFrontmatter } from "./extensions/frontmatter.js";
- 
- export type SerializeOptions = {
-   lineEnding?: "lf" | "crlf";
-@@ -79,6 +80,11 @@ function serializeBlockNode(node: MarkdownNode) {
+@@ -80,6 +80,10 @@ function serializeBlockNode(node: MarkdownNode) {
      return typeof node.value === "string" ? node.value : "";
    }
  
-+  if (node.type === "frontmatter") {
-+    const fmNode = node as unknown as FrontmatterNode;
-+    return serializeFrontmatter(fmNode.raw);
++  if (node.type === "thematicBreak") {
++    return "\n---\n";
 +  }
 +
-   if (node.type === "list" && Array.isArray(node.children)) {
-     return node.children
-       .map((child) => serializeListItem(child as MarkdownNode))
+   if (node.type === "frontmatter") {
+     const fmNode = node as unknown as FrontmatterNode;
+     return serializeFrontmatter(fmNode.raw);
 diff --git a/packages/markup/tests/frontmatter.test.mjs b/packages/markup/tests/frontmatter.test.mjs
-new file mode 100644
-index 0000000..f4857d2
---- /dev/null
+index f4857d2..3d60ea5 100644
+--- a/packages/markup/tests/frontmatter.test.mjs
 +++ b/packages/markup/tests/frontmatter.test.mjs
-@@ -0,0 +1,138 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+import { loadTsModule as loadRuntimeTsModule } from "./helpers/load-ts-module.mjs";
+@@ -9,7 +9,8 @@ const frontmatterModuleUrl = new URL("../src/extensions/frontmatter.ts", import.
+ 
+ const frontmatterFixtureIds = [
+   "frontmatter/valid",
+-  "frontmatter/invalid"
++  "frontmatter/invalid",
++  "frontmatter/horizontal-rule"
+ ];
+ 
+ let parserPromise;
+@@ -136,3 +137,13 @@ test("parseFrontmatterBlock returns null when no closing ---", async () => {
+   const result = parseFrontmatterBlock(["---", "title: broken"], 0);
+   assert.equal(result, null);
+ });
 +
-+const parserModuleUrl = new URL("../src/parser.ts", import.meta.url);
-+const serializerModuleUrl = new URL("../src/serializer.ts", import.meta.url);
-+const fixturesModuleUrl = new URL("../src/fixtures.ts", import.meta.url);
-+const frontmatterModuleUrl = new URL("../src/extensions/frontmatter.ts", import.meta.url);
-+
-+const frontmatterFixtureIds = [
-+  "frontmatter/valid",
-+  "frontmatter/invalid"
-+];
-+
-+let parserPromise;
-+let serializerPromise;
-+let fixturesPromise;
-+let frontmatterPromise;
-+
-+async function loadTsModule(moduleUrl) {
-+  return loadRuntimeTsModule(moduleUrl);
-+}
-+
-+async function loadParserModule() {
-+  parserPromise ??= loadTsModule(parserModuleUrl);
-+  return parserPromise;
-+}
-+
-+async function loadSerializerModule() {
-+  serializerPromise ??= loadTsModule(serializerModuleUrl);
-+  return serializerPromise;
-+}
-+
-+async function loadFixturesModule() {
-+  fixturesPromise ??= loadTsModule(fixturesModuleUrl);
-+  return fixturesPromise;
-+}
-+
-+async function loadFrontmatterModule() {
-+  frontmatterPromise ??= loadTsModule(frontmatterModuleUrl);
-+  return frontmatterPromise;
-+}
-+
-+test("frontmatter fixtures parse and serialize according to the checked-in contracts", async () => {
-+  const { parse } = await loadParserModule();
-+  const { serialize } = await loadSerializerModule();
-+  const {
-+    compareFixtureAst,
-+    compareFixtureDiagnostics,
-+    compareFixtureOutput,
-+    loadParserFixture
-+  } = await loadFixturesModule();
-+
-+  for (const fixtureId of frontmatterFixtureIds) {
-+    const fixture = await loadParserFixture(fixtureId);
-+    const parsed = parse(fixture.input);
-+
-+    compareFixtureAst(parsed, fixture.ast);
-+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
-+    compareFixtureOutput(serialize(parsed), fixture.output);
-+  }
-+});
-+
-+test("parse valid frontmatter yields correct raw and data", async () => {
-+  const { parse } = await loadParserModule();
-+  const result = parse("---\ntitle: Analyse\ntags: [math]\n---\n# Course");
-+
-+  const frontmatter = result.children[0];
-+  assert.equal(frontmatter.type, "frontmatter");
-+  assert.equal(frontmatter.raw, "title: Analyse\ntags: [math]");
-+  assert.deepEqual(frontmatter.data, { title: "Analyse", tags: ["math"] });
-+});
-+
-+test("parse invalid frontmatter yields raw with null data and diagnostic", async () => {
-+  const { parse } = await loadParserModule();
-+  const result = parse("---\ntitle: [broken\n---\nText");
-+
-+  const frontmatter = result.children[0];
-+  assert.equal(frontmatter.type, "frontmatter");
-+  assert.equal(frontmatter.raw, "title: [broken");
-+  assert.equal(frontmatter.data, null);
-+
-+  assert.equal(result.diagnostics.length, 1);
-+  assert.equal(result.diagnostics[0].severity, "warning");
-+  assert.equal(result.diagnostics[0].code, "NABLA_FRONTMATTER_INVALID");
-+  assert.equal(result.diagnostics[0].message, "Frontmatter could not be parsed.");
-+});
-+
-+test("parse --- not at document start is not frontmatter", async () => {
-+  const { parse } = await loadParserModule();
-+  const result = parse("text\n---\nmore");
-+  const firstChild = result.children[0];
-+
-+  assert.notEqual(firstChild.type, "frontmatter");
-+});
-+
-+test("parse --- without closing delimiter is not frontmatter", async () => {
-+  const { parse } = await loadParserModule();
-+  const result = parse("---\ntitle: Analyse");
-+  const firstChild = result.children[0];
-+
-+  assert.notEqual(firstChild.type, "frontmatter");
-+  assert.equal(result.diagnostics.length, 0);
-+});
-+
-+test("serialize valid frontmatter round-trips", async () => {
++test("thematic break round-trips", async () => {
 +  const { parse } = await loadParserModule();
 +  const { serialize } = await loadSerializerModule();
 +
-+  const input = "---\ntitle: Analyse\ntags: [math]\n---\n# Course";
++  const input = "a\n\n---\n\nb";
 +  const parsed = parse(input);
 +  const output = serialize(parsed).trimEnd();
-+
 +  assert.equal(output, input);
 +});
-+
-+test("serialize invalid frontmatter round-trips", async () => {
-+  const { parse } = await loadParserModule();
-+  const { serialize } = await loadSerializerModule();
-+
-+  const input = "---\ntitle: [broken\n---\nText";
-+  const parsed = parse(input);
-+  const output = serialize(parsed).trimEnd();
-+
-+  assert.equal(output, input);
-+});
-+
-+test("parseFrontmatterBlock returns null for non-frontmatter start", async () => {
-+  const { parseFrontmatterBlock } = await loadFrontmatterModule();
-+  const result = parseFrontmatterBlock(["text", "---", "content", "---"], 0);
-+  assert.equal(result, null);
-+});
-+
-+test("parseFrontmatterBlock returns null when no closing ---", async () => {
-+  const { parseFrontmatterBlock } = await loadFrontmatterModule();
-+  const result = parseFrontmatterBlock(["---", "title: broken"], 0);
-+  assert.equal(result, null);
-+});
-diff --git a/packages/markup/tests/helpers/load-ts-module.mjs b/packages/markup/tests/helpers/load-ts-module.mjs
-index 9ad6ec8..842b0e4 100644
---- a/packages/markup/tests/helpers/load-ts-module.mjs
-+++ b/packages/markup/tests/helpers/load-ts-module.mjs
-@@ -34,12 +34,28 @@ export async function loadTsModule(moduleUrl, cache = new Map()) {
- 
-   let rewritten = transpiled;
-   const localSpecifiers = new Set();
-+  const bareSpecifiers = new Set();
- 
--  for (const match of transpiled.matchAll(/(?:from\s+|import\()"(\.{1,2}\/[^"\n]+)"/g)) {
--    localSpecifiers.add(match[1]);
-+  for (const match of transpiled.matchAll(/(?:from\s+|import\()"([^"\n]+)"/g)) {
-+    const specifier = match[1];
-+    if (specifier.startsWith(".")) {
-+      localSpecifiers.add(specifier);
-+    } else {
-+      bareSpecifiers.add(specifier);
-+    }
-+  }
-+  for (const match of transpiled.matchAll(/(?:from\s+|import\()'([^'\n]+)'/g)) {
-+    const specifier = match[1];
-+    if (specifier.startsWith(".")) {
-+      localSpecifiers.add(specifier);
-+    } else {
-+      bareSpecifiers.add(specifier);
-+    }
-   }
--  for (const match of transpiled.matchAll(/(?:from\s+|import\()'(\.{1,2}\/[^'\n]+)'/g)) {
--    localSpecifiers.add(match[1]);
-+
-+  for (const specifier of bareSpecifiers) {
-+    const resolvedUrl = await import.meta.resolve(specifier, moduleUrl.href);
-+    rewritten = rewritten.replaceAll(specifier, resolvedUrl);
-   }
- 
-   for (const specifier of localSpecifiers) {
-diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
-index 0642cc7..5b64340 100644
---- a/pnpm-lock.yaml
-+++ b/pnpm-lock.yaml
-@@ -12,7 +12,11 @@ importers:
-         specifier: ^5.6.3
-         version: 5.9.3
- 
--  packages/markup: {}
-+  packages/markup:
-+    dependencies:
-+      yaml:
-+        specifier: ^2.9.0
-+        version: 2.9.0
- 
- packages:
- 
-@@ -21,6 +25,13 @@ packages:
-     engines: {node: '>=14.17'}
-     hasBin: true
- 
-+  yaml@2.9.0:
-+    resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
-+    engines: {node: '>= 14.6'}
-+    hasBin: true
-+
- snapshots:
- 
-   typescript@5.9.3: {}
-+
-+  yaml@2.9.0: {}

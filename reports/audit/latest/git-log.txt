@@ -1,1 +1,1 @@
-e91e789 feat(markup): implement frontmatter parsing
+39975e1 feat(markup): add minimal thematic break parsing

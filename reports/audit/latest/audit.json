@@ -1,29 +1,25 @@
 {
-  "taskId": "P1-015",
-  "baseCommit": "9c69fb1",
-  "headCommit": "e91e789",
+  "taskId": "P1-015A",
+  "baseCommit": "7a0cf2a",
+  "headCommit": "39975e1",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-18T22:50:04.942Z",
-  "currentHead": "e91e78973a5b681fa4ee5db79c6171ae861b83ab",
+  "timestamp": "2026-05-18T22:53:51.789Z",
+  "currentHead": "39975e138c33a3833e7c2c5cca402ec9d8abc86b",
   "currentWorkingTreeStatus": "",
   "changedFiles": [
-    "packages/markup/package.json",
-    "packages/markup/src/extensions/frontmatter.ts",
     "packages/markup/src/parser.ts",
     "packages/markup/src/serializer.ts",
-    "packages/markup/tests/frontmatter.test.mjs",
-    "packages/markup/tests/helpers/load-ts-module.mjs",
-    "pnpm-lock.yaml"
+    "packages/markup/tests/frontmatter.test.mjs"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 9c69fb1..e91e789",
-    "git diff --stat 9c69fb1..e91e789",
-    "git diff 9c69fb1..e91e789",
-    "git log --oneline 9c69fb1..e91e789",
-    "git ls-tree -r --name-only e91e789",
+    "git diff --name-only 7a0cf2a..39975e1",
+    "git diff --stat 7a0cf2a..39975e1",
+    "git diff 7a0cf2a..39975e1",
+    "git log --oneline 7a0cf2a..39975e1",
+    "git ls-tree -r --name-only 39975e1",
     "git remote get-url origin"
   ],
   "rawUrls": {
