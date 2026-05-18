@@ -25,6 +25,7 @@ const highlightFixtureIds = [
   "highlights/basic",
   "highlights/hex-3-and-8",
   "highlights/invalid-color",
+  "highlights/protected-region",
   "highlights/unclosed"
 ];
 
@@ -213,10 +214,9 @@ test("tag parser leaves syntax inside protected regions literal", async () => {
       {
         type: "paragraph",
         children: [
-          {
-            type: "text",
-            value: "See `#tag` and <span>#tag</span>."
-          }
+          { type: "text", value: "See " },
+          { type: "inlineCode", value: "#tag" },
+          { type: "text", value: " and <span>#tag</span>." }
         ]
       }
     ],
@@ -233,7 +233,9 @@ test("tag parser parses tags outside inline code but protects tags inside backti
       {
         type: "paragraph",
         children: [
-          { type: "text", value: "See `#tag` and " },
+          { type: "text", value: "See " },
+          { type: "inlineCode", value: "#tag" },
+          { type: "text", value: " and " },
           {
             type: "tag",
             value: "tag",
@@ -480,10 +482,9 @@ test("wiki link parser leaves syntax inside protected regions literal", async ()
       {
         type: "paragraph",
         children: [
-          {
-            type: "text",
-            value: "See `[[Analyse]]` and <span>[[Algebra]]</span>."
-          }
+          { type: "text", value: "See " },
+          { type: "inlineCode", value: "[[Analyse]]" },
+          { type: "text", value: " and <span>[[Algebra]]</span>." }
         ]
       }
     ],

@@ -19,6 +19,10 @@ function serializeInlineNode(node: MarkdownNode) {
     return typeof node.value === "string" ? node.value : "";
   }
 
+  if (node.type === "inlineCode") {
+    return `\`${node.value}\``;
+  }
+
   if (node.type === "wikiLink") {
     return serializeWikiLink(node as WikiLinkNode);
   }
@@ -41,6 +45,13 @@ function serializeInlineNode(node: MarkdownNode) {
 function serializeBlockNode(node: MarkdownNode) {
   if (node.type === "paragraph" && Array.isArray(node.children)) {
     return node.children.map((child) => serializeInlineNode(child as MarkdownNode)).join("");
+  }
+
+  if (node.type === "code") {
+    const lang = typeof node.lang === "string" ? node.lang : "";
+    const value = typeof node.value === "string" ? node.value : "";
+    const info = lang ? lang : "";
+    return `\n\`\`\`${info}\n${value}\n\`\`\``;
   }
 
   if (node.type === "heading" && typeof node.depth === "number") {

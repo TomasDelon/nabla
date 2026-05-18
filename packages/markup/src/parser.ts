@@ -13,6 +13,8 @@ const DOCUMENT_NODE_TYPE: NablaDocument["type"] = `doc${"ument"}`;
 
 const HEADING_PATTERN = /^(#{1,6}) (.+)/;
 const FOLDABLE_HEADING_PATTERN = /^#v (.+)/;
+const FENCE_PATTERN = /^( {0,3})(`{3,}|~{3,})(.*)$/;
+const FENCE_CLOSE_PATTERN = /^( {0,3})(`{3,}|~{3,})[ \t]*$/;
 
 function createTextNode(value: string): MarkdownNode {
   return {
@@ -49,6 +51,7 @@ function createFoldableHeading(content: string): NablaBlockNode {
 type BlockSpec =
   | { kind: "heading"; depth: number; content: string }
   | { kind: "foldableHeading"; content: string }
+  | { kind: "code"; lang: string; value: string }
   | { kind: "paragraph"; text: string };
 
 function parseBlocks(source: string): BlockSpec[] {
@@ -63,7 +66,38 @@ function parseBlocks(source: string): BlockSpec[] {
     }
   }
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    const fenceMatch = line.match(FENCE_PATTERN);
+    if (fenceMatch) {
+      flushParagraph();
+      const fence = fenceMatch[2];
+      const marker = fence[0];
+      const minLength = fence.length;
+      const lang = fenceMatch[3].trim();
+      const valueLines: string[] = [];
+
+      i += 1;
+      while (i < lines.length) {
+        const innerLine = lines[i];
+        const closeMatch = innerLine.match(FENCE_CLOSE_PATTERN);
+        if (closeMatch && closeMatch[2][0] === marker && closeMatch[2].length >= minLength) {
+          break;
+        }
+        valueLines.push(innerLine);
+        i += 1;
+      }
+
+      blocks.push({ kind: "code", lang, value: valueLines.join("\n") });
+      continue;
+    }
+
+    if (line.trim() === "") {
+      flushParagraph();
+      continue;
+    }
+
     const foldMatch = line.match(FOLDABLE_HEADING_PATTERN);
     if (foldMatch) {
       flushParagraph();
@@ -83,6 +117,14 @@ function parseBlocks(source: string): BlockSpec[] {
 
   flushParagraph();
   return blocks;
+}
+
+function extractInlineCodeValue(text: string): string {
+  let backtickLen = 0;
+  while (backtickLen < text.length && text[backtickLen] === "`") {
+    backtickLen += 1;
+  }
+  return text.slice(backtickLen, text.length - backtickLen);
 }
 
 function findClosingDelimiter(source: string, start: number) {
@@ -116,12 +158,26 @@ function findInlineHtmlContainerRanges(source: string) {
 function parseParagraphChildren(source: string) {
   const protectedRegions = findProtectedRegions(source);
   const inlineHtmlContainers = findInlineHtmlContainerRanges(source);
+  const inlineCodeRegions = protectedRegions.filter((r) => r.kind === "inlineCode");
   const children: MarkdownNode[] = [];
   const diagnostics: NablaDocument["diagnostics"] = [];
   let bufferStart = 0;
   let index = 0;
 
   while (index < source.length - 1) {
+    const codeRegion = inlineCodeRegions.find((r) => r.start === index);
+    if (codeRegion) {
+      if (!inlineHtmlContainers.some((region) => index >= region.start && index < region.end)) {
+        if (bufferStart < index) {
+          children.push(createTextNode(source.slice(bufferStart, index)));
+        }
+        children.push({ type: "inlineCode", value: extractInlineCodeValue(codeRegion.text) } as MarkdownNode);
+        bufferStart = codeRegion.end;
+        index = codeRegion.end;
+        continue;
+      }
+    }
+
     if (source[index] === "[" && source[index + 1] === "[") {
       if (index > 0 && source[index - 1] === "!") {
         index += 2;
@@ -234,6 +290,12 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
       const { children, diagnostics } = parseParagraphChildren(block.text);
       allDiagnostics.push(...diagnostics);
       docChildren.push(createParagraph(children));
+    } else if (block.kind === "code") {
+      docChildren.push({
+        type: "code",
+        lang: block.lang,
+        value: block.value
+      } as MarkdownNode);
     } else if (block.kind === "heading") {
       docChildren.push(createHeading(block.depth, block.content));
     } else if (block.kind === "foldableHeading") {
