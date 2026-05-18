@@ -1,8 +1,7 @@
-import type { CalloutNode, FoldState, SyntaxStatus, MarkdownNode, NablaBlockNode, ToggleNode } from "../ast.js";
+import type { CalloutNode, FoldState, SyntaxStatus, MarkdownNode, NablaBlockNode } from "../ast.js";
 
 const CALLOUT_CANONICAL_RE = /^\[!([A-Za-z][A-Za-z0-9_-]*)](\>|v)?[ \t]*(.*)$/;
 const CALLOUT_COMPATIBLE_RE = /^> \[!([A-Za-z][A-Za-z0-9_-]*)]\s*(.*)$/;
-const TOGGLE_RE = /^\](\>|v)[ \t]*(.*)$/;
 
 export type CalloutMarkerResult = {
   calloutType: string;
@@ -44,25 +43,6 @@ export function parseCalloutMarker(line: string): CalloutMarkerResult | null {
   }
 
   return null;
-}
-
-export type ToggleMarkerResult = {
-  foldState: FoldState;
-  title: string;
-  rawMarker: "]>" | "]v";
-};
-
-export function parseToggleMarker(line: string): ToggleMarkerResult | null {
-  const match = line.match(TOGGLE_RE);
-  if (!match) return null;
-
-  const foldMarker = match[1];
-
-  return {
-    foldState: foldMarker === ">" ? "closed" : "open",
-    title: match[2],
-    rawMarker: `]${foldMarker}` as "]>" | "]v"
-  };
 }
 
 export function isTabIndented(line: string): boolean {
@@ -143,10 +123,6 @@ export function collectCompatibleChildren(lines: string[], startIndex: number): 
   return { childLines, endIndex: i - 1 };
 }
 
-export function collectToggleChildLines(lines: string[], startIndex: number): { childLines: string[]; endIndex: number } {
-  return collectTabIndentedChildren(lines, startIndex);
-}
-
 export function serializeCallout(node: CalloutNode): string {
   const title = node.title.map((child) => (child as { value?: string }).value ?? "").join("");
 
@@ -155,22 +131,6 @@ export function serializeCallout(node: CalloutNode): string {
     : node.rawMarker;
 
   const header = `${marker} ${title}`;
-
-  if (node.children.length === 0) {
-    return `\n${header}`;
-  }
-
-  const childOutputs: string[] = [];
-  for (const child of node.children) {
-    childOutputs.push(serializeChildBlock(child as MarkdownNode | NablaBlockNode));
-  }
-
-  return `\n${header}\n${childOutputs.join("\n\n")}`;
-}
-
-export function serializeToggle(node: ToggleNode): string {
-  const title = node.title.map((child) => (child as { value?: string }).value ?? "").join("");
-  const header = `${node.rawMarker} ${title}`;
 
   if (node.children.length === 0) {
     return `\n${header}`;
@@ -200,15 +160,6 @@ function serializeChildBlock(node: MarkdownNode | NablaBlockNode): string {
 
   if (node.type === "callout") {
     const inner = serializeCallout(node as CalloutNode);
-    return inner
-      .replace(/^\n/, "")
-      .split("\n")
-      .map((l) => `\t${l}`)
-      .join("\n");
-  }
-
-  if (node.type === "toggle") {
-    const inner = serializeToggle(node as ToggleNode);
     return inner
       .replace(/^\n/, "")
       .split("\n")

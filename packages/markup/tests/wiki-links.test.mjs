@@ -41,8 +41,7 @@ const calloutFixtureIds = [
   "callouts/fold-states",
   "callouts/empty",
   "callouts/blank-child",
-  "callouts/fenced-child",
-  "callouts/nested-child"
+  "callouts/fenced-child"
 ];
 
 let parserModulePromise;
