@@ -1,1 +1,1 @@
-66b5866 fix(markup): protect wiki links inside inline HTML
+207011a feat(markup): implement tag parsing
