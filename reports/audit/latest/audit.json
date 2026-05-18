@@ -1,10 +1,10 @@
 {
-  "taskId": "P1-005",
-  "baseCommit": "5493de5",
-  "headCommit": "2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
+  "taskId": "P1-006",
+  "baseCommit": "a1d592e",
+  "headCommit": "b5650116a2008722bf82e3e0e589697c20cc9f41",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-18T20:42:09.466Z",
-  "currentHead": "2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
+  "timestamp": "2026-05-18T20:47:29.709Z",
+  "currentHead": "b5650116a2008722bf82e3e0e589697c20cc9f41",
   "currentWorkingTreeStatus": "",
   "changedFiles": [
     "packages/markup/src/fixtures.ts",
@@ -16,11 +16,11 @@
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 5493de5..2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
-    "git diff --stat 5493de5..2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
-    "git diff 5493de5..2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
-    "git log --oneline 5493de5..2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
-    "git ls-tree -r --name-only 2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
+    "git diff --name-only a1d592e..b5650116a2008722bf82e3e0e589697c20cc9f41",
+    "git diff --stat a1d592e..b5650116a2008722bf82e3e0e589697c20cc9f41",
+    "git diff a1d592e..b5650116a2008722bf82e3e0e589697c20cc9f41",
+    "git log --oneline a1d592e..b5650116a2008722bf82e3e0e589697c20cc9f41",
+    "git ls-tree -r --name-only b5650116a2008722bf82e3e0e589697c20cc9f41",
     "git remote get-url origin"
   ],
   "rawUrls": {

@@ -1,5 +1,5 @@
- packages/markup/src/fixtures.ts         | 240 ++++++++++++++++++++++++++++++++
- packages/markup/src/index.ts            |  12 ++
- packages/markup/tests/fixtures.test.mjs |  79 +++++++++++
- reports/IMPLEMENTATION_PROGRESS.md      |  18 ++-
- 4 files changed, 343 insertions(+), 6 deletions(-)
+ packages/markup/src/fixtures.ts         | 122 ++++++++++++++++++++++++++++++++
+ packages/markup/src/index.ts            |   9 +++
+ packages/markup/tests/fixtures.test.mjs |  96 +++++++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md      |  15 ++--
+ 4 files changed, 236 insertions(+), 6 deletions(-)
