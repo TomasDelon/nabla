@@ -1,0 +1,30 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Important result."
+        }
+      ],
+      "data": {
+        "nablaBlockId": "res-main"
+      }
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Another block."
+        }
+      ],
+      "data": {
+        "nablaBlockId": "block-two"
+      }
+    }
+  ],
+  "diagnostics": []
+}

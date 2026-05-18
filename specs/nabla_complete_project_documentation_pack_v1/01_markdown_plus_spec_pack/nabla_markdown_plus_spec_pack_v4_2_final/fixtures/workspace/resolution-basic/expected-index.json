@@ -1,0 +1,53 @@
+{
+  "documents": [
+    {
+      "path": "main.md",
+      "links": [
+        {
+          "target": "analyse",
+          "heading": "limits",
+          "resolvedPath": "analyse.md"
+        },
+        {
+          "target": "analyse",
+          "blockId": "thm-main",
+          "resolvedPath": "analyse.md"
+        }
+      ],
+      "transclusions": [
+        {
+          "target": "analyse",
+          "blockId": "thm-main",
+          "resolvedPath": "analyse.md"
+        }
+      ]
+    },
+    {
+      "path": "analyse.md",
+      "headings": [
+        {
+          "text": "Limits",
+          "slug": "limits"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "thm-main",
+          "ownerType": "paragraph"
+        }
+      ]
+    }
+  ],
+  "backlinks": [
+    {
+      "sourcePath": "main.md",
+      "targetPath": "analyse.md",
+      "kind": "heading"
+    },
+    {
+      "sourcePath": "main.md",
+      "targetPath": "analyse.md",
+      "kind": "block"
+    }
+  ]
+}

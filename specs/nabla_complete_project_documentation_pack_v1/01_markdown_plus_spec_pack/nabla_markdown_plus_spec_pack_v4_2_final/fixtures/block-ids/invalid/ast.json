@@ -1,0 +1,21 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Text with ^bad id in the middle."
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "NABLA_BLOCK_ID_INVALID_POSITION",
+      "message": "Block id appears in an invalid position."
+    }
+  ]
+}

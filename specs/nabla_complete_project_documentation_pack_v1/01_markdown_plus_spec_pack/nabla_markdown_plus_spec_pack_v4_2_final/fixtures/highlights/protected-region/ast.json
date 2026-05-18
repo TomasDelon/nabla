@@ -1,0 +1,20 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "inlineCode",
+          "value": "==text=="
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "md",
+      "value": "=={#ffcc00}text=="
+    }
+  ],
+  "diagnostics": []
+}

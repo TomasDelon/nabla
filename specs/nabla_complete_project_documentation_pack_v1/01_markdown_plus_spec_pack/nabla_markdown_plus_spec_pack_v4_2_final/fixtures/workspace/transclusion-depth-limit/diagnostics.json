@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "warning",
+    "code": "NABLA_TRANSCLUSION_DEPTH_LIMIT",
+    "message": "Transclusion depth limit reached."
+  }
+]

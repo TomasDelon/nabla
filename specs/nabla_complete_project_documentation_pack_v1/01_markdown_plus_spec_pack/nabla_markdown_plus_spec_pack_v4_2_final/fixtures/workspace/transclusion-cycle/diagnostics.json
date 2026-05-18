@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "error",
+    "code": "NABLA_TRANSCLUSION_CYCLE",
+    "message": "Transclusion cycle detected."
+  }
+]

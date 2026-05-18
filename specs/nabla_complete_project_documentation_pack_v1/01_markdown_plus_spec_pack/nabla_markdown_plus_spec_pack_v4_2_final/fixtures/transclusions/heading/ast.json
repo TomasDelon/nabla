@@ -1,0 +1,13 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "transclusion",
+      "target": "Analyse",
+      "heading": "Limits",
+      "syntax": "canonical",
+      "raw": "![[Analyse#Limits]]"
+    }
+  ],
+  "diagnostics": []
+}

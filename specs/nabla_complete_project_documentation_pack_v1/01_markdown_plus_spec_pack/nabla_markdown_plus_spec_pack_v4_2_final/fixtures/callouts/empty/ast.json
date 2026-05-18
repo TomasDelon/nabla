@@ -1,0 +1,19 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "callout",
+      "calloutType": "note",
+      "title": [
+        {
+          "type": "text",
+          "value": "Empty"
+        }
+      ],
+      "children": [],
+      "syntax": "canonical",
+      "rawMarker": "[!note]"
+    }
+  ],
+  "diagnostics": []
+}

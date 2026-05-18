@@ -1,0 +1,21 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "=={#zzzzzz}bad=="
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "NABLA_HIGHLIGHT_INVALID_COLOR",
+      "message": "Invalid highlight color."
+    }
+  ]
+}

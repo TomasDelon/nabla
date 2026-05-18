@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "warning",
+    "code": "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
+    "message": "Inline transclusions are not supported in Nabla v0."
+  }
+]

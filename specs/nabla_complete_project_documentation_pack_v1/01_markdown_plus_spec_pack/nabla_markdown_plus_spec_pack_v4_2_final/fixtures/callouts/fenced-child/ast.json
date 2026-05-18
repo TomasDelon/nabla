@@ -1,0 +1,25 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "callout",
+      "calloutType": "note",
+      "title": [
+        {
+          "type": "text",
+          "value": "Code"
+        }
+      ],
+      "children": [
+        {
+          "type": "code",
+          "lang": "js",
+          "value": "console.log(1)"
+        }
+      ],
+      "syntax": "canonical",
+      "rawMarker": "[!note]"
+    }
+  ],
+  "diagnostics": []
+}

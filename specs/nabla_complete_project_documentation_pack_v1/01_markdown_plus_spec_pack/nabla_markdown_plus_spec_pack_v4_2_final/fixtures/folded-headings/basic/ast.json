@@ -1,0 +1,48 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "foldableHeading",
+      "depth": 1,
+      "foldState": "closed",
+      "title": [
+        {
+          "type": "text",
+          "value": "Closed section"
+        }
+      ],
+      "rawMarker": "#>"
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Hidden until next heading."
+        }
+      ]
+    },
+    {
+      "type": "foldableHeading",
+      "depth": 2,
+      "foldState": "open",
+      "title": [
+        {
+          "type": "text",
+          "value": "Open subsection"
+        }
+      ],
+      "rawMarker": "##v"
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Content."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

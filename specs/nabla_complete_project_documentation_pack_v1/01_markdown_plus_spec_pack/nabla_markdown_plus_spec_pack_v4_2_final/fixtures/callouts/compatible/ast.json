@@ -1,0 +1,29 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "callout",
+      "calloutType": "note",
+      "title": [
+        {
+          "type": "text",
+          "value": "Main idea"
+        }
+      ],
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "This is the child."
+            }
+          ]
+        }
+      ],
+      "syntax": "compatible",
+      "rawMarker": "> [!note]"
+    }
+  ],
+  "diagnostics": []
+}

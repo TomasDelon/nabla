@@ -1,0 +1,20 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "inlineCode",
+          "value": "word^[tip]"
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "md",
+      "value": "word^[tip]"
+    }
+  ],
+  "diagnostics": []
+}

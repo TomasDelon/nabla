@@ -1,0 +1,27 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "See "
+        },
+        {
+          "type": "wikiLink",
+          "target": "Analyse",
+          "blockId": "thm-main",
+          "alias": "main theorem",
+          "syntax": "compatible",
+          "raw": "[[Analyse#^thm-main|main theorem]]"
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

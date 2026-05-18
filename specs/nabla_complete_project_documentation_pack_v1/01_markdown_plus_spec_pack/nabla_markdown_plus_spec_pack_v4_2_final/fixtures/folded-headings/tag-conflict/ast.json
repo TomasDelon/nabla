@@ -1,0 +1,31 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "foldableHeading",
+      "depth": 1,
+      "foldState": "open",
+      "title": [
+        {
+          "type": "text",
+          "value": "Vocabulary"
+        }
+      ],
+      "rawMarker": "#v"
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "tag",
+          "value": "vocabulary",
+          "segments": [
+            "vocabulary"
+          ],
+          "raw": "#vocabulary"
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

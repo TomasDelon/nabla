@@ -1,0 +1,26 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "list",
+      "ordered": false,
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "[?] maybe"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

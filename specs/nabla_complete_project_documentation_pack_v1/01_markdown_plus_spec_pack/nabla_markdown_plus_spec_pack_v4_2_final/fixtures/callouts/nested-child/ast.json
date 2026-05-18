@@ -1,0 +1,42 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "callout",
+      "calloutType": "note",
+      "title": [
+        {
+          "type": "text",
+          "value": "Parent"
+        }
+      ],
+      "children": [
+        {
+          "type": "toggle",
+          "title": [
+            {
+              "type": "text",
+              "value": "Nested toggle"
+            }
+          ],
+          "foldState": "closed",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "Inside"
+                }
+              ]
+            }
+          ],
+          "rawMarker": "]>"
+        }
+      ],
+      "syntax": "canonical",
+      "rawMarker": "[!note]"
+    }
+  ],
+  "diagnostics": []
+}

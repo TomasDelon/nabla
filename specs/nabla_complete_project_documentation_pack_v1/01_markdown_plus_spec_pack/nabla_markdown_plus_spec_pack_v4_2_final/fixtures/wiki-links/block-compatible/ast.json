@@ -1,0 +1,26 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "See "
+        },
+        {
+          "type": "wikiLink",
+          "target": "Analyse",
+          "blockId": "thm-main",
+          "syntax": "compatible",
+          "raw": "[[Analyse#^thm-main]]"
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

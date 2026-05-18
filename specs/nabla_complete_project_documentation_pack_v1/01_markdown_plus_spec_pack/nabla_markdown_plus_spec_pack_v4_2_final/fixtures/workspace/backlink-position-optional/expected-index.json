@@ -1,0 +1,30 @@
+{
+  "documents": [
+    {
+      "path": "main.md",
+      "links": [
+        {
+          "target": "target",
+          "resolvedPath": "target.md"
+        }
+      ]
+    },
+    {
+      "path": "target.md",
+      "headings": [
+        {
+          "text": "Target",
+          "slug": "target"
+        }
+      ]
+    }
+  ],
+  "backlinks": [
+    {
+      "sourcePath": "main.md",
+      "targetPath": "target.md",
+      "kind": "note"
+    }
+  ],
+  "sourcePositionPolicy": "optional"
+}

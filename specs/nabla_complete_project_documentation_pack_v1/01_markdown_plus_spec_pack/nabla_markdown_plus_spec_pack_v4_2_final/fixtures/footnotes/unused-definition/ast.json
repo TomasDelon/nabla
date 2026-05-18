@@ -1,0 +1,37 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Text."
+        }
+      ]
+    },
+    {
+      "type": "footnoteDefinition",
+      "id": "unused",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Unused."
+            }
+          ]
+        }
+      ],
+      "raw": "[^unused]: Unused."
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "info",
+      "code": "NABLA_FOOTNOTE_UNUSED_DEFINITION",
+      "message": "Footnote definition is not referenced."
+    }
+  ]
+}

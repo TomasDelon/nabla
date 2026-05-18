@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "warning",
+    "code": "NABLA_TOOLTIP_EMPTY_TARGET",
+    "message": "Tooltip has no valid target."
+  }
+]

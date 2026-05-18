@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "warning",
+    "code": "NABLA_FRONTMATTER_INVALID",
+    "message": "Frontmatter could not be parsed."
+  }
+]

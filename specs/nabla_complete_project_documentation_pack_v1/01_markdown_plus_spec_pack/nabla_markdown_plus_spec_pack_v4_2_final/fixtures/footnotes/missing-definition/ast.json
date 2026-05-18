@@ -1,0 +1,30 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Text"
+        },
+        {
+          "type": "footnoteReference",
+          "id": "missing",
+          "raw": "[^missing]"
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "NABLA_FOOTNOTE_MISSING_DEFINITION",
+      "message": "Footnote reference has no matching definition."
+    }
+  ]
+}

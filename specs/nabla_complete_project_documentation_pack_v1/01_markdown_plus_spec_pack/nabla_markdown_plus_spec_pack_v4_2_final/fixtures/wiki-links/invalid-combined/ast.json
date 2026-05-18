@@ -1,0 +1,21 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "See [[Analyse#Limits^thm-main]]."
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "NABLA_WIKI_LINK_INVALID_TARGET",
+      "message": "Wiki link target combines heading and block syntax invalidly."
+    }
+  ]
+}

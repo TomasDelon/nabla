@@ -1,0 +1,54 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "callout",
+      "calloutType": "note",
+      "title": [
+        {
+          "type": "text",
+          "value": "Closed"
+        }
+      ],
+      "foldState": "closed",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Hidden"
+            }
+          ]
+        }
+      ],
+      "syntax": "canonical",
+      "rawMarker": "[!note]>"
+    },
+    {
+      "type": "callout",
+      "calloutType": "note",
+      "title": [
+        {
+          "type": "text",
+          "value": "Open"
+        }
+      ],
+      "foldState": "open",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Visible"
+            }
+          ]
+        }
+      ],
+      "syntax": "canonical",
+      "rawMarker": "[!note]v"
+    }
+  ],
+  "diagnostics": []
+}

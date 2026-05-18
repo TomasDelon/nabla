@@ -1,0 +1,4 @@
+- [ ] pending
+- [x] done
+- [-] cancelled
+- [!] important

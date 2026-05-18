@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "warning",
+    "code": "NABLA_BLOCK_ID_DUPLICATE",
+    "message": "Duplicate block id in document."
+  }
+]

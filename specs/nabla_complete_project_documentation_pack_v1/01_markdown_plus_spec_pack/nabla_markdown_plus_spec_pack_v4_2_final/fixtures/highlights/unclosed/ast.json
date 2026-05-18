@@ -1,0 +1,21 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "==unfinished"
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "NABLA_HIGHLIGHT_UNCLOSED",
+      "message": "Highlight is not closed."
+    }
+  ]
+}

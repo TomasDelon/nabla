@@ -1,0 +1,18 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "toggle",
+      "title": [
+        {
+          "type": "text",
+          "value": "Empty"
+        }
+      ],
+      "foldState": "closed",
+      "children": [],
+      "rawMarker": "]>"
+    }
+  ],
+  "diagnostics": []
+}

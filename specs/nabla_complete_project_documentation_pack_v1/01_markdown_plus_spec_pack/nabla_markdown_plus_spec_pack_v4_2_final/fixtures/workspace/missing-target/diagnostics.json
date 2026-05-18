@@ -1,0 +1,12 @@
+[
+  {
+    "severity": "warning",
+    "code": "NABLA_LINK_MISSING_TARGET",
+    "message": "Wiki link target does not exist."
+  },
+  {
+    "severity": "warning",
+    "code": "NABLA_TRANSCLUSION_MISSING_TARGET",
+    "message": "Transclusion target does not exist."
+  }
+]

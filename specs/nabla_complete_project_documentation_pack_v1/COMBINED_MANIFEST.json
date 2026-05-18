@@ -1,0 +1,30 @@
+{
+  "name": "nabla_complete_project_documentation_pack",
+  "version": "v1",
+  "generated": "2026-05-18",
+  "source_zips": {
+    "markdown_plus_spec_pack": "nabla_markdown_plus_spec_pack_v4_2_final.zip",
+    "implementation_control_pack": "nabla_implementation_control_pack_v4_1_2_opencode.zip"
+  },
+  "folders": {
+    "markdown_plus_spec_pack": "01_markdown_plus_spec_pack",
+    "implementation_control_pack_opencode": "02_implementation_control_pack_opencode"
+  },
+  "counts": {
+    "markdown_plus_spec_pack": {
+      "total_files": 308,
+      "markdown_files": 172,
+      "json_files": 136
+    },
+    "implementation_control_pack_opencode": {
+      "total_files": 41,
+      "markdown_files": 40,
+      "json_files": 1
+    },
+    "combined": {
+      "total_files": 353,
+      "markdown_files": 214,
+      "json_files": 138
+    }
+  }
+}

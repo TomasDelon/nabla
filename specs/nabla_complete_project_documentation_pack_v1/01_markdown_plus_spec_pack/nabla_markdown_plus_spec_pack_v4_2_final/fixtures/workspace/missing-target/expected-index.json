@@ -1,0 +1,13 @@
+{
+  "documents": [
+    {
+      "path": "main.md",
+      "missingLinks": [
+        "missing"
+      ],
+      "missingTransclusions": [
+        "missing"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "heading",
+      "depth": 1,
+      "data": {
+        "nablaBlockId": "res-heading"
+      },
+      "children": [
+        {
+          "type": "text",
+          "value": "Result"
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

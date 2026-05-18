@@ -1,0 +1,30 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "emojiShortcode",
+          "name": "check",
+          "raw": ":check:"
+        },
+        {
+          "type": "text",
+          "value": ", :not_known: "
+        },
+        {
+          "type": "inlineCode",
+          "value": ":warning:"
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "info",
+      "code": "NABLA_EMOJI_UNKNOWN",
+      "message": "Unknown emoji shortcode: not_known."
+    }
+  ]
+}

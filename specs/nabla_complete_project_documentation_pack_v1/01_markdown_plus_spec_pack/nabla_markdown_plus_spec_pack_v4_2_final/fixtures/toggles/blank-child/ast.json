@@ -1,0 +1,37 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "toggle",
+      "title": [
+        {
+          "type": "text",
+          "value": "Notes"
+        }
+      ],
+      "foldState": "open",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "First."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Second."
+            }
+          ]
+        }
+      ],
+      "rawMarker": "]v"
+    }
+  ],
+  "diagnostics": []
+}

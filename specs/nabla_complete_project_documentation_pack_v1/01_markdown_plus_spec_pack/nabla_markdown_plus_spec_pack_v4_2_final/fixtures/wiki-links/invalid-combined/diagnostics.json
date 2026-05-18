@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "warning",
+    "code": "NABLA_WIKI_LINK_INVALID_TARGET",
+    "message": "Wiki link target combines heading and block syntax invalidly."
+  }
+]

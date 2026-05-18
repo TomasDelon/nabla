@@ -1,0 +1,80 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "list",
+      "ordered": false,
+      "children": [
+        {
+          "type": "listItem",
+          "data": {
+            "nablaTaskState": "unchecked"
+          },
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "data": {
+            "nablaTaskState": "checked"
+          },
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "done"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "data": {
+            "nablaTaskState": "cancelled"
+          },
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "cancelled"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "data": {
+            "nablaTaskState": "important"
+          },
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "important"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

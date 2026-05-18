@@ -1,0 +1,29 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Before"
+        }
+      ]
+    },
+    {
+      "type": "privateComment",
+      "value": "first line\nsecond line",
+      "raw": "%% first line\nsecond line %%"
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "After"
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

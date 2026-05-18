@@ -1,0 +1,27 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "See "
+        },
+        {
+          "type": "wikiLink",
+          "target": "Analyse",
+          "heading": "Limits",
+          "alias": "limits chapter",
+          "syntax": "canonical",
+          "raw": "[[Analyse#Limits|limits chapter]]"
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "warning",
+    "code": "NABLA_BLOCK_ID_INVALID",
+    "message": "Block id does not match the required grammar."
+  }
+]

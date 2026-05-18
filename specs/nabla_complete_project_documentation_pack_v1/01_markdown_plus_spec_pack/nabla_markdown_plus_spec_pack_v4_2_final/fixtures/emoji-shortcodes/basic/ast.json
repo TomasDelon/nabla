@@ -1,0 +1,35 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "emojiShortcode",
+          "name": "check",
+          "raw": ":check:"
+        },
+        {
+          "type": "text",
+          "value": " "
+        },
+        {
+          "type": "emojiShortcode",
+          "name": "warning",
+          "raw": ":warning:"
+        },
+        {
+          "type": "text",
+          "value": " :unknown_custom:"
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "info",
+      "code": "NABLA_EMOJI_UNKNOWN",
+      "message": "Unknown emoji shortcode: unknown_custom."
+    }
+  ]
+}

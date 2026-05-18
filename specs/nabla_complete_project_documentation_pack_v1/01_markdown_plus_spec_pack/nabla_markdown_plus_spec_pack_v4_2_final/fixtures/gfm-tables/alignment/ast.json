@@ -1,0 +1,80 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "table",
+      "align": [
+        "left",
+        "center",
+        "right"
+      ],
+      "children": [
+        {
+          "type": "tableRow",
+          "children": [
+            {
+              "type": "tableCell",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "A"
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "B"
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "C"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "children": [
+            {
+              "type": "tableCell",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "left"
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "center"
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "right"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

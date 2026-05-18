@@ -1,0 +1,66 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "callout",
+      "calloutType": "note",
+      "title": [
+        {
+          "type": "text",
+          "value": "Note"
+        }
+      ],
+      "data": {
+        "nablaBlockId": "callout-id"
+      },
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Child"
+            }
+          ]
+        }
+      ],
+      "syntax": "canonical",
+      "rawMarker": "[!note]"
+    },
+    {
+      "type": "toggle",
+      "title": [
+        {
+          "type": "text",
+          "value": "Toggle"
+        }
+      ],
+      "foldState": "closed",
+      "data": {
+        "nablaBlockId": "toggle-id"
+      },
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Child"
+            }
+          ]
+        }
+      ],
+      "rawMarker": "]>"
+    },
+    {
+      "type": "transclusion",
+      "target": "Note",
+      "syntax": "canonical",
+      "raw": "![[Note]]",
+      "data": {
+        "nablaBlockId": "embed-id"
+      }
+    }
+  ],
+  "diagnostics": []
+}

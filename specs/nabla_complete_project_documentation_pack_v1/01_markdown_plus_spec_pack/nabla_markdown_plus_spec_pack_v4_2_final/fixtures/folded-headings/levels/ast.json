@@ -1,0 +1,78 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "foldableHeading",
+      "depth": 1,
+      "foldState": "closed",
+      "title": [
+        {
+          "type": "text",
+          "value": "H1"
+        }
+      ],
+      "rawMarker": "#>"
+    },
+    {
+      "type": "foldableHeading",
+      "depth": 2,
+      "foldState": "open",
+      "title": [
+        {
+          "type": "text",
+          "value": "H2"
+        }
+      ],
+      "rawMarker": "##v"
+    },
+    {
+      "type": "foldableHeading",
+      "depth": 3,
+      "foldState": "closed",
+      "title": [
+        {
+          "type": "text",
+          "value": "H3"
+        }
+      ],
+      "rawMarker": "###>"
+    },
+    {
+      "type": "foldableHeading",
+      "depth": 4,
+      "foldState": "open",
+      "title": [
+        {
+          "type": "text",
+          "value": "H4"
+        }
+      ],
+      "rawMarker": "####v"
+    },
+    {
+      "type": "foldableHeading",
+      "depth": 5,
+      "foldState": "closed",
+      "title": [
+        {
+          "type": "text",
+          "value": "H5"
+        }
+      ],
+      "rawMarker": "#####>"
+    },
+    {
+      "type": "foldableHeading",
+      "depth": 6,
+      "foldState": "open",
+      "title": [
+        {
+          "type": "text",
+          "value": "H6"
+        }
+      ],
+      "rawMarker": "######v"
+    }
+  ],
+  "diagnostics": []
+}

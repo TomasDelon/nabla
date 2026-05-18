@@ -1,0 +1,36 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "See "
+        },
+        {
+          "type": "wikiLink",
+          "target": "Analyse IV",
+          "syntax": "canonical",
+          "raw": "[[Analyse IV]]"
+        },
+        {
+          "type": "text",
+          "value": " and "
+        },
+        {
+          "type": "wikiLink",
+          "target": "Algebra",
+          "alias": "ALG",
+          "syntax": "canonical",
+          "raw": "[[Algebra|ALG]]"
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

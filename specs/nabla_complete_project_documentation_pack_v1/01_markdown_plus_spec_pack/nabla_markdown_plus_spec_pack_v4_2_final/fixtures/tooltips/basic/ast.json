@@ -1,0 +1,45 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Function "
+        },
+        {
+          "type": "tooltip",
+          "target": [
+            {
+              "type": "text",
+              "value": "différentiable"
+            }
+          ],
+          "tooltip": "linear approximation",
+          "raw": "différentiable^[linear approximation]"
+        },
+        {
+          "type": "text",
+          "value": " and "
+        },
+        {
+          "type": "tooltip",
+          "target": [
+            {
+              "type": "text",
+              "value": "local minimum"
+            }
+          ],
+          "tooltip": "nearby larger values",
+          "raw": "[local minimum]^[nearby larger values]"
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

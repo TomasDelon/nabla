@@ -1,0 +1,20 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "inlineCode",
+          "value": "%% not private %%"
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "md",
+      "value": "%% not private either %%"
+    }
+  ],
+  "diagnostics": []
+}

@@ -1,0 +1,40 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "highlight",
+          "children": [
+            {
+              "type": "text",
+              "value": "important"
+            }
+          ],
+          "raw": "==important=="
+        },
+        {
+          "type": "text",
+          "value": " and "
+        },
+        {
+          "type": "colorHighlight",
+          "color": "#ffcc00",
+          "children": [
+            {
+              "type": "text",
+              "value": "colored"
+            }
+          ],
+          "raw": "=={#ffcc00}colored=="
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

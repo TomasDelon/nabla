@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "warning",
+    "code": "NABLA_TOOLTIP_UNCLOSED",
+    "message": "Tooltip marker is not closed."
+  }
+]

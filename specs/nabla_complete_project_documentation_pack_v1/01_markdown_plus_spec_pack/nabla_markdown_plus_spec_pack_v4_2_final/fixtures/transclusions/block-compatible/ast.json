@@ -1,0 +1,13 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "transclusion",
+      "target": "Analyse",
+      "blockId": "thm-main",
+      "syntax": "compatible",
+      "raw": "![[Analyse#^thm-main]]"
+    }
+  ],
+  "diagnostics": []
+}

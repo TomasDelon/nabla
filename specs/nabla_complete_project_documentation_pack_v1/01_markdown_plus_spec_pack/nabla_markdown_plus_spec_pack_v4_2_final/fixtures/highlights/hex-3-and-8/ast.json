@@ -1,0 +1,41 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "colorHighlight",
+          "color": "#fc0",
+          "children": [
+            {
+              "type": "text",
+              "value": "short"
+            }
+          ],
+          "raw": "=={#fc0}short=="
+        },
+        {
+          "type": "text",
+          "value": " and "
+        },
+        {
+          "type": "colorHighlight",
+          "color": "#ffcc00aa",
+          "children": [
+            {
+              "type": "text",
+              "value": "alpha"
+            }
+          ],
+          "raw": "=={#ffcc00aa}alpha=="
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

@@ -1,0 +1,21 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Text ![[Analyse]] stays inline text."
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
+      "message": "Inline transclusions are not supported in Nabla v0."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "See "
+        },
+        {
+          "type": "wikiLink",
+          "target": "A|B#C^D",
+          "alias": "shown",
+          "syntax": "canonical",
+          "raw": "[[A\\|B\\#C\\^D|shown]]"
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

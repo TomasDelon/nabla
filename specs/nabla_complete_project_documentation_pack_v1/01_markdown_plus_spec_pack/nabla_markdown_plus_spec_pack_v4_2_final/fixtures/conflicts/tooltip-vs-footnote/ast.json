@@ -1,0 +1,51 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "tooltip",
+          "target": [
+            {
+              "type": "text",
+              "value": "word"
+            }
+          ],
+          "tooltip": "tip",
+          "raw": "word^[tip]"
+        },
+        {
+          "type": "text",
+          "value": " and word"
+        },
+        {
+          "type": "footnoteReference",
+          "id": "note",
+          "raw": "[^note]"
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    },
+    {
+      "type": "footnoteDefinition",
+      "id": "note",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "footnote."
+            }
+          ]
+        }
+      ],
+      "raw": "[^note]: footnote."
+    }
+  ],
+  "diagnostics": []
+}

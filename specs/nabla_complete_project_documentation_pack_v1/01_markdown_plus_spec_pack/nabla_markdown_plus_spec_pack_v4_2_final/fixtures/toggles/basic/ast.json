@@ -1,0 +1,50 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "toggle",
+      "title": [
+        {
+          "type": "text",
+          "value": "Solution"
+        }
+      ],
+      "foldState": "closed",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Hidden content."
+            }
+          ]
+        }
+      ],
+      "rawMarker": "]>"
+    },
+    {
+      "type": "toggle",
+      "title": [
+        {
+          "type": "text",
+          "value": "Details"
+        }
+      ],
+      "foldState": "open",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Visible content."
+            }
+          ]
+        }
+      ],
+      "rawMarker": "]v"
+    }
+  ],
+  "diagnostics": []
+}

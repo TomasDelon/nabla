@@ -1,0 +1,26 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "frontmatter",
+      "raw": "title: [broken",
+      "data": null
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Text"
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "NABLA_FRONTMATTER_INVALID",
+      "message": "Frontmatter could not be parsed."
+    }
+  ]
+}

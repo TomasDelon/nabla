@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "info",
+    "code": "NABLA_FOOTNOTE_UNUSED_DEFINITION",
+    "message": "Footnote definition is not referenced."
+  }
+]

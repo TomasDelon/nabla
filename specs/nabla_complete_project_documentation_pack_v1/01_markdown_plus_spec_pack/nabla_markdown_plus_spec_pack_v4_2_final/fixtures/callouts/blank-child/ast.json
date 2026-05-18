@@ -1,0 +1,38 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "callout",
+      "calloutType": "note",
+      "title": [
+        {
+          "type": "text",
+          "value": "Text"
+        }
+      ],
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "First."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Second."
+            }
+          ]
+        }
+      ],
+      "syntax": "canonical",
+      "rawMarker": "[!note]"
+    }
+  ],
+  "diagnostics": []
+}

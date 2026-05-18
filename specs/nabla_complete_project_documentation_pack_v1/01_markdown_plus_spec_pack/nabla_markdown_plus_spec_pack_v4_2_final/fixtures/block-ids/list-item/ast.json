@@ -1,0 +1,29 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "list",
+      "ordered": false,
+      "children": [
+        {
+          "type": "listItem",
+          "data": {
+            "nablaBlockId": "item-id"
+          },
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "value": "Important item"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

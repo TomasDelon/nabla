@@ -1,0 +1,67 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "tag",
+          "value": "math/analyse",
+          "segments": [
+            "math",
+            "analyse"
+          ],
+          "raw": "#math/analyse"
+        },
+        {
+          "type": "text",
+          "value": " "
+        },
+        {
+          "type": "tag",
+          "value": "todo",
+          "segments": [
+            "todo"
+          ],
+          "raw": "#todo"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "depth": 1,
+      "children": [
+        {
+          "type": "text",
+          "value": "Title"
+        }
+      ]
+    },
+    {
+      "type": "foldableHeading",
+      "depth": 1,
+      "foldState": "open",
+      "title": [
+        {
+          "type": "text",
+          "value": "Vocabulary"
+        }
+      ],
+      "rawMarker": "#v"
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "tag",
+          "value": "vocabulary",
+          "segments": [
+            "vocabulary"
+          ],
+          "raw": "#vocabulary"
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

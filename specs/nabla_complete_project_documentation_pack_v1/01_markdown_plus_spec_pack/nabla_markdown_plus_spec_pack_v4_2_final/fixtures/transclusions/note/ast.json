@@ -1,0 +1,12 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "transclusion",
+      "target": "Analyse",
+      "syntax": "canonical",
+      "raw": "![[Analyse]]"
+    }
+  ],
+  "diagnostics": []
+}

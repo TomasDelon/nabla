@@ -1,0 +1,24 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "toggle",
+      "title": [
+        {
+          "type": "text",
+          "value": "Code"
+        }
+      ],
+      "foldState": "open",
+      "children": [
+        {
+          "type": "code",
+          "lang": "js",
+          "value": "console.log(1)"
+        }
+      ],
+      "rawMarker": "]v"
+    }
+  ],
+  "diagnostics": []
+}

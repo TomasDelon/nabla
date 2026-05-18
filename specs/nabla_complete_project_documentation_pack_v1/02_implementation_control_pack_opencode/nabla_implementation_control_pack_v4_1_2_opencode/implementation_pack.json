@@ -1,0 +1,88 @@
+{
+  "name": "nabla_implementation_control_pack",
+  "version": "v4.1.2-opencode",
+  "generated": "2026-05-18",
+  "requires": [
+    "nabla_markdown_plus_spec_pack_v4_2_final.zip"
+  ],
+  "required_spec_version": "v4.2 final",
+  "version_control": {
+    "git_required": true,
+    "branch_per_phase": true,
+    "commit_after_each_coherent_step": true,
+    "clean_working_tree_before_handoff": true
+  },
+  "default_stack": {
+    "language": "TypeScript",
+    "package_manager": "pnpm",
+    "tests": "Vitest",
+    "markdown": [
+      "unified",
+      "remark-parse",
+      "remark-gfm"
+    ],
+    "build": "tsup",
+    "editor_later": "Milkdown / Crepe"
+  },
+  "phase_order": [
+    "@nabla/markup",
+    "@nabla/workspace",
+    "@nabla/editor",
+    "@nabla/components",
+    "@nabla/app"
+  ],
+  "canonical_fixture_path": "specs/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/",
+  "required_spec_manifest_sha256": "b6a6a59f70b30ecf68009e0ded88533b65f31a81facffa9db24879a8797ccdd1",
+  "quality_gate_commands": [
+    "pnpm test",
+    "pnpm test:markup",
+    "pnpm test:workspace",
+    "pnpm typecheck",
+    "pnpm lint",
+    "pnpm build",
+    "pnpm validate:fixtures",
+    "pnpm validate:spec-version",
+    "pnpm check:boundaries"
+  ],
+  "opencode_operational_layer": true,
+  "required_opencode_files": [
+    "implementation/17_OPENCODE_MODEL_ROUTING.md",
+    "implementation/18_TASK_PACKET_PROTOCOL.md",
+    "implementation/19_TASK_PACKET_TEMPLATE.md",
+    "implementation/20_PHASE_1_TASK_BACKLOG.md",
+    "implementation/21_REVIEW_PROTOCOL.md",
+    "implementation/22_FINAL_REVIEW_PROTOCOL.md",
+    "implementation/23_CONTEXT_ENGINEERING_AND_HANDOFF.md",
+    "implementation/24_DECISION_RECORDS.md",
+    "implementation/25_SPEC_SYNC_AND_HASH_POLICY.md",
+    "implementation/26_BOUNDARY_CHECK_POLICY.md",
+    "implementation/27_PHASE_ACCEPTANCE_CRITERIA.md",
+    "implementation/28_OPENCODE_CONFIG_GUIDE.md",
+    "implementation/29_PARALLELISM_POLICY.md",
+    "implementation/30_PHASE_2_TASK_BACKLOG.md",
+    "implementation/31_PHASE_3_TASK_BACKLOG.md",
+    "implementation/32_PHASE_4_TASK_BACKLOG.md",
+    "implementation/33_PHASE_5_TASK_BACKLOG.md"
+  ],
+  "implementation_pack_folder": "nabla_implementation_control_pack_v4_1_2_opencode",
+  "implementation_pack_zip": "nabla_implementation_control_pack_v4_1_2_opencode.zip",
+  "opencode_config_key": "agent",
+  "file_counts": {
+    "total_files": 41,
+    "markdown_files": 40,
+    "json_files": 1
+  },
+  "validation": {
+    "stale_v4_1_reference_hits": [],
+    "stale_v4_1_1_reference_hits": [],
+    "stale_v3_reference_hits": [],
+    "agents_plural_hits": [],
+    "duplicate_spec_version_validation_hits": []
+  },
+  "self_integrity_policy": {
+    "embedded_zip_sha256": "not_embedded",
+    "reason": "A ZIP cannot reliably contain the SHA-256 of itself without changing the artifact. Validate the final ZIP with the external .sha256 sidecar file.",
+    "sidecar_file": "nabla_implementation_control_pack_v4_1_2_opencode.zip.sha256",
+    "sidecar_location": "external_next_to_zip_not_inside_zip"
+  }
+}

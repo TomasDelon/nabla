@@ -1,0 +1,26 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "frontmatter",
+      "raw": "title: Analyse\ntags: [math]",
+      "data": {
+        "title": "Analyse",
+        "tags": [
+          "math"
+        ]
+      }
+    },
+    {
+      "type": "heading",
+      "depth": 1,
+      "children": [
+        {
+          "type": "text",
+          "value": "Course"
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

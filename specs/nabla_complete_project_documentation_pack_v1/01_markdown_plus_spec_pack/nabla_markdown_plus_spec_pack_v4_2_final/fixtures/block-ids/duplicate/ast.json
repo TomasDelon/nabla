@@ -1,0 +1,36 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "First."
+        }
+      ],
+      "data": {
+        "nablaBlockId": "dup"
+      }
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Second."
+        }
+      ],
+      "data": {
+        "nablaBlockId": "dup"
+      }
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "NABLA_BLOCK_ID_DUPLICATE",
+      "message": "Duplicate block id in document."
+    }
+  ]
+}

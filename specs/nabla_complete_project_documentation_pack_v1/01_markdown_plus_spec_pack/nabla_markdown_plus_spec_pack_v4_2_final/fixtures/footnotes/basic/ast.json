@@ -1,0 +1,40 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "value": "Text"
+        },
+        {
+          "type": "footnoteReference",
+          "id": "a",
+          "raw": "[^a]"
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    },
+    {
+      "type": "footnoteDefinition",
+      "id": "a",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "Footnote content."
+            }
+          ]
+        }
+      ],
+      "raw": "[^a]: Footnote content."
+    }
+  ],
+  "diagnostics": []
+}
