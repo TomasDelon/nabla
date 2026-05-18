@@ -197,6 +197,30 @@ test("tag parser leaves syntax inside protected regions literal", async () => {
   });
 });
 
+test("tag parser parses tags outside inline code but protects tags inside backticks", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(parse("See `#tag` and #tag."), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          { type: "text", value: "See `#tag` and " },
+          {
+            type: "tag",
+            value: "tag",
+            segments: ["tag"],
+            raw: "#tag"
+          },
+          { type: "text", value: "." }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+});
+
 test("tag and wiki link interop work correctly", async () => {
   const { parse } = await loadParserModule();
 
