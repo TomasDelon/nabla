@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-008 parser skeleton`
+`P1-009 protected regions`
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Parser skeleton implemented with a public `parse` entry point and no feature-specific rules.
+Protected-region utilities implemented for Markdown code and HTML spans before Nabla parsing.
 
 ## Scope Guardrails
 
@@ -41,10 +41,12 @@ Parser skeleton implemented with a public `parse` entry point and no feature-spe
 - `packages/markup/src/fixtures.ts`
 - `packages/markup/src/parse-mode.ts`
 - `packages/markup/src/parser.ts`
+- `packages/markup/src/protected-regions.ts`
 - `packages/markup/src/serializer.ts`
 - `packages/markup/tests/diagnostics.test.mjs`
 - `packages/markup/tests/fixtures.test.mjs`
 - `packages/markup/tests/parser.test.mjs`
+- `packages/markup/tests/protected-regions.test.mjs`
 - `packages/markup/tests/serializer.test.mjs`
 - `packages/markup/tests/ast-surface.test.mjs`
 - `packages/markup/tests/bootstrap.test.mjs`
@@ -72,6 +74,8 @@ Parser skeleton implemented with a public `parse` entry point and no feature-spe
 - Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
 - Parser skeleton exposes a public `parse` entry point that accepts Markdown source and returns a `NablaDocument`
 - Parser skeleton intentionally does not implement Markdown or Nabla parsing rules yet
+- Protected-region utilities identify standalone spans for inline code, fenced code blocks, indented code blocks, raw HTML blocks, and inline HTML
+- Protected-region utilities do not implement Nabla feature parsing inside those spans
 - Serializer skeleton exposes a public `serialize` entry point that accepts `NablaDocument` and returns a string
 - Serializer skeleton intentionally does not implement Markdown serialization rules yet
 - Workspace fixtures are detected as metadata only, without workspace implementation
@@ -79,8 +83,8 @@ Parser skeleton implemented with a public `parse` entry point and no feature-spe
 
 ## Verification Summary
 
-- `pnpm test` passed (14 tests)
-- `pnpm test:markup` passed (14 tests)
+- `pnpm test` passed (18 tests)
+- `pnpm test:markup` passed (18 tests)
 - `pnpm typecheck` passed
 - `pnpm build` passed
 - `pnpm validate:fixtures` passed
@@ -95,4 +99,4 @@ None.
 
 ## Next Recommended Task
 
-P1-009 protected regions
+P1-010 wiki-links

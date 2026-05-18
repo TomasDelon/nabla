@@ -36,6 +36,7 @@ export {
   DIAGNOSTIC_CODES
 } from "./diagnostics.js";
 export { parse } from "./parser.js";
+export { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
 export { serialize } from "./serializer.js";
 export {
   compareFixtureAst,
@@ -55,6 +56,10 @@ export type {
   DiagnosticCode
 } from "./diagnostics.js";
 export type { ParseOptions } from "./parser.js";
+export type {
+  ProtectedRegion,
+  ProtectedRegionKind
+} from "./protected-regions.js";
 export type { SerializeOptions } from "./serializer.js";
 export type {
   ExpectedDiagnostic,
