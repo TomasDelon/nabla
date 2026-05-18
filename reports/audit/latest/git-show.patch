@@ -1,675 +1,15 @@
-diff --git a/packages/markup/src/extensions/wiki-links.ts b/packages/markup/src/extensions/wiki-links.ts
-new file mode 100644
-index 0000000..d98820a
---- /dev/null
-+++ b/packages/markup/src/extensions/wiki-links.ts
-@@ -0,0 +1,156 @@
-+import type { Diagnostic, WikiLinkNode } from "../ast.js";
-+import { DIAGNOSTIC_CODES } from "../diagnostics.js";
-+
-+export type ParsedWikiLink = {
-+  node: WikiLinkNode;
-+};
-+
-+export type InvalidWikiLink = {
-+  text: string;
-+  diagnostic: Diagnostic;
-+};
-+
-+export type WikiLinkParseResult = ParsedWikiLink | InvalidWikiLink;
-+
-+function findFirstUnescaped(value: string, target: string) {
-+  let escaped = false;
-+
-+  for (let index = 0; index < value.length; index += 1) {
-+    const character = value[index];
-+    if (escaped) {
-+      escaped = false;
-+      continue;
-+    }
-+
-+    if (character === "\\") {
-+      escaped = true;
-+      continue;
-+    }
-+
-+    if (character === target) {
-+      return index;
-+    }
-+  }
-+
-+  return -1;
-+}
-+
-+function findLastUnescaped(value: string, target: string) {
-+  let escaped = false;
-+  let lastIndex = -1;
-+
-+  for (let index = 0; index < value.length; index += 1) {
-+    const character = value[index];
-+    if (escaped) {
-+      escaped = false;
-+      continue;
-+    }
-+
-+    if (character === "\\") {
-+      escaped = true;
-+      continue;
-+    }
-+
-+    if (character === target) {
-+      lastIndex = index;
-+    }
-+  }
-+
-+  return lastIndex;
-+}
-+
-+function unescapeWikiText(value: string) {
-+  return value.replace(/\\([|#^\]])/g, "$1");
-+}
-+
-+function escapeWikiText(value: string) {
-+  return value.replace(/[|#^\]]/g, "\\$&");
-+}
-+
-+function invalidCombinedDiagnostic(): Diagnostic {
-+  return {
-+    severity: "warning",
-+    code: DIAGNOSTIC_CODES.WIKI_LINK_INVALID_TARGET,
-+    message: "Wiki link target combines heading and block syntax invalidly."
-+  };
-+}
-+
-+export function parseWikiLink(raw: string): WikiLinkParseResult {
-+  const content = raw.slice(2, -2);
-+  const aliasIndex = findFirstUnescaped(content, "|");
-+  const targetSide = aliasIndex === -1 ? content : content.slice(0, aliasIndex);
-+  const aliasSide = aliasIndex === -1 ? undefined : content.slice(aliasIndex + 1);
-+
-+  let syntax: WikiLinkNode["syntax"] = "canonical";
-+  let targetText = targetSide;
-+  let blockId: string | undefined;
-+  let heading: string | undefined;
-+
-+  if (targetText.length === 0) {
-+    return {
-+      node: {
-+        type: "wikiLink",
-+        target: "",
-+        syntax,
-+        raw
-+      }
-+    };
-+  }
-+
-+  const compatibleBlockIndex = targetText.endsWith("#^") ? -1 : targetText.lastIndexOf("#^");
-+  if (compatibleBlockIndex !== -1 && compatibleBlockIndex + 2 < targetText.length) {
-+    syntax = "compatible";
-+    blockId = targetText.slice(compatibleBlockIndex + 2);
-+    targetText = targetText.slice(0, compatibleBlockIndex);
-+  } else {
-+    const blockIndex = findLastUnescaped(targetText, "^");
-+    if (blockIndex !== -1 && blockIndex + 1 < targetText.length) {
-+      blockId = targetText.slice(blockIndex + 1);
-+      targetText = targetText.slice(0, blockIndex);
-+    }
-+  }
-+
-+  if (blockId !== undefined) {
-+    const headingMarkerIndex = findFirstUnescaped(targetText, "#");
-+    if (headingMarkerIndex !== -1) {
-+      return {
-+        text: raw,
-+        diagnostic: invalidCombinedDiagnostic()
-+      };
-+    }
-+  } else {
-+    const headingIndex = findFirstUnescaped(targetText, "#");
-+    if (headingIndex !== -1) {
-+      heading = targetText.slice(headingIndex + 1);
-+      targetText = targetText.slice(0, headingIndex);
-+    }
-+  }
-+
-+  const node: WikiLinkNode = {
-+    type: "wikiLink",
-+    target: unescapeWikiText(targetText),
-+    ...(heading !== undefined ? { heading: unescapeWikiText(heading) } : {}),
-+    ...(blockId !== undefined ? { blockId: unescapeWikiText(blockId) } : {}),
-+    ...(aliasSide !== undefined ? { alias: unescapeWikiText(aliasSide) } : {}),
-+    syntax,
-+    raw
-+  };
-+
-+  return { node };
-+}
-+
-+export function serializeWikiLink(node: WikiLinkNode) {
-+  let target = escapeWikiText(node.target);
-+
-+  if (node.blockId !== undefined) {
-+    target += `^${escapeWikiText(node.blockId)}`;
-+  } else if (node.heading !== undefined) {
-+    target += `#${escapeWikiText(node.heading)}`;
-+  }
-+
-+  if (node.alias !== undefined) {
-+    target += `|${escapeWikiText(node.alias)}`;
-+  }
-+
-+  return `[[${target}]]`;
-+}
-diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index 1a484fa..e77bcd1 100644
---- a/packages/markup/src/parser.ts
-+++ b/packages/markup/src/parser.ts
-@@ -1,5 +1,7 @@
--import type { NablaDocument } from "./ast.js";
-+import type { MarkdownNode, NablaDocument } from "./ast.js";
- import type { ParseMode } from "./parse-mode.js";
-+import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
-+import { parseWikiLink } from "./extensions/wiki-links.js";
- 
- export type ParseOptions = {
-   mode?: ParseMode;
-@@ -7,14 +9,116 @@ export type ParseOptions = {
- 
- const DOCUMENT_NODE_TYPE: NablaDocument["type"] = `doc${"ument"}`;
- 
-+function createTextNode(value: string): MarkdownNode {
-+  return {
-+    type: "text",
-+    value
-+  };
-+}
-+
-+function createParagraph(children: MarkdownNode[]) {
-+  return {
-+    type: "paragraph",
-+    children
-+  } as MarkdownNode;
-+}
-+
-+function findClosingDelimiter(source: string, start: number) {
-+  for (let index = start + 2; index < source.length - 1; index += 1) {
-+    if (source[index] === "]" && source[index + 1] === "]") {
-+      return index;
-+    }
-+  }
-+
-+  return -1;
-+}
-+
-+function normalizeSource(markdown: string) {
-+  const normalized = markdown.replace(/\r\n/g, "\n");
-+  return normalized.endsWith("\n") ? normalized.slice(0, -1) : normalized;
-+}
-+
-+function findInlineHtmlContainerRanges(source: string) {
-+  const regions: Array<{ start: number; end: number }> = [];
-+  const tagPattern = /<([A-Za-z][A-Za-z0-9-]*)(?:\s[^<>\n]*)?>/g;
-+
-+  for (const match of source.matchAll(tagPattern)) {
-+    const tagName = match[1];
-+    const start = match.index ?? 0;
-+    const opening = match[0];
-+    const closing = `</${tagName}>`;
-+    const closingStart = source.indexOf(closing, start + opening.length);
-+    if (closingStart !== -1) {
-+      regions.push({ start, end: closingStart + closing.length });
-+    }
-+  }
-+
-+  return regions;
-+}
-+
-+function parseParagraphChildren(source: string) {
-+  const protectedRegions = findProtectedRegions(source);
-+  const inlineHtmlContainers = findInlineHtmlContainerRanges(source);
-+  const children: MarkdownNode[] = [];
-+  const diagnostics: NablaDocument["diagnostics"] = [];
-+  let bufferStart = 0;
-+  let index = 0;
-+
-+  while (index < source.length - 1) {
-+    if (source[index] !== "[" || source[index + 1] !== "[") {
-+      index += 1;
-+      continue;
-+    }
-+
-+        if (index > 0 && source[index - 1] === "!") {
-+          index += 2;
-+          continue;
-+        }
-+
-+        if (
-+          isOffsetProtected(protectedRegions, index) ||
-+          inlineHtmlContainers.some((region) => index >= region.start && index < region.end)
-+        ) {
-+          index += 2;
-+          continue;
-+        }
-+
-+    const closingIndex = findClosingDelimiter(source, index);
-+    if (closingIndex === -1 || isOffsetProtected(protectedRegions, closingIndex)) {
-+      index += 2;
-+      continue;
-+    }
-+
-+    const raw = source.slice(index, closingIndex + 2);
-+    const parsed = parseWikiLink(raw);
-+    if ("node" in parsed) {
-+      if (bufferStart < index) {
-+        children.push(createTextNode(source.slice(bufferStart, index)));
-+      }
-+      children.push(parsed.node as MarkdownNode);
-+      bufferStart = closingIndex + 2;
-+    } else {
-+      diagnostics.push(parsed.diagnostic);
-+    }
-+
-+    index = closingIndex + 2;
-+  }
-+
-+  if (bufferStart < source.length) {
-+    children.push(createTextNode(source.slice(bufferStart)));
-+  }
-+
-+  return { children, diagnostics };
-+}
-+
- export function parse(markdown: string, options: ParseOptions = {}): NablaDocument {
--  void markdown;
-   void options;
- 
--  // P1-008 only establishes the public parser entry point.
-+  const source = normalizeSource(markdown);
-+  const { children, diagnostics } = parseParagraphChildren(source);
-   return {
-     type: DOCUMENT_NODE_TYPE,
--    children: [],
--    diagnostics: []
-+    children: source === "" ? [] : [createParagraph(children)],
-+    diagnostics
-   };
- }
-diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
-index 808680f..a38b010 100644
---- a/packages/markup/src/serializer.ts
-+++ b/packages/markup/src/serializer.ts
-@@ -1,4 +1,5 @@
--import type { NablaDocument } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, WikiLinkNode } from "./ast.js";
-+import { serializeWikiLink } from "./extensions/wiki-links.js";
- 
- export type SerializeOptions = {
-   lineEnding?: "lf" | "crlf";
-@@ -11,9 +12,28 @@ function normalizeLineEnding(value: string, lineEnding: SerializeOptions["lineEn
-   return value;
- }
- 
--export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
--  void source;
-+function serializeInlineNode(node: MarkdownNode) {
-+  if (node.type === "text") {
-+    return typeof node.value === "string" ? node.value : "";
-+  }
-+
-+  if (node.type === "wikiLink") {
-+    return serializeWikiLink(node as WikiLinkNode);
-+  }
-+
-+  return "";
-+}
- 
--  // P1-007 only establishes the public serializer entry point.
--  return normalizeLineEnding("", options.lineEnding);
-+function serializeBlockNode(node: MarkdownNode) {
-+  if (node.type === "paragraph" && Array.isArray(node.children)) {
-+    return node.children.map((child) => serializeInlineNode(child as MarkdownNode)).join("");
-+  }
-+
-+  return "";
-+}
-+
-+export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
-+  const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n\n");
-+  const normalizedOutput = output === "" ? "" : `${output}\n`;
-+  return normalizeLineEnding(normalizedOutput, options.lineEnding);
- }
-diff --git a/packages/markup/tests/helpers/load-ts-module.mjs b/packages/markup/tests/helpers/load-ts-module.mjs
-new file mode 100644
-index 0000000..9ad6ec8
---- /dev/null
-+++ b/packages/markup/tests/helpers/load-ts-module.mjs
-@@ -0,0 +1,56 @@
-+import { access, readFile } from "node:fs/promises";
-+import ts from "typescript";
-+
-+async function resolveLocalModuleUrl(specifier, parentUrl) {
-+  const directUrl = new URL(specifier, parentUrl);
-+
-+  try {
-+    await access(directUrl);
-+    return directUrl;
-+  } catch {
-+    if (directUrl.pathname.endsWith(".js")) {
-+      const tsUrl = new URL(directUrl.href.replace(/\.js$/, ".ts"));
-+      await access(tsUrl);
-+      return tsUrl;
-+    }
-+
-+    throw new Error(`Unable to resolve local module ${specifier} from ${parentUrl.href}`);
-+  }
-+}
-+
-+export async function loadTsModule(moduleUrl, cache = new Map()) {
-+  const cacheKey = moduleUrl.href;
-+  if (cache.has(cacheKey)) {
-+    return import(cache.get(cacheKey));
-+  }
-+
-+  const source = await readFile(moduleUrl, "utf8");
-+  const transpiled = ts.transpileModule(source, {
-+    compilerOptions: {
-+      module: ts.ModuleKind.ES2022,
-+      target: ts.ScriptTarget.ES2022
-+    }
-+  }).outputText;
-+
-+  let rewritten = transpiled;
-+  const localSpecifiers = new Set();
-+
-+  for (const match of transpiled.matchAll(/(?:from\s+|import\()"(\.{1,2}\/[^"\n]+)"/g)) {
-+    localSpecifiers.add(match[1]);
-+  }
-+  for (const match of transpiled.matchAll(/(?:from\s+|import\()'(\.{1,2}\/[^'\n]+)'/g)) {
-+    localSpecifiers.add(match[1]);
-+  }
-+
-+  for (const specifier of localSpecifiers) {
-+    const resolvedUrl = await resolveLocalModuleUrl(specifier, moduleUrl);
-+    const importedModule = await loadTsModule(resolvedUrl, cache);
-+    const resolvedDataUrl = cache.get(resolvedUrl.href);
-+    rewritten = rewritten.split(specifier).join(resolvedDataUrl);
-+    void importedModule;
-+  }
-+
-+  const dataUrl = `data:text/javascript;base64,${Buffer.from(rewritten, "utf8").toString("base64")}`;
-+  cache.set(cacheKey, dataUrl);
-+  return import(dataUrl);
-+}
-diff --git a/packages/markup/tests/parser.test.mjs b/packages/markup/tests/parser.test.mjs
-index 528cf9e..1751a8c 100644
---- a/packages/markup/tests/parser.test.mjs
-+++ b/packages/markup/tests/parser.test.mjs
-@@ -1,26 +1,14 @@
- import test from "node:test";
- import assert from "node:assert/strict";
- import { readFile } from "node:fs/promises";
--import ts from "typescript";
-+import { loadTsModule } from "./helpers/load-ts-module.mjs";
- 
- const parserModuleUrl = new URL("../src/parser.ts", import.meta.url);
- 
- let parserModulePromise;
- 
- async function loadParserModule() {
--  parserModulePromise ??= (async () => {
--    const source = await readFile(parserModuleUrl, "utf8");
--    const transpiled = ts.transpileModule(source, {
--      compilerOptions: {
--        module: ts.ModuleKind.ES2022,
--        target: ts.ScriptTarget.ES2022
--      }
--    });
--
--    return import(
--      `data:text/javascript;base64,${Buffer.from(transpiled.outputText, "utf8").toString("base64")}`
--    );
--  })();
-+  parserModulePromise ??= loadTsModule(parserModuleUrl);
- 
-   return parserModulePromise;
- }
-@@ -29,27 +17,42 @@ test("parser skeleton exports a public parse entry point", async () => {
-   const parserSource = await readFile(parserModuleUrl, "utf8");
-   const indexSource = await readFile(new URL("../src/index.ts", import.meta.url), "utf8");
- 
--  assert.match(parserSource, /import type \{ NablaDocument \} from "\.\/ast\.js";/);
-+  assert.match(parserSource, /import type \{ .*NablaDocument.*\} from "\.\/ast\.js";/);
-   assert.match(parserSource, /export function parse\(markdown: string, options: ParseOptions = \{\}\): NablaDocument/);
-   assert.match(indexSource, /export \{ parse \} from "\.\/parser\.js";/);
- });
- 
--test("parser skeleton returns a minimal NablaDocument placeholder without parsing markdown", async () => {
-+test("parser returns a minimal paragraph document when no wiki link grammar applies", async () => {
-   const { parse } = await loadParserModule();
- 
-   assert.deepEqual(parse("# hello"), {
-     type: "document",
--    children: [],
-+    children: [
-+      {
-+        type: "paragraph",
-+        children: [{ type: "text", value: "# hello" }]
-+      }
-+    ],
-     diagnostics: []
-   });
-   assert.deepEqual(parse("- [ ] task", { mode: "strict" }), {
-     type: "document",
--    children: [],
-+    children: [
-+      {
-+        type: "paragraph",
-+        children: [{ type: "text", value: "- [ ] task" }]
-+      }
-+    ],
-     diagnostics: []
-   });
--  assert.deepEqual(parse("[[wiki]]", { mode: "tolerant" }), {
-+  assert.deepEqual(parse("![[note]]", { mode: "tolerant" }), {
-     type: "document",
--    children: [],
-+    children: [
-+      {
-+        type: "paragraph",
-+        children: [{ type: "text", value: "![[note]]" }]
-+      }
-+    ],
-     diagnostics: []
-   });
- });
-diff --git a/packages/markup/tests/serializer.test.mjs b/packages/markup/tests/serializer.test.mjs
-index 2ae1887..cfd86e1 100644
---- a/packages/markup/tests/serializer.test.mjs
-+++ b/packages/markup/tests/serializer.test.mjs
-@@ -1,26 +1,14 @@
- import test from "node:test";
- import assert from "node:assert/strict";
- import { readFile } from "node:fs/promises";
--import ts from "typescript";
-+import { loadTsModule } from "./helpers/load-ts-module.mjs";
- 
- const serializerModuleUrl = new URL("../src/serializer.ts", import.meta.url);
- 
- let serializerModulePromise;
- 
- async function loadSerializerModule() {
--  serializerModulePromise ??= (async () => {
--    const source = await readFile(serializerModuleUrl, "utf8");
--    const transpiled = ts.transpileModule(source, {
--      compilerOptions: {
--        module: ts.ModuleKind.ES2022,
--        target: ts.ScriptTarget.ES2022
--      }
--    });
--
--    return import(
--      `data:text/javascript;base64,${Buffer.from(transpiled.outputText, "utf8").toString("base64")}`
--    );
--  })();
-+  serializerModulePromise ??= loadTsModule(serializerModuleUrl);
- 
-   return serializerModulePromise;
- }
-@@ -29,20 +17,41 @@ test("serializer skeleton exports a public serialize entry point", async () => {
-   const serializerSource = await readFile(serializerModuleUrl, "utf8");
-   const indexSource = await readFile(new URL("../src/index.ts", import.meta.url), "utf8");
- 
--  assert.match(serializerSource, /import type \{ NablaDocument \} from "\.\/ast\.js";/);
-+  assert.match(serializerSource, /import type \{ .*NablaDocument.*\} from "\.\/ast\.js";/);
-   assert.match(serializerSource, /export function serialize\(source: NablaDocument, options: SerializeOptions = \{\}\)/);
-   assert.match(indexSource, /export \{ serialize \} from "\.\/serializer\.js";/);
- });
- 
--test("serializer skeleton returns a string placeholder without implementing markdown rules", async () => {
-+test("serializer emits plain paragraph text and canonical wiki links", async () => {
-   const { serialize } = await loadSerializerModule();
-   const document = {
-     type: "document",
-     children: [{ type: "paragraph", children: [{ type: "text", value: "hello" }] }],
-     diagnostics: []
-   };
-+  const compatibleBlockLink = {
-+    type: "document",
-+    children: [
-+      {
-+        type: "paragraph",
-+        children: [
-+          { type: "text", value: "See " },
-+          {
-+            type: "wikiLink",
-+            target: "Analyse",
-+            blockId: "thm-main",
-+            syntax: "compatible",
-+            raw: "[[Analyse#^thm-main]]"
-+          },
-+          { type: "text", value: "." }
-+        ]
-+      }
-+    ],
-+    diagnostics: []
-+  };
- 
--  assert.equal(serialize(document), "");
--  assert.equal(serialize(document, { lineEnding: "lf" }), "");
--  assert.equal(serialize(document, { lineEnding: "crlf" }), "");
-+  assert.equal(serialize(document), "hello\n");
-+  assert.equal(serialize(document, { lineEnding: "lf" }), "hello\n");
-+  assert.equal(serialize(document, { lineEnding: "crlf" }), "hello\r\n");
-+  assert.equal(serialize(compatibleBlockLink), "See [[Analyse^thm-main]].\n");
- });
 diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
-new file mode 100644
-index 0000000..78f98ae
---- /dev/null
+index 78f98ae..de2c0bb 100644
+--- a/packages/markup/tests/wiki-links.test.mjs
 +++ b/packages/markup/tests/wiki-links.test.mjs
-@@ -0,0 +1,117 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+import { loadTsModule as loadRuntimeTsModule } from "./helpers/load-ts-module.mjs";
-+
-+const parserModuleUrl = new URL("../src/parser.ts", import.meta.url);
-+const serializerModuleUrl = new URL("../src/serializer.ts", import.meta.url);
-+const fixturesModuleUrl = new URL("../src/fixtures.ts", import.meta.url);
-+
-+const wikiFixtureIds = [
-+  "wiki-links/basic",
-+  "wiki-links/alias",
-+  "wiki-links/block-canonical",
-+  "wiki-links/block-compatible",
-+  "wiki-links/combined-alias-heading",
-+  "wiki-links/combined-alias-block-compatible",
-+  "wiki-links/escaped",
-+  "wiki-links/invalid-combined"
-+];
-+
-+let parserModulePromise;
-+let serializerModulePromise;
-+let fixturesModulePromise;
-+
-+async function loadTsModule(moduleUrl) {
-+  return loadRuntimeTsModule(moduleUrl);
-+}
-+
-+async function loadParserModule() {
-+  parserModulePromise ??= loadTsModule(parserModuleUrl);
-+  return parserModulePromise;
-+}
-+
-+async function loadSerializerModule() {
-+  serializerModulePromise ??= loadTsModule(serializerModuleUrl);
-+  return serializerModulePromise;
-+}
-+
-+async function loadFixturesModule() {
-+  fixturesModulePromise ??= loadTsModule(fixturesModuleUrl);
-+  return fixturesModulePromise;
-+}
-+
-+test("wiki link fixtures parse and serialize according to the checked-in contracts", async () => {
-+  const { parse } = await loadParserModule();
-+  const { serialize } = await loadSerializerModule();
-+  const {
-+    compareFixtureAst,
-+    compareFixtureDiagnostics,
-+    compareFixtureOutput,
-+    loadParserFixture
-+  } = await loadFixturesModule();
-+
-+  for (const fixtureId of wikiFixtureIds) {
-+    const fixture = await loadParserFixture(fixtureId);
-+    const parsed = parse(fixture.input);
-+
-+    compareFixtureAst(parsed, fixture.ast);
-+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
-+    compareFixtureOutput(serialize(parsed), fixture.output);
-+  }
-+});
-+
-+test("wiki link parser handles heading-only links and leaves transclusion syntax literal", async () => {
+@@ -96,6 +96,143 @@ test("wiki link parser handles heading-only links and leaves transclusion syntax
+   });
+ });
+ 
++test("wiki link parser leaves syntax inside inline HTML containers literal", async () => {
 +  const { parse } = await loadParserModule();
 +
-+  assert.deepEqual(parse("See [[Analyse#Limits]]."), {
-+    type: "document",
-+    children: [
-+      {
-+        type: "paragraph",
-+        children: [
-+          { type: "text", value: "See " },
-+          {
-+            type: "wikiLink",
-+            target: "Analyse",
-+            heading: "Limits",
-+            syntax: "canonical",
-+            raw: "[[Analyse#Limits]]"
-+          },
-+          { type: "text", value: "." }
-+        ]
-+      }
-+    ],
-+    diagnostics: []
-+  });
-+
-+  assert.deepEqual(parse("See ![[Analyse]]."), {
-+    type: "document",
-+    children: [
-+      {
-+        type: "paragraph",
-+        children: [{ type: "text", value: "See ![[Analyse]]." }]
-+      }
-+    ],
-+    diagnostics: []
-+  });
-+});
-+
-+test("wiki link parser leaves syntax inside protected regions literal", async () => {
-+  const { parse } = await loadParserModule();
-+
-+  assert.deepEqual(parse("See `[[Analyse]]` and <span>[[Algebra]]</span>."), {
++  assert.deepEqual(parse("See <span>[[Algebra]]</span> inside span."), {
 +    type: "document",
 +    children: [
 +      {
@@ -677,7 +17,7 @@ index 0000000..78f98ae
 +        children: [
 +          {
 +            type: "text",
-+            value: "See `[[Analyse]]` and <span>[[Algebra]]</span>."
++            value: "See <span>[[Algebra]]</span> inside span."
 +          }
 +        ]
 +      }
@@ -685,71 +25,123 @@ index 0000000..78f98ae
 +    diagnostics: []
 +  });
 +});
-diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 2d940d1..11337ed 100644
---- a/reports/IMPLEMENTATION_PROGRESS.md
-+++ b/reports/IMPLEMENTATION_PROGRESS.md
-@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
- 
- ## Task ID
- 
--`P1-009 protected regions`
-+`P1-010 wiki-links`
- 
- ## Branch
- 
-@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
- 
- ## Status
- 
--Protected-region utilities implemented for Markdown code and HTML spans before Nabla parsing.
-+Wiki-link parsing and serialization implemented against the checked-in fixture contracts.
- 
- ## Scope Guardrails
- 
-@@ -39,15 +39,18 @@ Protected-region utilities implemented for Markdown code and HTML spans before N
- - `packages/markup/src/index.ts`
- - `packages/markup/src/diagnostics.ts`
- - `packages/markup/src/fixtures.ts`
-+- `packages/markup/src/extensions/wiki-links.ts`
- - `packages/markup/src/parse-mode.ts`
- - `packages/markup/src/parser.ts`
- - `packages/markup/src/protected-regions.ts`
- - `packages/markup/src/serializer.ts`
- - `packages/markup/tests/diagnostics.test.mjs`
- - `packages/markup/tests/fixtures.test.mjs`
-+- `packages/markup/tests/helpers/load-ts-module.mjs`
- - `packages/markup/tests/parser.test.mjs`
- - `packages/markup/tests/protected-regions.test.mjs`
- - `packages/markup/tests/serializer.test.mjs`
-+- `packages/markup/tests/wiki-links.test.mjs`
- - `packages/markup/tests/ast-surface.test.mjs`
- - `packages/markup/tests/bootstrap.test.mjs`
- - `scripts/check-boundaries.mjs`
-@@ -72,6 +75,9 @@ Protected-region utilities implemented for Markdown code and HTML spans before N
- - Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
- - Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
- - Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
-+- Wiki-link parser matches the specified target/alias/heading/block grammar and preserves invalid combined targets as literal text with diagnostics
-+- Wiki-link serializer canonicalizes compatible block syntax to `^` form and preserves escaped wiki-link characters
-+- Wiki-link parsing stays disabled inside protected code and HTML regions
- - Parser skeleton exposes a public `parse` entry point that accepts Markdown source and returns a `NablaDocument`
- - Parser skeleton intentionally does not implement Markdown or Nabla parsing rules yet
- - Protected-region utilities identify standalone spans for inline code, fenced code blocks, indented code blocks, raw HTML blocks, and inline HTML
-@@ -83,8 +89,8 @@ Protected-region utilities implemented for Markdown code and HTML spans before N
- 
- ## Verification Summary
- 
--- `pnpm test` passed (18 tests)
--- `pnpm test:markup` passed (18 tests)
-+- `pnpm test` passed (21 tests)
-+- `pnpm test:markup` passed (21 tests)
- - `pnpm typecheck` passed
- - `pnpm build` passed
- - `pnpm validate:fixtures` passed
-@@ -99,4 +105,4 @@ None.
- 
- ## Next Recommended Task
- 
--P1-010 wiki-links
-+P1-011 tags
++
++test("wiki link parser leaves syntax inside inline HTML with attributes literal", async () => {
++  const { parse } = await loadParserModule();
++
++  assert.deepEqual(
++    parse('See <span class="foo">[[Algebra]]</span> inside span with attributes.'),
++    {
++      type: "document",
++      children: [
++        {
++          type: "paragraph",
++          children: [
++            {
++              type: "text",
++              value: 'See <span class="foo">[[Algebra]]</span> inside span with attributes.'
++            }
++          ]
++        }
++      ],
++      diagnostics: []
++    }
++  );
++});
++
++test("wiki link parser leaves syntax inside inline HTML with multiple attributes literal", async () => {
++  const { parse } = await loadParserModule();
++
++  assert.deepEqual(
++    parse('See <span class="foo" id="bar">[[Algebra]]</span> inside span with multiple attributes.'),
++    {
++      type: "document",
++      children: [
++        {
++          type: "paragraph",
++          children: [
++            {
++              type: "text",
++              value: 'See <span class="foo" id="bar">[[Algebra]]</span> inside span with multiple attributes.'
++            }
++          ]
++        }
++      ],
++      diagnostics: []
++    }
++  );
++});
++
++test("wiki link parser leaves syntax inside different inline HTML containers literal", async () => {
++  const { parse } = await loadParserModule();
++
++  assert.deepEqual(parse("See <div>[[Algebra]]</div> inside div."), {
++    type: "document",
++    children: [
++      {
++        type: "paragraph",
++        children: [
++          {
++            type: "text",
++            value: "See <div>[[Algebra]]</div> inside div."
++          }
++        ]
++      }
++    ],
++    diagnostics: []
++  });
++});
++
++test("wiki link parser parses normal wiki link outside inline HTML", async () => {
++  const { parse } = await loadParserModule();
++
++  assert.deepEqual(parse("See <span>literal</span> and [[Analyse]] outside."), {
++    type: "document",
++    children: [
++      {
++        type: "paragraph",
++        children: [
++          { type: "text", value: "See <span>literal</span> and " },
++          {
++            type: "wikiLink",
++            target: "Analyse",
++            syntax: "canonical",
++            raw: "[[Analyse]]"
++          },
++          { type: "text", value: " outside." }
++        ]
++      }
++    ],
++    diagnostics: []
++  });
++});
++
++test("wiki link parser handles inline HTML and wiki links mixed in same input", async () => {
++  const { parse } = await loadParserModule();
++
++  assert.deepEqual(
++    parse("Text <span>[[hidden]]</span> and [[visible]] and <div>[[also hidden]]</div> end."),
++    {
++      type: "document",
++      children: [
++        {
++          type: "paragraph",
++          children: [
++            { type: "text", value: "Text <span>[[hidden]]</span> and " },
++            {
++              type: "wikiLink",
++              target: "visible",
++              syntax: "canonical",
++              raw: "[[visible]]"
++            },
++            { type: "text", value: " and <div>[[also hidden]]</div> end." }
++          ]
++        }
++      ],
++      diagnostics: []
++    }
++  );
++});
++
+ test("wiki link parser leaves syntax inside protected regions literal", async () => {
+   const { parse } = await loadParserModule();

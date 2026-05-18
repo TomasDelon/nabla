@@ -1,30 +1,23 @@
 {
-  "taskId": "P1-010",
-  "baseCommit": "44da253",
-  "headCommit": "a15ed520dd366a454d97555ec17c5f4b6ab22201",
+  "taskId": "P1-010-fix-inline-html",
+  "baseCommit": "b52c975",
+  "headCommit": "66b5866",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-18T21:19:12.171Z",
-  "currentHead": "a15ed520dd366a454d97555ec17c5f4b6ab22201",
+  "timestamp": "2026-05-18T21:25:00.370Z",
+  "currentHead": "66b58669d02078d4fc6f3927ff6b75a5505322ab",
   "currentWorkingTreeStatus": "",
   "changedFiles": [
-    "packages/markup/src/extensions/wiki-links.ts",
-    "packages/markup/src/parser.ts",
-    "packages/markup/src/serializer.ts",
-    "packages/markup/tests/helpers/load-ts-module.mjs",
-    "packages/markup/tests/parser.test.mjs",
-    "packages/markup/tests/serializer.test.mjs",
-    "packages/markup/tests/wiki-links.test.mjs",
-    "reports/IMPLEMENTATION_PROGRESS.md"
+    "packages/markup/tests/wiki-links.test.mjs"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 44da253..a15ed520dd366a454d97555ec17c5f4b6ab22201",
-    "git diff --stat 44da253..a15ed520dd366a454d97555ec17c5f4b6ab22201",
-    "git diff 44da253..a15ed520dd366a454d97555ec17c5f4b6ab22201",
-    "git log --oneline 44da253..a15ed520dd366a454d97555ec17c5f4b6ab22201",
-    "git ls-tree -r --name-only a15ed520dd366a454d97555ec17c5f4b6ab22201",
+    "git diff --name-only b52c975..66b5866",
+    "git diff --stat b52c975..66b5866",
+    "git diff b52c975..66b5866",
+    "git log --oneline b52c975..66b5866",
+    "git ls-tree -r --name-only 66b5866",
     "git remote get-url origin"
   ],
   "rawUrls": {
