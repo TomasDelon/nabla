@@ -1,5 +1,19 @@
- packages/markup/src/diagnostics.ts         | 66 ++++++++++++++++++++++++++++++
- packages/markup/src/index.ts               |  9 ++++
- packages/markup/tests/diagnostics.test.mjs | 41 +++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md         | 14 ++++---
- 4 files changed, 124 insertions(+), 6 deletions(-)
+ package.json                                       |   1 +
+ packages/markup/src/diagnostics.ts                 |  66 ++++
+ packages/markup/src/index.ts                       |   9 +
+ packages/markup/tests/diagnostics.test.mjs         |  41 +++
+ reports/IMPLEMENTATION_PROGRESS.md                 |  23 +-
+ reports/audit/latest/AUDIT_INDEX.md                |  10 +
+ reports/audit/latest/audit.json                    |  37 ++
+ reports/audit/latest/git-branch.txt                |   1 +
+ reports/audit/latest/git-log.txt                   |   1 +
+ reports/audit/latest/git-show-name-only.txt        |   4 +
+ reports/audit/latest/git-show-stat.txt             |   5 +
+ reports/audit/latest/git-show.patch                | 195 +++++++++++
+ reports/audit/latest/git-status.txt                |   4 +
+ reports/audit/latest/package-json.txt              |  21 ++
+ reports/audit/latest/progress-report.md            |  81 +++++
+ reports/audit/latest/repo-tree.txt                 | 375 +++++++++++++++++++++
+ .../decisions/IDR-0001-audit-bundle-workflow.md    |  27 ++
+ scripts/create-audit-bundle.mjs                    | 131 +++++++
+ 18 files changed, 1024 insertions(+), 8 deletions(-)

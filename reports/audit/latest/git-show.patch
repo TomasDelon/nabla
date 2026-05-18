@@ -1,3 +1,15 @@
+diff --git a/package.json b/package.json
+index 52a6b79..a82d592 100644
+--- a/package.json
++++ b/package.json
+@@ -5,6 +5,7 @@
+   "packageManager": "pnpm@11.1.3",
+   "scripts": {
+     "build": "tsc -b packages/markup/tsconfig.json",
++    "audit:bundle": "node scripts/create-audit-bundle.mjs",
+     "check:boundaries": "node scripts/check-boundaries.mjs",
+     "lint": "node scripts/report-unavailable.mjs lint --silent \"Lint tooling is not bootstrapped in P1-001\"",
+     "test": "node --test packages/markup/tests/**/*.test.mjs",
 diff --git a/packages/markup/src/diagnostics.ts b/packages/markup/src/diagnostics.ts
 new file mode 100644
 index 0000000..20430ad
@@ -135,7 +147,7 @@ index 0000000..3eb82fd
 +  assert.match(source, /export const DIAGNOSTIC_CATALOG = \[/);
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index dcce861..a7b7003 100644
+index dcce861..54a12c0 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
@@ -143,26 +155,33 @@ index dcce861..a7b7003 100644
  ## Task ID
  
 -`P1-003 @nabla/markup AST types`
-+`P1-004 diagnostic constants`
++`INFRA-002-create-audit-bundle-script`
  
  ## Branch
  
-@@ -14,13 +14,12 @@ Phase 1 - `@nabla/markup`
+@@ -14,17 +14,17 @@ Phase 1 - `@nabla/markup`
  
  ## Status
  
 -P1-003 AST type definitions implemented.
-+P1-004 diagnostic constants implemented.
++Audit bundle workflow implemented.
  
  ## Scope Guardrails
  
  - No parser implementation
  - No serializer implementation
 -- No diagnostics catalog implementation
- - No fixture loader implementation
+-- No fixture loader implementation
++- No AST implementation
++- No diagnostics implementation
++- No workspace/editor/components/app
  - No spec changes
  - No fixture changes
-@@ -37,7 +36,9 @@ P1-003 AST type definitions implemented.
+-- No Phase 2+ package work
+ 
+ ## Files Created
+ 
+@@ -37,13 +37,18 @@ P1-003 AST type definitions implemented.
  - `packages/markup/tsconfig.json`
  - `packages/markup/src/ast.ts`
  - `packages/markup/src/index.ts`
@@ -172,7 +191,16 @@ index dcce861..a7b7003 100644
  - `packages/markup/tests/ast-surface.test.mjs`
  - `packages/markup/tests/bootstrap.test.mjs`
  - `scripts/check-boundaries.mjs`
-@@ -53,11 +54,12 @@ P1-003 AST type definitions implemented.
+ - `scripts/report-unavailable.mjs`
+ - `scripts/validate-fixtures.mjs`
+ - `scripts/validate-spec-version.mjs`
++- `scripts/create-audit-bundle.mjs`
++- `reports/decisions/IDR-0001-audit-bundle-workflow.md`
++- `reports/audit/latest/`
+ - `pnpm-lock.yaml`
+ 
+ ## Files Verified
+@@ -53,17 +58,19 @@ P1-003 AST type definitions implemented.
  - `MarkdownNode` remains mdast-compatible via structural shape and index signature
  - `data.nablaTaskState` and `data.nablaBlockId` are represented
  - `ParseMode` is represented without adding parser runtime behavior
@@ -187,9 +215,986 @@ index dcce861..a7b7003 100644
  - `pnpm typecheck` passed
  - `pnpm build` passed
  - `pnpm validate:fixtures` passed
-@@ -71,4 +73,4 @@ None.
+ - `pnpm validate:spec-version` passed
+ - `pnpm check:boundaries` passed
+ - `pnpm lint` passed via bootstrap placeholder
++- `pnpm audit:bundle -- --task INFRA-002 --base 3f5c1e5` generated text-only audit artifacts
+ 
+ ## Active Blockers
+ 
+@@ -71,4 +78,4 @@ None.
  
  ## Next Recommended Task
  
 -P1-004 diagnostic constants
 +P1-005 fixture loader
+diff --git a/reports/audit/latest/AUDIT_INDEX.md b/reports/audit/latest/AUDIT_INDEX.md
+new file mode 100644
+index 0000000..c9bf491
+--- /dev/null
++++ b/reports/audit/latest/AUDIT_INDEX.md
+@@ -0,0 +1,10 @@
++# Audit Bundle
++
++Start with this order:
++1. `audit.json` for task, branch, base, HEAD, and raw URLs.
++2. `git-status.txt` for working tree state.
++3. `git-log.txt` for the commit slice under review.
++4. `git-show-name-only.txt` and `git-show.patch` for the actual diff.
++5. `repo-tree.txt` and `package-json.txt` for repository context.
++
++This bundle is text-only and is intended for review from GitHub without manual uploads.
+diff --git a/reports/audit/latest/audit.json b/reports/audit/latest/audit.json
+new file mode 100644
+index 0000000..a5eae40
+--- /dev/null
++++ b/reports/audit/latest/audit.json
+@@ -0,0 +1,37 @@
++{
++  "taskId": "INFRA-002",
++  "baseCommit": "3f5c1e5",
++  "headCommit": "fdfe884b5f08a6a5d9dbf8e8956cca0212f04ab3",
++  "currentBranch": "phase-1-markup-core",
++  "timestamp": "2026-05-18T20:08:58.964Z",
++  "gitStatus": " M package.json\n M reports/IMPLEMENTATION_PROGRESS.md\n?? reports/decisions/\n?? scripts/create-audit-bundle.mjs",
++  "changedFiles": [
++    "packages/markup/src/diagnostics.ts",
++    "packages/markup/src/index.ts",
++    "packages/markup/tests/diagnostics.test.mjs",
++    "reports/IMPLEMENTATION_PROGRESS.md"
++  ],
++  "commandsUsed": [
++    "git branch --show-current",
++    "git rev-parse HEAD",
++    "git status --short",
++    "git diff --name-only 3f5c1e5..HEAD",
++    "git diff --stat 3f5c1e5 HEAD",
++    "git diff 3f5c1e5 HEAD",
++    "git log --oneline 3f5c1e5..HEAD",
++    "git ls-tree -r --name-only HEAD",
++    "git remote get-url origin"
++  ],
++  "rawUrls": {
++    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/AUDIT_INDEX.md",
++    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/audit.json",
++    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-show.patch",
++    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-show-name-only.txt",
++    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-status.txt",
++    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-log.txt",
++    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-branch.txt",
++    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-show-stat.txt",
++    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/package-json.txt",
++    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/progress-report.md"
++  }
++}
+diff --git a/reports/audit/latest/git-branch.txt b/reports/audit/latest/git-branch.txt
+new file mode 100644
+index 0000000..b6304a6
+--- /dev/null
++++ b/reports/audit/latest/git-branch.txt
+@@ -0,0 +1 @@
++phase-1-markup-core
+diff --git a/reports/audit/latest/git-log.txt b/reports/audit/latest/git-log.txt
+new file mode 100644
+index 0000000..7b317df
+--- /dev/null
++++ b/reports/audit/latest/git-log.txt
+@@ -0,0 +1 @@
++fdfe884 feat(markup): add diagnostic constants
+diff --git a/reports/audit/latest/git-show-name-only.txt b/reports/audit/latest/git-show-name-only.txt
+new file mode 100644
+index 0000000..efe5e07
+--- /dev/null
++++ b/reports/audit/latest/git-show-name-only.txt
+@@ -0,0 +1,4 @@
++packages/markup/src/diagnostics.ts
++packages/markup/src/index.ts
++packages/markup/tests/diagnostics.test.mjs
++reports/IMPLEMENTATION_PROGRESS.md
+diff --git a/reports/audit/latest/git-show-stat.txt b/reports/audit/latest/git-show-stat.txt
+new file mode 100644
+index 0000000..835de6c
+--- /dev/null
++++ b/reports/audit/latest/git-show-stat.txt
+@@ -0,0 +1,5 @@
++ packages/markup/src/diagnostics.ts         | 66 ++++++++++++++++++++++++++++++
++ packages/markup/src/index.ts               |  9 ++++
++ packages/markup/tests/diagnostics.test.mjs | 41 +++++++++++++++++++
++ reports/IMPLEMENTATION_PROGRESS.md         | 14 ++++---
++ 4 files changed, 124 insertions(+), 6 deletions(-)
+diff --git a/reports/audit/latest/git-show.patch b/reports/audit/latest/git-show.patch
+new file mode 100644
+index 0000000..90f4408
+--- /dev/null
++++ b/reports/audit/latest/git-show.patch
+@@ -0,0 +1,195 @@
++diff --git a/packages/markup/src/diagnostics.ts b/packages/markup/src/diagnostics.ts
++new file mode 100644
++index 0000000..20430ad
++--- /dev/null
+++++ b/packages/markup/src/diagnostics.ts
++@@ -0,0 +1,66 @@
+++import type { DiagnosticSeverity } from "./ast.js";
+++
+++export const DIAGNOSTIC_CODES = {
+++  FRONTMATTER_INVALID: "NABLA_FRONTMATTER_INVALID",
+++  LINK_MISSING_TARGET: "NABLA_LINK_MISSING_TARGET",
+++  LINK_AMBIGUOUS_TARGET: "NABLA_LINK_AMBIGUOUS_TARGET",
+++  WIKI_LINK_INVALID_TARGET: "NABLA_WIKI_LINK_INVALID_TARGET",
+++  HEADING_MISSING_TARGET: "NABLA_HEADING_MISSING_TARGET",
+++  BLOCK_MISSING_TARGET: "NABLA_BLOCK_MISSING_TARGET",
+++  BLOCK_ID_INVALID: "NABLA_BLOCK_ID_INVALID",
+++  BLOCK_ID_INVALID_POSITION: "NABLA_BLOCK_ID_INVALID_POSITION",
+++  BLOCK_ID_DUPLICATE: "NABLA_BLOCK_ID_DUPLICATE",
+++  TOOLTIP_EMPTY_TARGET: "NABLA_TOOLTIP_EMPTY_TARGET",
+++  TOOLTIP_UNCLOSED: "NABLA_TOOLTIP_UNCLOSED",
+++  HIGHLIGHT_UNCLOSED: "NABLA_HIGHLIGHT_UNCLOSED",
+++  HIGHLIGHT_INVALID_COLOR: "NABLA_HIGHLIGHT_INVALID_COLOR",
+++  CALLOUT_INVALID_TYPE: "NABLA_CALLOUT_INVALID_TYPE",
+++  TOGGLE_MISSING_TITLE: "NABLA_TOGGLE_MISSING_TITLE",
+++  TRANSCLUSION_INLINE_UNSUPPORTED: "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
+++  TRANSCLUSION_MISSING_TARGET: "NABLA_TRANSCLUSION_MISSING_TARGET",
+++  TRANSCLUSION_CYCLE: "NABLA_TRANSCLUSION_CYCLE",
+++  TRANSCLUSION_DEPTH_LIMIT: "NABLA_TRANSCLUSION_DEPTH_LIMIT",
+++  EMOJI_UNKNOWN: "NABLA_EMOJI_UNKNOWN",
+++  FOOTNOTE_MISSING_DEFINITION: "NABLA_FOOTNOTE_MISSING_DEFINITION",
+++  FOOTNOTE_UNUSED_DEFINITION: "NABLA_FOOTNOTE_UNUSED_DEFINITION",
+++  EDITOR_EXPORT_LOSS: "NABLA_EDITOR_EXPORT_LOSS"
+++} as const;
+++
+++export type DiagnosticCode =
+++  (typeof DIAGNOSTIC_CODES)[keyof typeof DIAGNOSTIC_CODES];
+++
+++export type DiagnosticCatalogEntry = {
+++  code: DiagnosticCode;
+++  severity: DiagnosticSeverity;
+++};
+++
+++export const DIAGNOSTIC_CATALOG = [
+++  { code: DIAGNOSTIC_CODES.FRONTMATTER_INVALID, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.LINK_MISSING_TARGET, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.LINK_AMBIGUOUS_TARGET, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.WIKI_LINK_INVALID_TARGET, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.HEADING_MISSING_TARGET, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.BLOCK_MISSING_TARGET, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.BLOCK_ID_INVALID, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.BLOCK_ID_INVALID_POSITION, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.BLOCK_ID_DUPLICATE, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.TOOLTIP_EMPTY_TARGET, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.TOOLTIP_UNCLOSED, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.HIGHLIGHT_UNCLOSED, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.HIGHLIGHT_INVALID_COLOR, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.CALLOUT_INVALID_TYPE, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.TOGGLE_MISSING_TITLE, severity: "info" },
+++  {
+++    code: DIAGNOSTIC_CODES.TRANSCLUSION_INLINE_UNSUPPORTED,
+++    severity: "warning"
+++  },
+++  { code: DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.TRANSCLUSION_CYCLE, severity: "error" },
+++  { code: DIAGNOSTIC_CODES.TRANSCLUSION_DEPTH_LIMIT, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.EMOJI_UNKNOWN, severity: "info" },
+++  { code: DIAGNOSTIC_CODES.FOOTNOTE_MISSING_DEFINITION, severity: "warning" },
+++  { code: DIAGNOSTIC_CODES.FOOTNOTE_UNUSED_DEFINITION, severity: "info" },
+++  { code: DIAGNOSTIC_CODES.EDITOR_EXPORT_LOSS, severity: "error" }
+++] as const satisfies readonly DiagnosticCatalogEntry[];
+++
+++export type DiagnosticCatalog = typeof DIAGNOSTIC_CATALOG;
++diff --git a/packages/markup/src/index.ts b/packages/markup/src/index.ts
++index b7b3fa9..b0650db 100644
++--- a/packages/markup/src/index.ts
+++++ b/packages/markup/src/index.ts
++@@ -31,3 +31,12 @@ export type {
++   EmojiShortcodeNode,
++ } from "./ast.js";
++ export type { ParseMode } from "./parse-mode.js";
+++export {
+++  DIAGNOSTIC_CATALOG,
+++  DIAGNOSTIC_CODES
+++} from "./diagnostics.js";
+++export type {
+++  DiagnosticCatalog,
+++  DiagnosticCatalogEntry,
+++  DiagnosticCode
+++} from "./diagnostics.js";
++diff --git a/packages/markup/tests/diagnostics.test.mjs b/packages/markup/tests/diagnostics.test.mjs
++new file mode 100644
++index 0000000..3eb82fd
++--- /dev/null
+++++ b/packages/markup/tests/diagnostics.test.mjs
++@@ -0,0 +1,41 @@
+++import test from "node:test";
+++import assert from "node:assert/strict";
+++import { readFile } from "node:fs/promises";
+++
+++test("markup package exports diagnostic constants", async () => {
+++  const source = await readFile(
+++    new URL("../src/diagnostics.ts", import.meta.url),
+++    "utf8"
+++  );
+++
+++  for (const code of [
+++    "NABLA_FRONTMATTER_INVALID",
+++    "NABLA_LINK_MISSING_TARGET",
+++    "NABLA_LINK_AMBIGUOUS_TARGET",
+++    "NABLA_WIKI_LINK_INVALID_TARGET",
+++    "NABLA_HEADING_MISSING_TARGET",
+++    "NABLA_BLOCK_MISSING_TARGET",
+++    "NABLA_BLOCK_ID_INVALID",
+++    "NABLA_BLOCK_ID_INVALID_POSITION",
+++    "NABLA_BLOCK_ID_DUPLICATE",
+++    "NABLA_TOOLTIP_EMPTY_TARGET",
+++    "NABLA_TOOLTIP_UNCLOSED",
+++    "NABLA_HIGHLIGHT_UNCLOSED",
+++    "NABLA_HIGHLIGHT_INVALID_COLOR",
+++    "NABLA_CALLOUT_INVALID_TYPE",
+++    "NABLA_TOGGLE_MISSING_TITLE",
+++    "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
+++    "NABLA_TRANSCLUSION_MISSING_TARGET",
+++    "NABLA_TRANSCLUSION_CYCLE",
+++    "NABLA_TRANSCLUSION_DEPTH_LIMIT",
+++    "NABLA_EMOJI_UNKNOWN",
+++    "NABLA_FOOTNOTE_MISSING_DEFINITION",
+++    "NABLA_FOOTNOTE_UNUSED_DEFINITION",
+++    "NABLA_EDITOR_EXPORT_LOSS"
+++  ]) {
+++    assert.match(source, new RegExp(code));
+++  }
+++
+++  assert.match(source, /export const DIAGNOSTIC_CODES = \{/);
+++  assert.match(source, /export const DIAGNOSTIC_CATALOG = \[/);
+++});
++diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
++index dcce861..a7b7003 100644
++--- a/reports/IMPLEMENTATION_PROGRESS.md
+++++ b/reports/IMPLEMENTATION_PROGRESS.md
++@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
++ 
++ ## Task ID
++ 
++-`P1-003 @nabla/markup AST types`
+++`P1-004 diagnostic constants`
++ 
++ ## Branch
++ 
++@@ -14,13 +14,12 @@ Phase 1 - `@nabla/markup`
++ 
++ ## Status
++ 
++-P1-003 AST type definitions implemented.
+++P1-004 diagnostic constants implemented.
++ 
++ ## Scope Guardrails
++ 
++ - No parser implementation
++ - No serializer implementation
++-- No diagnostics catalog implementation
++ - No fixture loader implementation
++ - No spec changes
++ - No fixture changes
++@@ -37,7 +36,9 @@ P1-003 AST type definitions implemented.
++ - `packages/markup/tsconfig.json`
++ - `packages/markup/src/ast.ts`
++ - `packages/markup/src/index.ts`
+++- `packages/markup/src/diagnostics.ts`
++ - `packages/markup/src/parse-mode.ts`
+++- `packages/markup/tests/diagnostics.test.mjs`
++ - `packages/markup/tests/ast-surface.test.mjs`
++ - `packages/markup/tests/bootstrap.test.mjs`
++ - `scripts/check-boundaries.mjs`
++@@ -53,11 +54,12 @@ P1-003 AST type definitions implemented.
++ - `MarkdownNode` remains mdast-compatible via structural shape and index signature
++ - `data.nablaTaskState` and `data.nablaBlockId` are represented
++ - `ParseMode` is represented without adding parser runtime behavior
+++- Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
++ 
++ ## Verification Summary
++ 
++-- `pnpm test` passed (2 tests)
++-- `pnpm test:markup` passed (2 tests)
+++- `pnpm test` passed (3 tests)
+++- `pnpm test:markup` passed (3 tests)
++ - `pnpm typecheck` passed
++ - `pnpm build` passed
++ - `pnpm validate:fixtures` passed
++@@ -71,4 +73,4 @@ None.
++ 
++ ## Next Recommended Task
++ 
++-P1-004 diagnostic constants
+++P1-005 fixture loader
+diff --git a/reports/audit/latest/git-status.txt b/reports/audit/latest/git-status.txt
+new file mode 100644
+index 0000000..c408c2b
+--- /dev/null
++++ b/reports/audit/latest/git-status.txt
+@@ -0,0 +1,4 @@
++ M package.json
++ M reports/IMPLEMENTATION_PROGRESS.md
++?? reports/decisions/
++?? scripts/create-audit-bundle.mjs
+diff --git a/reports/audit/latest/package-json.txt b/reports/audit/latest/package-json.txt
+new file mode 100644
+index 0000000..a82d592
+--- /dev/null
++++ b/reports/audit/latest/package-json.txt
+@@ -0,0 +1,21 @@
++{
++  "name": "nabla",
++  "version": "0.0.0",
++  "private": true,
++  "packageManager": "pnpm@11.1.3",
++  "scripts": {
++    "build": "tsc -b packages/markup/tsconfig.json",
++    "audit:bundle": "node scripts/create-audit-bundle.mjs",
++    "check:boundaries": "node scripts/check-boundaries.mjs",
++    "lint": "node scripts/report-unavailable.mjs lint --silent \"Lint tooling is not bootstrapped in P1-001\"",
++    "test": "node --test packages/markup/tests/**/*.test.mjs",
++    "test:markup": "node --test packages/markup/tests/**/*.test.mjs",
++    "test:workspace": "node scripts/report-unavailable.mjs test:workspace \"Phase 2 (@nabla/workspace) has not started yet\"",
++    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json",
++    "validate:fixtures": "node scripts/validate-fixtures.mjs",
++    "validate:spec-version": "node scripts/validate-spec-version.mjs"
++  },
++  "devDependencies": {
++    "typescript": "^5.6.3"
++  }
++}
+diff --git a/reports/audit/latest/progress-report.md b/reports/audit/latest/progress-report.md
+new file mode 100644
+index 0000000..54a12c0
+--- /dev/null
++++ b/reports/audit/latest/progress-report.md
+@@ -0,0 +1,81 @@
++# Implementation Progress Report
++
++## Phase
++
++Phase 1 - `@nabla/markup`
++
++## Task ID
++
++`INFRA-002-create-audit-bundle-script`
++
++## Branch
++
++`phase-1-markup-core`
++
++## Status
++
++Audit bundle workflow implemented.
++
++## Scope Guardrails
++
++- No parser implementation
++- No serializer implementation
++- No AST implementation
++- No diagnostics implementation
++- No workspace/editor/components/app
++- No spec changes
++- No fixture changes
++
++## Files Created
++
++- `.gitignore`
++- `README.md`
++- `package.json`
++- `pnpm-workspace.yaml`
++- `tsconfig.base.json`
++- `packages/markup/package.json`
++- `packages/markup/tsconfig.json`
++- `packages/markup/src/ast.ts`
++- `packages/markup/src/index.ts`
++- `packages/markup/src/diagnostics.ts`
++- `packages/markup/src/parse-mode.ts`
++- `packages/markup/tests/diagnostics.test.mjs`
++- `packages/markup/tests/ast-surface.test.mjs`
++- `packages/markup/tests/bootstrap.test.mjs`
++- `scripts/check-boundaries.mjs`
++- `scripts/report-unavailable.mjs`
++- `scripts/validate-fixtures.mjs`
++- `scripts/validate-spec-version.mjs`
++- `scripts/create-audit-bundle.mjs`
++- `reports/decisions/IDR-0001-audit-bundle-workflow.md`
++- `reports/audit/latest/`
++- `pnpm-lock.yaml`
++
++## Files Verified
++
++- `@nabla/markup` package metadata and exports remain coherent
++- AST types follow `04_AST_MODEL.md`
++- `MarkdownNode` remains mdast-compatible via structural shape and index signature
++- `data.nablaTaskState` and `data.nablaBlockId` are represented
++- `ParseMode` is represented without adding parser runtime behavior
++- Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
++
++## Verification Summary
++
++- `pnpm test` passed (3 tests)
++- `pnpm test:markup` passed (3 tests)
++- `pnpm typecheck` passed
++- `pnpm build` passed
++- `pnpm validate:fixtures` passed
++- `pnpm validate:spec-version` passed
++- `pnpm check:boundaries` passed
++- `pnpm lint` passed via bootstrap placeholder
++- `pnpm audit:bundle -- --task INFRA-002 --base 3f5c1e5` generated text-only audit artifacts
++
++## Active Blockers
++
++None.
++
++## Next Recommended Task
++
++P1-005 fixture loader
+diff --git a/reports/audit/latest/repo-tree.txt b/reports/audit/latest/repo-tree.txt
+new file mode 100644
+index 0000000..de0b274
+--- /dev/null
++++ b/reports/audit/latest/repo-tree.txt
+@@ -0,0 +1,375 @@
++.gitignore
++README.md
++nabla_complete_project_documentation_pack_v1_final.zip
++nabla_complete_project_documentation_pack_v1_final.zip.sha256
++package.json
++packages/markup/package.json
++packages/markup/src/ast.ts
++packages/markup/src/diagnostics.ts
++packages/markup/src/index.ts
++packages/markup/src/parse-mode.ts
++packages/markup/tests/ast-surface.test.mjs
++packages/markup/tests/bootstrap.test.mjs
++packages/markup/tests/diagnostics.test.mjs
++packages/markup/tsconfig.json
++pnpm-lock.yaml
++pnpm-workspace.yaml
++reports/IMPLEMENTATION_PROGRESS.md
++scripts/check-boundaries.mjs
++scripts/report-unavailable.mjs
++scripts/validate-fixtures.mjs
++scripts/validate-spec-version.mjs
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/MANIFEST.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/00_INDEX.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/01_PRODUCT_SCOPE.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/02_ARCHITECTURE.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/03_MARKUP_SYNTAX.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/04_AST_MODEL.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/05_PARSER_SERIALIZER.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/06_SYNTAX_CONFLICTS.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/07_EDITOR_BEHAVIOR.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/08_WORKSPACE_MODEL.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/09_FEATURE_SPECS.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/10_TESTING_AND_FIXTURES.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/11_VALIDATION.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/12_DECISIONS.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/13_ROADMAP.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/14_DIAGNOSTICS.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/15_REGISTRIES.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/16_SPEC_COVERAGE_MATRIX.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/block-ids.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/callouts.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/comments.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/emoji-shortcodes.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/folded-headings.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/footnotes.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/frontmatter.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/highlights.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/tags.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/task-states.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/toggles.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/tooltips.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/transclusions.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/docs/features/wiki-links.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/callout-toggle-transclusion-attachment/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/callout-toggle-transclusion-attachment/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/callout-toggle-transclusion-attachment/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/callout-toggle-transclusion-attachment/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/duplicate/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/duplicate/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/duplicate/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/duplicate/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/heading/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/heading/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/heading/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/heading/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/invalid-grammar/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/invalid-grammar/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/invalid-grammar/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/invalid-grammar/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/invalid/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/invalid/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/invalid/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/invalid/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/list-item/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/list-item/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/list-item/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/list-item/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/table/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/table/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/table/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/block-ids/table/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/blank-child/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/blank-child/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/blank-child/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/blank-child/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/canonical/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/canonical/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/canonical/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/canonical/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/compatible/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/compatible/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/compatible/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/compatible/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/empty/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/empty/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/empty/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/empty/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/fenced-child/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/fenced-child/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/fenced-child/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/fenced-child/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/fold-states/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/fold-states/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/fold-states/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/fold-states/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/nested-child/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/nested-child/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/nested-child/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/callouts/nested-child/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/multiline-private/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/multiline-private/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/multiline-private/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/multiline-private/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/protected-region/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/protected-region/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/protected-region/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/comments/protected-region/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/inline-html/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/inline-html/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/inline-html/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/inline-html/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/protected-regions/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/protected-regions/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/protected-regions/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/protected-regions/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/tooltip-vs-footnote/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/tooltip-vs-footnote/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/tooltip-vs-footnote/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/conflicts/tooltip-vs-footnote/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/emoji-shortcodes/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/emoji-shortcodes/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/emoji-shortcodes/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/emoji-shortcodes/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/emoji-shortcodes/punctuation-and-protected/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/emoji-shortcodes/punctuation-and-protected/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/emoji-shortcodes/punctuation-and-protected/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/emoji-shortcodes/punctuation-and-protected/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/levels/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/levels/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/levels/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/levels/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/tag-conflict/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/tag-conflict/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/tag-conflict/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/folded-headings/tag-conflict/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/missing-definition/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/missing-definition/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/missing-definition/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/missing-definition/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/unused-definition/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/unused-definition/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/unused-definition/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/footnotes/unused-definition/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/horizontal-rule/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/horizontal-rule/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/horizontal-rule/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/horizontal-rule/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/invalid/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/invalid/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/invalid/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/invalid/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/valid/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/valid/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/valid/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/frontmatter/valid/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/gfm-tables/alignment/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/gfm-tables/alignment/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/gfm-tables/alignment/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/gfm-tables/alignment/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/hex-3-and-8/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/hex-3-and-8/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/hex-3-and-8/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/hex-3-and-8/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/invalid-color/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/invalid-color/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/invalid-color/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/invalid-color/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/protected-region/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/protected-region/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/protected-region/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/protected-region/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/unclosed/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/unclosed/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/unclosed/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/highlights/unclosed/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tags/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tags/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tags/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tags/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/task-states/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/task-states/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/task-states/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/task-states/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/task-states/unsupported-marker/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/task-states/unsupported-marker/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/task-states/unsupported-marker/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/task-states/unsupported-marker/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/blank-child/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/blank-child/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/blank-child/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/blank-child/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/empty/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/empty/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/empty/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/empty/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/fenced-child/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/fenced-child/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/fenced-child/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/fenced-child/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/nested-child/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/nested-child/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/nested-child/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/toggles/nested-child/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/empty-target/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/empty-target/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/empty-target/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/empty-target/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/protected-region/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/protected-region/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/protected-region/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/protected-region/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/unclosed/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/unclosed/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/unclosed/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/tooltips/unclosed/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/block-canonical/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/block-canonical/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/block-canonical/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/block-canonical/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/block-compatible/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/block-compatible/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/block-compatible/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/block-compatible/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/heading/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/heading/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/heading/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/heading/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/inline-unsupported/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/inline-unsupported/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/inline-unsupported/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/inline-unsupported/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/note/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/note/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/note/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/transclusions/note/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/alias/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/alias/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/alias/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/alias/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/basic/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/basic/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/basic/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/block-canonical/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/block-canonical/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/block-canonical/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/block-canonical/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/block-compatible/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/block-compatible/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/block-compatible/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/block-compatible/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/combined-alias-block-compatible/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/combined-alias-block-compatible/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/combined-alias-block-compatible/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/combined-alias-block-compatible/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/combined-alias-heading/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/combined-alias-heading/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/combined-alias-heading/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/combined-alias-heading/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/escaped/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/escaped/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/escaped/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/escaped/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/invalid-combined/ast.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/invalid-combined/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/invalid-combined/input.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/wiki-links/invalid-combined/output.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/backlink-position-optional/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/backlink-position-optional/expected-index.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/backlink-position-optional/files/main.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/backlink-position-optional/files/target.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/missing-target/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/missing-target/expected-index.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/missing-target/files/main.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/resolution-basic/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/resolution-basic/expected-index.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/resolution-basic/files/analyse.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/resolution-basic/files/main.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-cycle/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-cycle/expected-index.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-cycle/files/a.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-cycle/files/b.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-depth-limit/diagnostics.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-depth-limit/expected-index.json
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-depth-limit/files/a.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-depth-limit/files/b.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-depth-limit/files/c.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-depth-limit/files/d.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-depth-limit/files/e.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-depth-limit/files/f.md
++specs/nabla_complete_project_documentation_pack_v1/01_markdown_plus_spec_pack/nabla_markdown_plus_spec_pack_v4_2_final/fixtures/workspace/transclusion-depth-limit/files/g.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/AGENTS.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/NEW_FILES_REPORT.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/README.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/UPDATED_FILES_REPORT.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/VALIDATION_REPORT.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/ZIP_HASH_POLICY.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/00_IMPLEMENTATION_INDEX.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/01_AGENT_OPERATING_RULES.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/02_TECH_STACK.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/03_REPO_STRUCTURE.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/04_PHASE_1_MARKUP_CORE.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/05_PHASE_2_WORKSPACE.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/06_PHASE_3_EDITOR_ADAPTER.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/07_PHASE_4_COMPONENTS.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/08_PHASE_5_APP.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/09_FIXTURE_DRIVEN_WORKFLOW.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/10_TESTING_AND_QUALITY_GATES.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/11_MISSING_SPEC_PROTOCOL.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/12_PROGRESS_REPORT_TEMPLATE.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/13_PROMPTS_FOR_IMPLEMENTATION_AI.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/14_RISK_REGISTER.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/15_HANDOFF_CHECKLIST.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/16_GIT_AND_VERSION_CONTROL.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/17_OPENCODE_MODEL_ROUTING.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/18_TASK_PACKET_PROTOCOL.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/19_TASK_PACKET_TEMPLATE.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/20_PHASE_1_TASK_BACKLOG.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/21_REVIEW_PROTOCOL.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/22_FINAL_REVIEW_PROTOCOL.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/23_CONTEXT_ENGINEERING_AND_HANDOFF.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/24_DECISION_RECORDS.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/25_SPEC_SYNC_AND_HASH_POLICY.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/26_BOUNDARY_CHECK_POLICY.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/27_PHASE_ACCEPTANCE_CRITERIA.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/28_OPENCODE_CONFIG_GUIDE.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/29_PARALLELISM_POLICY.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/30_PHASE_2_TASK_BACKLOG.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/31_PHASE_3_TASK_BACKLOG.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/32_PHASE_4_TASK_BACKLOG.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation/33_PHASE_5_TASK_BACKLOG.md
++specs/nabla_complete_project_documentation_pack_v1/02_implementation_control_pack_opencode/nabla_implementation_control_pack_v4_1_2_opencode/implementation_pack.json
++specs/nabla_complete_project_documentation_pack_v1/COMBINED_MANIFEST.json
++specs/nabla_complete_project_documentation_pack_v1/FINAL_COMBINED_VALIDATION_REPORT.md
++specs/nabla_complete_project_documentation_pack_v1/README.md
++specs/nabla_complete_project_documentation_pack_v1/nabla_implementation_control_pack_v4_1_2_opencode.zip.sha256
++tsconfig.base.json
+diff --git a/reports/decisions/IDR-0001-audit-bundle-workflow.md b/reports/decisions/IDR-0001-audit-bundle-workflow.md
+new file mode 100644
+index 0000000..c240fa2
+--- /dev/null
++++ b/reports/decisions/IDR-0001-audit-bundle-workflow.md
+@@ -0,0 +1,27 @@
++# IDR-0001 Audit Bundle Workflow
++
++## Decision
++
++Use a text-only, git-derived audit bundle under `reports/audit/latest/` for external review.
++
++## Context
++
++Completed tasks need a review artifact that can be inspected directly from GitHub without uploading ZIP files or binaries.
++
++## Workflow
++
++- Run `pnpm audit:bundle -- --task <TASK_ID> --base <BASE_COMMIT>`.
++- The script writes only text artifacts to `reports/audit/latest/`.
++- `AUDIT_INDEX.md` explains the review order.
++- `audit.json` records task metadata, git state, commands, and raw URLs when the remote is GitHub.
++
++## Rationale
++
++- Keeps review artifacts simple and auditable.
++- Avoids binary snapshots for now.
++- Uses the repository history as the source of truth.
++
++## Consequences
++
++- External reviewers can inspect the bundle from GitHub directly.
++- The workflow stays lightweight and operational.
+diff --git a/scripts/create-audit-bundle.mjs b/scripts/create-audit-bundle.mjs
+new file mode 100644
+index 0000000..cafd9a9
+--- /dev/null
++++ b/scripts/create-audit-bundle.mjs
+@@ -0,0 +1,131 @@
++import { mkdir, readFile, writeFile } from "node:fs/promises";
++import { execFileSync } from "node:child_process";
++import path from "node:path";
++
++const cwd = process.cwd();
++const auditDir = path.join(cwd, "reports", "audit", "latest");
++const args = process.argv.slice(2);
++
++function getArg(name) {
++  const index = args.indexOf(name);
++  if (index === -1) return undefined;
++  return args[index + 1];
++}
++
++const taskId = getArg("--task");
++const base = getArg("--base");
++
++if (!taskId || !base) {
++  console.error("Usage: pnpm audit:bundle -- --task <TASK_ID> --base <BASE_COMMIT>");
++  process.exit(1);
++}
++
++function runGit(commandArgs) {
++  return execFileSync("git", commandArgs, { cwd, encoding: "utf8" }).trimEnd();
++}
++
++function safeRead(filePath) {
++  try {
++    return readFile(filePath, "utf8");
++  } catch {
++    return Promise.resolve(null);
++  }
++}
++
++function rawUrlFor(ref, relPath) {
++  const remote = runGit(["remote", "get-url", "origin"]);
++  if (!remote.includes("github.com")) return null;
++
++  const httpsMatch = remote.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/i);
++  const sshMatch = remote.match(/^git@github\.com:([^/]+)\/([^/]+?)(?:\.git)?$/i);
++  const match = httpsMatch ?? sshMatch;
++  if (!match) return null;
++
++  const owner = match[1];
++  const repo = match[2];
++  return `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${relPath}`;
++}
++
++async function main() {
++  await mkdir(auditDir, { recursive: true });
++
++  const branch = runGit(["branch", "--show-current"]);
++  const head = runGit(["rev-parse", "HEAD"]);
++  const status = runGit(["status", "--short"]);
++  const changedFiles = runGit(["diff", "--name-only", `${base}..HEAD`]);
++  const stat = runGit(["diff", "--stat", base, "HEAD"]);
++  const patch = runGit(["diff", base, "HEAD"]);
++  const nameOnly = runGit(["diff", "--name-only", base, "HEAD"]);
++  const log = runGit(["log", "--oneline", `${base}..HEAD`]);
++  const tree = runGit(["ls-tree", "-r", "--name-only", "HEAD"]);
++  const packageJson = await readFile(path.join(cwd, "package.json"), "utf8");
++  const progressReport = await safeRead(path.join(cwd, "reports", "IMPLEMENTATION_PROGRESS.md"));
++  const timestamp = new Date().toISOString();
++
++  const commandsUsed = [
++    "git branch --show-current",
++    "git rev-parse HEAD",
++    "git status --short",
++    `git diff --name-only ${base}..HEAD`,
++    `git diff --stat ${base} HEAD`,
++    `git diff ${base} HEAD`,
++    `git log --oneline ${base}..HEAD`,
++    "git ls-tree -r --name-only HEAD",
++    "git remote get-url origin"
++  ];
++
++  const rawUrls = {
++    AUDIT_INDEX_MD: rawUrlFor(branch, "reports/audit/latest/AUDIT_INDEX.md"),
++    audit_json: rawUrlFor(branch, "reports/audit/latest/audit.json"),
++    git_show_patch: rawUrlFor(branch, "reports/audit/latest/git-show.patch"),
++    git_show_name_only: rawUrlFor(branch, "reports/audit/latest/git-show-name-only.txt"),
++    git_status: rawUrlFor(branch, "reports/audit/latest/git-status.txt"),
++    git_log: rawUrlFor(branch, "reports/audit/latest/git-log.txt"),
++    git_branch: rawUrlFor(branch, "reports/audit/latest/git-branch.txt"),
++    git_show_stat: rawUrlFor(branch, "reports/audit/latest/git-show-stat.txt"),
++    package_json: rawUrlFor(branch, "reports/audit/latest/package-json.txt"),
++    progress_report: rawUrlFor(branch, "reports/audit/latest/progress-report.md")
++  };
++
++  const auditJson = {
++    taskId,
++    baseCommit: base,
++    headCommit: head,
++    currentBranch: branch,
++    timestamp,
++    gitStatus: status,
++    changedFiles: nameOnly ? nameOnly.split("\n") : [],
++    commandsUsed,
++    rawUrls
++  };
++
++  const auditIndex = `# Audit Bundle\n\nStart with this order:\n1. \`audit.json\` for task, branch, base, HEAD, and raw URLs.\n2. \`git-status.txt\` for working tree state.\n3. \`git-log.txt\` for the commit slice under review.\n4. \`git-show-name-only.txt\` and \`git-show.patch\` for the actual diff.\n5. \`repo-tree.txt\` and \`package-json.txt\` for repository context.\n\nThis bundle is text-only and is intended for review from GitHub without manual uploads.\n`;
++
++  const files = [
++    ["AUDIT_INDEX.md", auditIndex],
++    ["audit.json", JSON.stringify(auditJson, null, 2) + "\n"],
++    ["git-status.txt", status + "\n"],
++    ["git-branch.txt", branch + "\n"],
++    ["git-log.txt", log + "\n"],
++    ["git-show-stat.txt", stat + "\n"],
++    ["git-show-name-only.txt", nameOnly + "\n"],
++    ["git-show.patch", patch + "\n"],
++    ["repo-tree.txt", tree + "\n"],
++    ["package-json.txt", packageJson],
++  ];
++
++  if (progressReport !== null) {
++    files.push(["progress-report.md", await progressReport]);
++  }
++
++  for (const [name, content] of files) {
++    await writeFile(path.join(auditDir, name), content, "utf8");
++  }
++
++  console.log(`Audit bundle written to ${path.relative(cwd, auditDir)}`);
++}
++
++main().catch((error) => {
++  console.error(error instanceof Error ? error.message : String(error));
++  process.exit(1);
++});
