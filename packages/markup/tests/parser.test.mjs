@@ -29,8 +29,9 @@ test("parser returns a minimal paragraph document when no wiki link grammar appl
     type: "document",
     children: [
       {
-        type: "paragraph",
-        children: [{ type: "text", value: "# hello" }]
+        type: "heading",
+        depth: 1,
+        children: [{ type: "text", value: "hello" }]
       }
     ],
     diagnostics: []

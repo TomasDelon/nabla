@@ -1,5 +1,6 @@
-import type { MarkdownNode, NablaDocument, WikiLinkNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode } from "./ast.js";
 import { serializeWikiLink } from "./extensions/wiki-links.js";
+import { serializeTag } from "./extensions/tags.js";
 
 export type SerializeOptions = {
   lineEnding?: "lf" | "crlf";
@@ -21,6 +22,10 @@ function serializeInlineNode(node: MarkdownNode) {
     return serializeWikiLink(node as WikiLinkNode);
   }
 
+  if (node.type === "tag") {
+    return serializeTag(node as TagNode);
+  }
+
   return "";
 }
 
@@ -29,11 +34,27 @@ function serializeBlockNode(node: MarkdownNode) {
     return node.children.map((child) => serializeInlineNode(child as MarkdownNode)).join("");
   }
 
+  if (node.type === "heading" && typeof node.depth === "number") {
+    const content = (Array.isArray(node.children) ? node.children : [])
+      .map((child) => serializeInlineNode(child as MarkdownNode))
+      .join("");
+    return `${"#".repeat(node.depth)} ${content}`;
+  }
+
+  if (node.type === "foldableHeading") {
+    const foldNode = node as unknown as FoldableHeadingNode;
+    const marker = foldNode.rawMarker || "#v";
+    const content = (Array.isArray(foldNode.title) ? foldNode.title : [])
+      .map((child) => serializeInlineNode(child as MarkdownNode))
+      .join("");
+    return `${marker} ${content}`;
+  }
+
   return "";
 }
 
 export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
-  const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n\n");
+  const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n");
   const normalizedOutput = output === "" ? "" : `${output}\n`;
   return normalizeLineEnding(normalizedOutput, options.lineEnding);
 }

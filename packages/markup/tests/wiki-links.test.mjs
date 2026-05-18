@@ -17,6 +17,10 @@ const wikiFixtureIds = [
   "wiki-links/invalid-combined"
 ];
 
+const tagFixtureIds = [
+  "tags/basic"
+];
+
 let parserModulePromise;
 let serializerModulePromise;
 let fixturesModulePromise;
@@ -39,6 +43,189 @@ async function loadFixturesModule() {
   fixturesModulePromise ??= loadTsModule(fixturesModuleUrl);
   return fixturesModulePromise;
 }
+
+test("tag fixtures parse and serialize according to the checked-in contracts", async () => {
+  const { parse } = await loadParserModule();
+  const { serialize } = await loadSerializerModule();
+  const {
+    compareFixtureAst,
+    compareFixtureDiagnostics,
+    compareFixtureOutput,
+    loadParserFixture
+  } = await loadFixturesModule();
+
+  for (const fixtureId of tagFixtureIds) {
+    const fixture = await loadParserFixture(fixtureId);
+    const parsed = parse(fixture.input);
+
+    compareFixtureAst(parsed, fixture.ast);
+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
+    compareFixtureOutput(serialize(parsed), fixture.output);
+  }
+});
+
+test("tag parser handles single and nested tag values", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(parse("#topic"), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "tag",
+            value: "topic",
+            segments: ["topic"],
+            raw: "#topic"
+          }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+
+  assert.deepEqual(parse("#math/analyse"), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "tag",
+            value: "math/analyse",
+            segments: ["math", "analyse"],
+            raw: "#math/analyse"
+          }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+
+  assert.deepEqual(parse("#a/b/c/d"), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "tag",
+            value: "a/b/c/d",
+            segments: ["a", "b", "c", "d"],
+            raw: "#a/b/c/d"
+          }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+});
+
+test("tag parser handles tags with underscores and digits", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(parse("#tag_name_123"), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "tag",
+            value: "tag_name_123",
+            segments: ["tag_name_123"],
+            raw: "#tag_name_123"
+          }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+
+  assert.deepEqual(parse("#99_problems"), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "tag",
+            value: "99_problems",
+            segments: ["99_problems"],
+            raw: "#99_problems"
+          }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+});
+
+test("tag parser leaves hash followed by space as literal text", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(parse("see # notag"), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [{ type: "text", value: "see # notag" }]
+      }
+    ],
+    diagnostics: []
+  });
+});
+
+test("tag parser leaves syntax inside protected regions literal", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(parse("See `#tag` and <span>#tag</span>."), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "text",
+            value: "See `#tag` and <span>#tag</span>."
+          }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+});
+
+test("tag and wiki link interop work correctly", async () => {
+  const { parse } = await loadParserModule();
+
+  assert.deepEqual(parse("#tag and [[Wiki]] link"), {
+    type: "document",
+    children: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            type: "tag",
+            value: "tag",
+            segments: ["tag"],
+            raw: "#tag"
+          },
+          { type: "text", value: " and " },
+          {
+            type: "wikiLink",
+            target: "Wiki",
+            syntax: "canonical",
+            raw: "[[Wiki]]"
+          },
+          { type: "text", value: " link" }
+        ]
+      }
+    ],
+    diagnostics: []
+  });
+});
 
 test("wiki link fixtures parse and serialize according to the checked-in contracts", async () => {
   const { parse } = await loadParserModule();
