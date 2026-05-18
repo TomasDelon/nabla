@@ -1,4 +1,4 @@
-import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState } from "./ast.js";
+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic } from "./ast.js";
 import type { ParseMode } from "./parse-mode.js";
 import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
 import { parseWikiLink } from "./extensions/wiki-links.js";
@@ -6,6 +6,7 @@ import { parseTag } from "./extensions/tags.js";
 import { parseHighlight } from "./extensions/highlights.js";
 import { parsePrivateCommentBlock } from "./extensions/comments.js";
 import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
+import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
 
 export type ParseOptions = {
   mode?: ParseMode;
@@ -57,7 +58,8 @@ type BlockSpec =
   | { kind: "paragraph"; text: string }
   | { kind: "privateComment"; value: string; raw: string }
   | { kind: "html"; value: string }
-  | { kind: "listItem"; taskState?: TaskState; text: string };
+  | { kind: "listItem"; taskState?: TaskState; text: string }
+  | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic };
 
 function parseBlocks(source: string): BlockSpec[] {
   const lines = source.split("\n");
@@ -73,6 +75,29 @@ function parseBlocks(source: string): BlockSpec[] {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+
+    if (i === 0 && line === "---") {
+      const fmResult = parseFrontmatterBlock(lines, 0);
+      if (fmResult !== null) {
+        const isInvalid = fmResult.data === null;
+        blocks.push({
+          kind: "frontmatter",
+          raw: fmResult.raw,
+          data: fmResult.data,
+          ...(isInvalid
+            ? {
+                diagnostic: {
+                  severity: "warning" as const,
+                  code: "NABLA_FRONTMATTER_INVALID",
+                  message: "Frontmatter could not be parsed."
+                }
+              }
+            : {})
+        });
+        i = fmResult.endIndex;
+        continue;
+      }
+    }
 
     const fenceMatch = line.match(FENCE_PATTERN);
     if (fenceMatch) {
@@ -361,6 +386,15 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
         type: "html",
         value: block.value
       } as MarkdownNode);
+    } else if (block.kind === "frontmatter") {
+      if (block.diagnostic) {
+        allDiagnostics.push(block.diagnostic);
+      }
+      docChildren.push({
+        type: "frontmatter",
+        raw: block.raw,
+        data: block.data
+      } as FrontmatterNode);
     } else if (block.kind === "listItem") {
       const items: Array<{ taskState?: TaskState; text: string }> = [
         { taskState: block.taskState, text: block.text }

@@ -34,12 +34,28 @@ export async function loadTsModule(moduleUrl, cache = new Map()) {
 
   let rewritten = transpiled;
   const localSpecifiers = new Set();
+  const bareSpecifiers = new Set();
 
-  for (const match of transpiled.matchAll(/(?:from\s+|import\()"(\.{1,2}\/[^"\n]+)"/g)) {
-    localSpecifiers.add(match[1]);
+  for (const match of transpiled.matchAll(/(?:from\s+|import\()"([^"\n]+)"/g)) {
+    const specifier = match[1];
+    if (specifier.startsWith(".")) {
+      localSpecifiers.add(specifier);
+    } else {
+      bareSpecifiers.add(specifier);
+    }
   }
-  for (const match of transpiled.matchAll(/(?:from\s+|import\()'(\.{1,2}\/[^'\n]+)'/g)) {
-    localSpecifiers.add(match[1]);
+  for (const match of transpiled.matchAll(/(?:from\s+|import\()'([^'\n]+)'/g)) {
+    const specifier = match[1];
+    if (specifier.startsWith(".")) {
+      localSpecifiers.add(specifier);
+    } else {
+      bareSpecifiers.add(specifier);
+    }
+  }
+
+  for (const specifier of bareSpecifiers) {
+    const resolvedUrl = await import.meta.resolve(specifier, moduleUrl.href);
+    rewritten = rewritten.replaceAll(specifier, resolvedUrl);
   }
 
   for (const specifier of localSpecifiers) {
