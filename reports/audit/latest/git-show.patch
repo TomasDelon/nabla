@@ -10,167 +10,30 @@ index 52a6b79..a82d592 100644
      "check:boundaries": "node scripts/check-boundaries.mjs",
      "lint": "node scripts/report-unavailable.mjs lint --silent \"Lint tooling is not bootstrapped in P1-001\"",
      "test": "node --test packages/markup/tests/**/*.test.mjs",
-diff --git a/packages/markup/src/diagnostics.ts b/packages/markup/src/diagnostics.ts
-new file mode 100644
-index 0000000..20430ad
---- /dev/null
-+++ b/packages/markup/src/diagnostics.ts
-@@ -0,0 +1,66 @@
-+import type { DiagnosticSeverity } from "./ast.js";
-+
-+export const DIAGNOSTIC_CODES = {
-+  FRONTMATTER_INVALID: "NABLA_FRONTMATTER_INVALID",
-+  LINK_MISSING_TARGET: "NABLA_LINK_MISSING_TARGET",
-+  LINK_AMBIGUOUS_TARGET: "NABLA_LINK_AMBIGUOUS_TARGET",
-+  WIKI_LINK_INVALID_TARGET: "NABLA_WIKI_LINK_INVALID_TARGET",
-+  HEADING_MISSING_TARGET: "NABLA_HEADING_MISSING_TARGET",
-+  BLOCK_MISSING_TARGET: "NABLA_BLOCK_MISSING_TARGET",
-+  BLOCK_ID_INVALID: "NABLA_BLOCK_ID_INVALID",
-+  BLOCK_ID_INVALID_POSITION: "NABLA_BLOCK_ID_INVALID_POSITION",
-+  BLOCK_ID_DUPLICATE: "NABLA_BLOCK_ID_DUPLICATE",
-+  TOOLTIP_EMPTY_TARGET: "NABLA_TOOLTIP_EMPTY_TARGET",
-+  TOOLTIP_UNCLOSED: "NABLA_TOOLTIP_UNCLOSED",
-+  HIGHLIGHT_UNCLOSED: "NABLA_HIGHLIGHT_UNCLOSED",
-+  HIGHLIGHT_INVALID_COLOR: "NABLA_HIGHLIGHT_INVALID_COLOR",
-+  CALLOUT_INVALID_TYPE: "NABLA_CALLOUT_INVALID_TYPE",
-+  TOGGLE_MISSING_TITLE: "NABLA_TOGGLE_MISSING_TITLE",
-+  TRANSCLUSION_INLINE_UNSUPPORTED: "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
-+  TRANSCLUSION_MISSING_TARGET: "NABLA_TRANSCLUSION_MISSING_TARGET",
-+  TRANSCLUSION_CYCLE: "NABLA_TRANSCLUSION_CYCLE",
-+  TRANSCLUSION_DEPTH_LIMIT: "NABLA_TRANSCLUSION_DEPTH_LIMIT",
-+  EMOJI_UNKNOWN: "NABLA_EMOJI_UNKNOWN",
-+  FOOTNOTE_MISSING_DEFINITION: "NABLA_FOOTNOTE_MISSING_DEFINITION",
-+  FOOTNOTE_UNUSED_DEFINITION: "NABLA_FOOTNOTE_UNUSED_DEFINITION",
-+  EDITOR_EXPORT_LOSS: "NABLA_EDITOR_EXPORT_LOSS"
-+} as const;
-+
-+export type DiagnosticCode =
-+  (typeof DIAGNOSTIC_CODES)[keyof typeof DIAGNOSTIC_CODES];
-+
-+export type DiagnosticCatalogEntry = {
-+  code: DiagnosticCode;
-+  severity: DiagnosticSeverity;
-+};
-+
-+export const DIAGNOSTIC_CATALOG = [
-+  { code: DIAGNOSTIC_CODES.FRONTMATTER_INVALID, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.LINK_MISSING_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.LINK_AMBIGUOUS_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.WIKI_LINK_INVALID_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.HEADING_MISSING_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.BLOCK_MISSING_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.BLOCK_ID_INVALID, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.BLOCK_ID_INVALID_POSITION, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.BLOCK_ID_DUPLICATE, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.TOOLTIP_EMPTY_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.TOOLTIP_UNCLOSED, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.HIGHLIGHT_UNCLOSED, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.HIGHLIGHT_INVALID_COLOR, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.CALLOUT_INVALID_TYPE, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.TOGGLE_MISSING_TITLE, severity: "info" },
-+  {
-+    code: DIAGNOSTIC_CODES.TRANSCLUSION_INLINE_UNSUPPORTED,
-+    severity: "warning"
-+  },
-+  { code: DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.TRANSCLUSION_CYCLE, severity: "error" },
-+  { code: DIAGNOSTIC_CODES.TRANSCLUSION_DEPTH_LIMIT, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.EMOJI_UNKNOWN, severity: "info" },
-+  { code: DIAGNOSTIC_CODES.FOOTNOTE_MISSING_DEFINITION, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.FOOTNOTE_UNUSED_DEFINITION, severity: "info" },
-+  { code: DIAGNOSTIC_CODES.EDITOR_EXPORT_LOSS, severity: "error" }
-+] as const satisfies readonly DiagnosticCatalogEntry[];
-+
-+export type DiagnosticCatalog = typeof DIAGNOSTIC_CATALOG;
-diff --git a/packages/markup/src/index.ts b/packages/markup/src/index.ts
-index b7b3fa9..b0650db 100644
---- a/packages/markup/src/index.ts
-+++ b/packages/markup/src/index.ts
-@@ -31,3 +31,12 @@ export type {
-   EmojiShortcodeNode,
- } from "./ast.js";
- export type { ParseMode } from "./parse-mode.js";
-+export {
-+  DIAGNOSTIC_CATALOG,
-+  DIAGNOSTIC_CODES
-+} from "./diagnostics.js";
-+export type {
-+  DiagnosticCatalog,
-+  DiagnosticCatalogEntry,
-+  DiagnosticCode
-+} from "./diagnostics.js";
-diff --git a/packages/markup/tests/diagnostics.test.mjs b/packages/markup/tests/diagnostics.test.mjs
-new file mode 100644
-index 0000000..3eb82fd
---- /dev/null
-+++ b/packages/markup/tests/diagnostics.test.mjs
-@@ -0,0 +1,41 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+import { readFile } from "node:fs/promises";
-+
-+test("markup package exports diagnostic constants", async () => {
-+  const source = await readFile(
-+    new URL("../src/diagnostics.ts", import.meta.url),
-+    "utf8"
-+  );
-+
-+  for (const code of [
-+    "NABLA_FRONTMATTER_INVALID",
-+    "NABLA_LINK_MISSING_TARGET",
-+    "NABLA_LINK_AMBIGUOUS_TARGET",
-+    "NABLA_WIKI_LINK_INVALID_TARGET",
-+    "NABLA_HEADING_MISSING_TARGET",
-+    "NABLA_BLOCK_MISSING_TARGET",
-+    "NABLA_BLOCK_ID_INVALID",
-+    "NABLA_BLOCK_ID_INVALID_POSITION",
-+    "NABLA_BLOCK_ID_DUPLICATE",
-+    "NABLA_TOOLTIP_EMPTY_TARGET",
-+    "NABLA_TOOLTIP_UNCLOSED",
-+    "NABLA_HIGHLIGHT_UNCLOSED",
-+    "NABLA_HIGHLIGHT_INVALID_COLOR",
-+    "NABLA_CALLOUT_INVALID_TYPE",
-+    "NABLA_TOGGLE_MISSING_TITLE",
-+    "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
-+    "NABLA_TRANSCLUSION_MISSING_TARGET",
-+    "NABLA_TRANSCLUSION_CYCLE",
-+    "NABLA_TRANSCLUSION_DEPTH_LIMIT",
-+    "NABLA_EMOJI_UNKNOWN",
-+    "NABLA_FOOTNOTE_MISSING_DEFINITION",
-+    "NABLA_FOOTNOTE_UNUSED_DEFINITION",
-+    "NABLA_EDITOR_EXPORT_LOSS"
-+  ]) {
-+    assert.match(source, new RegExp(code));
-+  }
-+
-+  assert.match(source, /export const DIAGNOSTIC_CODES = \{/);
-+  assert.match(source, /export const DIAGNOSTIC_CATALOG = \[/);
-+});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index dcce861..54a12c0 100644
+index a7b7003..54a12c0 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
  
  ## Task ID
  
--`P1-003 @nabla/markup AST types`
+-`P1-004 diagnostic constants`
 +`INFRA-002-create-audit-bundle-script`
  
  ## Branch
  
-@@ -14,17 +14,17 @@ Phase 1 - `@nabla/markup`
+@@ -14,16 +14,17 @@ Phase 1 - `@nabla/markup`
  
  ## Status
  
--P1-003 AST type definitions implemented.
+-P1-004 diagnostic constants implemented.
 +Audit bundle workflow implemented.
  
  ## Scope Guardrails
  
  - No parser implementation
  - No serializer implementation
--- No diagnostics catalog implementation
 -- No fixture loader implementation
 +- No AST implementation
 +- No diagnostics implementation
@@ -181,16 +44,7 @@ index dcce861..54a12c0 100644
  
  ## Files Created
  
-@@ -37,13 +37,18 @@ P1-003 AST type definitions implemented.
- - `packages/markup/tsconfig.json`
- - `packages/markup/src/ast.ts`
- - `packages/markup/src/index.ts`
-+- `packages/markup/src/diagnostics.ts`
- - `packages/markup/src/parse-mode.ts`
-+- `packages/markup/tests/diagnostics.test.mjs`
- - `packages/markup/tests/ast-surface.test.mjs`
- - `packages/markup/tests/bootstrap.test.mjs`
- - `scripts/check-boundaries.mjs`
+@@ -45,6 +46,9 @@ P1-004 diagnostic constants implemented.
  - `scripts/report-unavailable.mjs`
  - `scripts/validate-fixtures.mjs`
  - `scripts/validate-spec-version.mjs`
@@ -200,21 +54,7 @@ index dcce861..54a12c0 100644
  - `pnpm-lock.yaml`
  
  ## Files Verified
-@@ -53,17 +58,19 @@ P1-003 AST type definitions implemented.
- - `MarkdownNode` remains mdast-compatible via structural shape and index signature
- - `data.nablaTaskState` and `data.nablaBlockId` are represented
- - `ParseMode` is represented without adding parser runtime behavior
-+- Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
- 
- ## Verification Summary
- 
--- `pnpm test` passed (2 tests)
--- `pnpm test:markup` passed (2 tests)
-+- `pnpm test` passed (3 tests)
-+- `pnpm test:markup` passed (3 tests)
- - `pnpm typecheck` passed
- - `pnpm build` passed
- - `pnpm validate:fixtures` passed
+@@ -66,6 +70,7 @@ P1-004 diagnostic constants implemented.
  - `pnpm validate:spec-version` passed
  - `pnpm check:boundaries` passed
  - `pnpm lint` passed via bootstrap placeholder
@@ -222,12 +62,6 @@ index dcce861..54a12c0 100644
  
  ## Active Blockers
  
-@@ -71,4 +78,4 @@ None.
- 
- ## Next Recommended Task
- 
--P1-004 diagnostic constants
-+P1-005 fixture loader
 diff --git a/reports/audit/latest/AUDIT_INDEX.md b/reports/audit/latest/AUDIT_INDEX.md
 new file mode 100644
 index 0000000..c9bf491
