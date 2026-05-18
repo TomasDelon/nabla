@@ -14,9 +14,10 @@ function getArg(name) {
 
 const taskId = getArg("--task");
 const base = getArg("--base");
+const requestedHead = getArg("--head");
 
 if (!taskId || !base) {
-  console.error("Usage: pnpm audit:bundle -- --task <TASK_ID> --base <BASE_COMMIT>");
+  console.error("Usage: pnpm audit:bundle -- --task <TASK_ID> --base <BASE_COMMIT> [--head <HEAD_COMMIT>]");
   process.exit(1);
 }
 
@@ -50,14 +51,15 @@ async function main() {
   await mkdir(auditDir, { recursive: true });
 
   const branch = runGit(["branch", "--show-current"]);
-  const head = runGit(["rev-parse", "HEAD"]);
-  const status = runGit(["status", "--short"]);
-  const changedFiles = runGit(["diff", "--name-only", `${base}..HEAD`]);
-  const stat = runGit(["diff", "--stat", base, "HEAD"]);
-  const patch = runGit(["diff", base, "HEAD"]);
-  const nameOnly = runGit(["diff", "--name-only", base, "HEAD"]);
-  const log = runGit(["log", "--oneline", `${base}..HEAD`]);
-  const tree = runGit(["ls-tree", "-r", "--name-only", "HEAD"]);
+  const currentHead = runGit(["rev-parse", "HEAD"]);
+  const head = requestedHead ?? currentHead;
+  const currentWorkingTreeStatus = runGit(["status", "--short"]);
+  const reviewedRange = `${base}..${head}`;
+  const stat = runGit(["diff", "--stat", reviewedRange]);
+  const patch = runGit(["diff", reviewedRange]);
+  const nameOnly = runGit(["diff", "--name-only", reviewedRange]);
+  const log = runGit(["log", "--oneline", reviewedRange]);
+  const tree = runGit(["ls-tree", "-r", "--name-only", head]);
   const packageJson = await readFile(path.join(cwd, "package.json"), "utf8");
   const progressReport = await safeRead(path.join(cwd, "reports", "IMPLEMENTATION_PROGRESS.md"));
   const timestamp = new Date().toISOString();
@@ -66,11 +68,11 @@ async function main() {
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    `git diff --name-only ${base}..HEAD`,
-    `git diff --stat ${base} HEAD`,
-    `git diff ${base} HEAD`,
-    `git log --oneline ${base}..HEAD`,
-    "git ls-tree -r --name-only HEAD",
+    `git diff --name-only ${reviewedRange}`,
+    `git diff --stat ${reviewedRange}`,
+    `git diff ${reviewedRange}`,
+    `git log --oneline ${reviewedRange}`,
+    `git ls-tree -r --name-only ${head}`,
     "git remote get-url origin"
   ];
 
@@ -93,18 +95,19 @@ async function main() {
     headCommit: head,
     currentBranch: branch,
     timestamp,
-    gitStatus: status,
+    currentHead,
+    currentWorkingTreeStatus,
     changedFiles: nameOnly ? nameOnly.split("\n") : [],
     commandsUsed,
     rawUrls
   };
 
-  const auditIndex = `# Audit Bundle\n\nStart with this order:\n1. \`audit.json\` for task, branch, base, HEAD, and raw URLs.\n2. \`git-status.txt\` for working tree state.\n3. \`git-log.txt\` for the commit slice under review.\n4. \`git-show-name-only.txt\` and \`git-show.patch\` for the actual diff.\n5. \`repo-tree.txt\` and \`package-json.txt\` for repository context.\n\nThis bundle is text-only and is intended for review from GitHub without manual uploads.\n`;
+  const auditIndex = `# Audit Bundle\n\nReviewed range: \`${reviewedRange}\`\nCurrent branch: \`${branch}\`\nCurrent HEAD at generation time: \`${currentHead}\`\n\nStart with this order:\n1. \`audit.json\` for task, branch, reviewed range, current HEAD, working tree status, and raw URLs.\n2. \`git-status.txt\` for current working tree state at generation time.\n3. \`git-log.txt\` for the commit slice under review.\n4. \`git-show-name-only.txt\` and \`git-show.patch\` for the actual reviewed diff.\n5. \`repo-tree.txt\` and \`package-json.txt\` for repository context.\n\nThis bundle is text-only and is intended for review from GitHub without manual uploads.\n`;
 
   const files = [
     ["AUDIT_INDEX.md", auditIndex],
     ["audit.json", JSON.stringify(auditJson, null, 2) + "\n"],
-    ["git-status.txt", status + "\n"],
+    ["git-status.txt", currentWorkingTreeStatus + "\n"],
     ["git-branch.txt", branch + "\n"],
     ["git-log.txt", log + "\n"],
     ["git-show-stat.txt", stat + "\n"],

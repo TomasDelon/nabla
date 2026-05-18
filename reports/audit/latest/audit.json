@@ -3,8 +3,9 @@
   "baseCommit": "3f5c1e5",
   "headCommit": "9276d2117d9eb8636ff3bce2f6df4fad133a0e53",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-18T20:14:14.845Z",
-  "gitStatus": "",
+  "timestamp": "2026-05-18T20:24:21.780Z",
+  "currentHead": "3714f0057c83bdb9cf2d51a43649a343735b8c60",
+  "currentWorkingTreeStatus": " M reports/IMPLEMENTATION_PROGRESS.md\n M scripts/create-audit-bundle.mjs",
   "changedFiles": [
     "package.json",
     "packages/markup/src/diagnostics.ts",
@@ -29,11 +30,11 @@
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 3f5c1e5..HEAD",
-    "git diff --stat 3f5c1e5 HEAD",
-    "git diff 3f5c1e5 HEAD",
-    "git log --oneline 3f5c1e5..HEAD",
-    "git ls-tree -r --name-only HEAD",
+    "git diff --name-only 3f5c1e5..9276d2117d9eb8636ff3bce2f6df4fad133a0e53",
+    "git diff --stat 3f5c1e5..9276d2117d9eb8636ff3bce2f6df4fad133a0e53",
+    "git diff 3f5c1e5..9276d2117d9eb8636ff3bce2f6df4fad133a0e53",
+    "git log --oneline 3f5c1e5..9276d2117d9eb8636ff3bce2f6df4fad133a0e53",
+    "git ls-tree -r --name-only 9276d2117d9eb8636ff3bce2f6df4fad133a0e53",
     "git remote get-url origin"
   ],
   "rawUrls": {

@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`INFRA-002-create-audit-bundle-script`
+`INFRA-002B-support-explicit-audit-head`
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Audit bundle workflow implemented.
+Audit bundle workflow updated to support an explicit reviewed head commit.
 
 ## Scope Guardrails
 
@@ -70,7 +70,7 @@ Audit bundle workflow implemented.
 - `pnpm validate:spec-version` passed
 - `pnpm check:boundaries` passed
 - `pnpm lint` passed via bootstrap placeholder
-- `pnpm audit:bundle -- --task INFRA-002 --base 3f5c1e5` generated text-only audit artifacts
+- `pnpm audit:bundle -- --task INFRA-002 --base 3f5c1e5 --head 9276d2117d9eb8636ff3bce2f6df4fad133a0e53` generates a text-only audit bundle for the explicit INFRA-002 review range
 
 ## Active Blockers
 
@@ -78,4 +78,4 @@ None.
 
 ## Next Recommended Task
 
-P1-005 fixture loader
+Audit `fdfe884` separately as P1-004
