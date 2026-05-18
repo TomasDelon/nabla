@@ -1,4 +1,4 @@
-import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode, CalloutNode, ToggleNode, FoldState, SyntaxStatus } from "./ast.js";
 import type { ParseMode } from "./parse-mode.js";
 import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
 import { parseWikiLink } from "./extensions/wiki-links.js";
@@ -8,6 +8,7 @@ import { parsePrivateCommentBlock } from "./extensions/comments.js";
 import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
 import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
 import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefinition, collectFootnoteIds, collectFootnoteDiagnostics } from "./extensions/footnotes.js";
+import { parseCalloutMarker, parseToggleMarker, collectTabIndentedChildren, collectCompatibleChildren } from "./extensions/callouts.js";
 
 export type ParseOptions = {
   mode?: ParseMode;
@@ -62,7 +63,9 @@ type BlockSpec =
   | { kind: "listItem"; taskState?: TaskState; text: string }
   | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic }
   | { kind: "thematicBreak" }
-  | { kind: "footnoteDefinition"; id: string; content: string; raw: string };
+  | { kind: "footnoteDefinition"; id: string; content: string; raw: string }
+  | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string }
+  | { kind: "toggle"; foldState: FoldState; title: string; rawMarker: string; childContent: string };
 
 function parseBlocks(source: string): BlockSpec[] {
   const lines = source.split("\n");
@@ -199,6 +202,54 @@ function parseBlocks(source: string): BlockSpec[] {
     if (fnDefMatch !== null) {
       flushParagraph();
       blocks.push({ kind: "footnoteDefinition", id: fnDefMatch.id, content: fnDefMatch.content, raw: fnDefMatch.raw });
+      continue;
+    }
+
+    const calloutMarker = parseCalloutMarker(line);
+    if (calloutMarker !== null) {
+      flushParagraph();
+
+      if (calloutMarker.syntax === "compatible") {
+        const { childLines, endIndex } = collectCompatibleChildren(lines, i + 1);
+        blocks.push({
+          kind: "callout",
+          calloutType: calloutMarker.calloutType,
+          foldState: calloutMarker.foldState,
+          title: calloutMarker.title,
+          syntax: calloutMarker.syntax,
+          rawMarker: calloutMarker.rawMarker,
+          childContent: childLines.join("\n")
+        });
+        i = endIndex;
+      } else {
+        const { childLines, endIndex } = collectTabIndentedChildren(lines, i + 1);
+        blocks.push({
+          kind: "callout",
+          calloutType: calloutMarker.calloutType,
+          foldState: calloutMarker.foldState,
+          title: calloutMarker.title,
+          syntax: calloutMarker.syntax,
+          rawMarker: calloutMarker.rawMarker,
+          childContent: childLines.join("\n")
+        });
+        i = endIndex;
+      }
+
+      continue;
+    }
+
+    const toggleMarker = parseToggleMarker(line);
+    if (toggleMarker !== null) {
+      flushParagraph();
+      const { childLines, endIndex } = collectTabIndentedChildren(lines, i + 1);
+      blocks.push({
+        kind: "toggle",
+        foldState: toggleMarker.foldState,
+        title: toggleMarker.title,
+        rawMarker: toggleMarker.rawMarker,
+        childContent: childLines.join("\n")
+      });
+      i = endIndex;
       continue;
     }
 
@@ -464,6 +515,46 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
           ]
         }))
       } as MarkdownNode);
+    } else if (block.kind === "callout") {
+      const titleDoc = parse(block.title);
+      const titleChildren = titleDoc.children.length === 1 && titleDoc.children[0].type === "paragraph"
+        ? (titleDoc.children[0] as MarkdownNode).children ?? []
+        : [];
+      const childDoc = block.childContent !== "" ? parse(block.childContent) : null;
+      allDiagnostics.push(...titleDoc.diagnostics);
+      if (childDoc) {
+        allDiagnostics.push(...childDoc.diagnostics);
+      }
+
+      const calloutNode: CalloutNode = {
+        type: "callout",
+        calloutType: block.calloutType,
+        title: titleChildren as import("./ast.js").NablaInlineNode[],
+        ...(block.foldState ? { foldState: block.foldState } : {}),
+        children: childDoc ? (childDoc.children as Array<MarkdownNode | NablaBlockNode>) : [],
+        syntax: block.syntax,
+        rawMarker: block.rawMarker
+      };
+
+      docChildren.push(calloutNode as unknown as NablaBlockNode);
+    } else if (block.kind === "toggle") {
+      const titleDoc = parse(block.title);
+      const titleChildren = titleDoc.children.length === 1 && titleDoc.children[0].type === "paragraph"
+        ? (titleDoc.children[0] as MarkdownNode).children ?? []
+        : [];
+      const childDoc = block.childContent !== "" ? parse(block.childContent) : null;
+      allDiagnostics.push(...titleDoc.diagnostics);
+      if (childDoc) {
+        allDiagnostics.push(...childDoc.diagnostics);
+      }
+
+      docChildren.push({
+        type: "toggle",
+        title: titleChildren as import("./ast.js").NablaInlineNode[],
+        foldState: block.foldState,
+        children: childDoc ? (childDoc.children as Array<MarkdownNode | NablaBlockNode>) : [],
+        rawMarker: block.rawMarker
+      } as ToggleNode);
     }
   }
 
