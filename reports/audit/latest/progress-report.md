@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`INFRA-002B-support-explicit-audit-head`
+`P1-005 fixture loader`
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Audit bundle workflow updated to support an explicit reviewed head commit.
+Fixture loading utilities implemented for parser fixtures and workspace fixture metadata.
 
 ## Scope Guardrails
 
@@ -38,8 +38,10 @@ Audit bundle workflow updated to support an explicit reviewed head commit.
 - `packages/markup/src/ast.ts`
 - `packages/markup/src/index.ts`
 - `packages/markup/src/diagnostics.ts`
+- `packages/markup/src/fixtures.ts`
 - `packages/markup/src/parse-mode.ts`
 - `packages/markup/tests/diagnostics.test.mjs`
+- `packages/markup/tests/fixtures.test.mjs`
 - `packages/markup/tests/ast-surface.test.mjs`
 - `packages/markup/tests/bootstrap.test.mjs`
 - `scripts/check-boundaries.mjs`
@@ -59,18 +61,22 @@ Audit bundle workflow updated to support an explicit reviewed head commit.
 - `data.nablaTaskState` and `data.nablaBlockId` are represented
 - `ParseMode` is represented without adding parser runtime behavior
 - Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
+- Fixture loader resolves the canonical spec-pack fixture root without modifying fixtures
+- Parser fixtures load `input.md`, `ast.json`, `output.md`, and `diagnostics.json`
+- Workspace fixtures are detected as metadata only, without workspace implementation
+- JSON fixture parse failures report the source file path clearly
 
 ## Verification Summary
 
-- `pnpm test` passed (3 tests)
-- `pnpm test:markup` passed (3 tests)
+- `pnpm test` passed (6 tests)
+- `pnpm test:markup` passed (6 tests)
 - `pnpm typecheck` passed
 - `pnpm build` passed
 - `pnpm validate:fixtures` passed
 - `pnpm validate:spec-version` passed
 - `pnpm check:boundaries` passed
 - `pnpm lint` passed via bootstrap placeholder
-- `pnpm audit:bundle -- --task INFRA-002 --base 3f5c1e5 --head 9276d2117d9eb8636ff3bce2f6df4fad133a0e53` generates a text-only audit bundle for the explicit INFRA-002 review range
+- `pnpm audit:bundle -- --task P1-005 --base 5493de5 --head <implementation-commit>` will generate a text-only audit bundle for the fixture loader task
 
 ## Active Blockers
 
@@ -78,4 +84,4 @@ None.
 
 ## Next Recommended Task
 
-Audit `fdfe884` separately as P1-004
+P1-006 fixture runner

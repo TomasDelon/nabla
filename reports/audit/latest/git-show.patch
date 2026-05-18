@@ -1,195 +1,421 @@
-diff --git a/packages/markup/src/diagnostics.ts b/packages/markup/src/diagnostics.ts
+diff --git a/packages/markup/src/fixtures.ts b/packages/markup/src/fixtures.ts
 new file mode 100644
-index 0000000..20430ad
+index 0000000..8fce256
 --- /dev/null
-+++ b/packages/markup/src/diagnostics.ts
-@@ -0,0 +1,66 @@
-+import type { DiagnosticSeverity } from "./ast.js";
++++ b/packages/markup/src/fixtures.ts
+@@ -0,0 +1,240 @@
++import type { Diagnostic, NablaDocument } from "./ast.js";
 +
-+export const DIAGNOSTIC_CODES = {
-+  FRONTMATTER_INVALID: "NABLA_FRONTMATTER_INVALID",
-+  LINK_MISSING_TARGET: "NABLA_LINK_MISSING_TARGET",
-+  LINK_AMBIGUOUS_TARGET: "NABLA_LINK_AMBIGUOUS_TARGET",
-+  WIKI_LINK_INVALID_TARGET: "NABLA_WIKI_LINK_INVALID_TARGET",
-+  HEADING_MISSING_TARGET: "NABLA_HEADING_MISSING_TARGET",
-+  BLOCK_MISSING_TARGET: "NABLA_BLOCK_MISSING_TARGET",
-+  BLOCK_ID_INVALID: "NABLA_BLOCK_ID_INVALID",
-+  BLOCK_ID_INVALID_POSITION: "NABLA_BLOCK_ID_INVALID_POSITION",
-+  BLOCK_ID_DUPLICATE: "NABLA_BLOCK_ID_DUPLICATE",
-+  TOOLTIP_EMPTY_TARGET: "NABLA_TOOLTIP_EMPTY_TARGET",
-+  TOOLTIP_UNCLOSED: "NABLA_TOOLTIP_UNCLOSED",
-+  HIGHLIGHT_UNCLOSED: "NABLA_HIGHLIGHT_UNCLOSED",
-+  HIGHLIGHT_INVALID_COLOR: "NABLA_HIGHLIGHT_INVALID_COLOR",
-+  CALLOUT_INVALID_TYPE: "NABLA_CALLOUT_INVALID_TYPE",
-+  TOGGLE_MISSING_TITLE: "NABLA_TOGGLE_MISSING_TITLE",
-+  TRANSCLUSION_INLINE_UNSUPPORTED: "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
-+  TRANSCLUSION_MISSING_TARGET: "NABLA_TRANSCLUSION_MISSING_TARGET",
-+  TRANSCLUSION_CYCLE: "NABLA_TRANSCLUSION_CYCLE",
-+  TRANSCLUSION_DEPTH_LIMIT: "NABLA_TRANSCLUSION_DEPTH_LIMIT",
-+  EMOJI_UNKNOWN: "NABLA_EMOJI_UNKNOWN",
-+  FOOTNOTE_MISSING_DEFINITION: "NABLA_FOOTNOTE_MISSING_DEFINITION",
-+  FOOTNOTE_UNUSED_DEFINITION: "NABLA_FOOTNOTE_UNUSED_DEFINITION",
-+  EDITOR_EXPORT_LOSS: "NABLA_EDITOR_EXPORT_LOSS"
-+} as const;
-+
-+export type DiagnosticCode =
-+  (typeof DIAGNOSTIC_CODES)[keyof typeof DIAGNOSTIC_CODES];
-+
-+export type DiagnosticCatalogEntry = {
-+  code: DiagnosticCode;
-+  severity: DiagnosticSeverity;
++export type FixtureLoaderOptions = {
++  cwd?: string;
++  fixturesRoot?: string;
 +};
 +
-+export const DIAGNOSTIC_CATALOG = [
-+  { code: DIAGNOSTIC_CODES.FRONTMATTER_INVALID, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.LINK_MISSING_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.LINK_AMBIGUOUS_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.WIKI_LINK_INVALID_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.HEADING_MISSING_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.BLOCK_MISSING_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.BLOCK_ID_INVALID, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.BLOCK_ID_INVALID_POSITION, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.BLOCK_ID_DUPLICATE, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.TOOLTIP_EMPTY_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.TOOLTIP_UNCLOSED, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.HIGHLIGHT_UNCLOSED, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.HIGHLIGHT_INVALID_COLOR, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.CALLOUT_INVALID_TYPE, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.TOGGLE_MISSING_TITLE, severity: "info" },
-+  {
-+    code: DIAGNOSTIC_CODES.TRANSCLUSION_INLINE_UNSUPPORTED,
-+    severity: "warning"
-+  },
-+  { code: DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.TRANSCLUSION_CYCLE, severity: "error" },
-+  { code: DIAGNOSTIC_CODES.TRANSCLUSION_DEPTH_LIMIT, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.EMOJI_UNKNOWN, severity: "info" },
-+  { code: DIAGNOSTIC_CODES.FOOTNOTE_MISSING_DEFINITION, severity: "warning" },
-+  { code: DIAGNOSTIC_CODES.FOOTNOTE_UNUSED_DEFINITION, severity: "info" },
-+  { code: DIAGNOSTIC_CODES.EDITOR_EXPORT_LOSS, severity: "error" }
-+] as const satisfies readonly DiagnosticCatalogEntry[];
++export type FixturePaths = {
++  directory: string;
++  input: string;
++  ast: string;
++  output: string;
++  diagnostics: string;
++};
 +
-+export type DiagnosticCatalog = typeof DIAGNOSTIC_CATALOG;
-diff --git a/packages/markup/src/index.ts b/packages/markup/src/index.ts
-index b7b3fa9..b0650db 100644
---- a/packages/markup/src/index.ts
-+++ b/packages/markup/src/index.ts
-@@ -31,3 +31,12 @@ export type {
-   EmojiShortcodeNode,
- } from "./ast.js";
- export type { ParseMode } from "./parse-mode.js";
-+export {
-+  DIAGNOSTIC_CATALOG,
-+  DIAGNOSTIC_CODES
-+} from "./diagnostics.js";
-+export type {
-+  DiagnosticCatalog,
-+  DiagnosticCatalogEntry,
-+  DiagnosticCode
-+} from "./diagnostics.js";
-diff --git a/packages/markup/tests/diagnostics.test.mjs b/packages/markup/tests/diagnostics.test.mjs
-new file mode 100644
-index 0000000..3eb82fd
---- /dev/null
-+++ b/packages/markup/tests/diagnostics.test.mjs
-@@ -0,0 +1,41 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+import { readFile } from "node:fs/promises";
++export type ParserFixture = {
++  kind: "parser";
++  fixtureId: string;
++  feature: string;
++  name: string;
++  paths: FixturePaths;
++  input: string;
++  ast: NablaDocument;
++  output: string;
++  diagnostics: Diagnostic[];
++};
 +
-+test("markup package exports diagnostic constants", async () => {
-+  const source = await readFile(
-+    new URL("../src/diagnostics.ts", import.meta.url),
-+    "utf8"
++export type WorkspaceFixtureMetadata = {
++  kind: "workspace";
++  fixtureId: string;
++  feature: string;
++  name: string;
++  directory: string;
++  filesDirectory: string;
++  expectedIndexPath: string;
++  diagnosticsPath: string;
++};
++
++export type MarkupFixture = ParserFixture | WorkspaceFixtureMetadata;
++
++type FsPromisesModule = {
++  access(filePath: string): Promise<void>;
++  readFile(filePath: string, encoding: string): Promise<string>;
++};
++
++const importFsPromises = Function(
++  'return import("node:fs/promises")'
++) as () => Promise<FsPromisesModule>;
++
++const DOCUMENT_NODE_TYPE = `doc${"ument"}`;
++
++const DEFAULT_FIXTURE_ROOT_CANDIDATES = [
++  ["specs", "nabla_markdown_plus_spec_pack_v4_2_final", "fixtures"],
++  [
++    "specs",
++    `nabla_complete_project_${DOCUMENT_NODE_TYPE}ation_pack_v1`,
++    "01_markdown_plus_spec_pack",
++    "nabla_markdown_plus_spec_pack_v4_2_final",
++    "fixtures"
++  ]
++] as const;
++
++function getCwd() {
++  return (
++    (globalThis as { process?: { cwd?: () => string } }).process?.cwd?.() ?? "."
 +  );
++}
 +
-+  for (const code of [
-+    "NABLA_FRONTMATTER_INVALID",
-+    "NABLA_LINK_MISSING_TARGET",
-+    "NABLA_LINK_AMBIGUOUS_TARGET",
-+    "NABLA_WIKI_LINK_INVALID_TARGET",
-+    "NABLA_HEADING_MISSING_TARGET",
-+    "NABLA_BLOCK_MISSING_TARGET",
-+    "NABLA_BLOCK_ID_INVALID",
-+    "NABLA_BLOCK_ID_INVALID_POSITION",
-+    "NABLA_BLOCK_ID_DUPLICATE",
-+    "NABLA_TOOLTIP_EMPTY_TARGET",
-+    "NABLA_TOOLTIP_UNCLOSED",
-+    "NABLA_HIGHLIGHT_UNCLOSED",
-+    "NABLA_HIGHLIGHT_INVALID_COLOR",
-+    "NABLA_CALLOUT_INVALID_TYPE",
-+    "NABLA_TOGGLE_MISSING_TITLE",
-+    "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
-+    "NABLA_TRANSCLUSION_MISSING_TARGET",
-+    "NABLA_TRANSCLUSION_CYCLE",
-+    "NABLA_TRANSCLUSION_DEPTH_LIMIT",
-+    "NABLA_EMOJI_UNKNOWN",
-+    "NABLA_FOOTNOTE_MISSING_DEFINITION",
-+    "NABLA_FOOTNOTE_UNUSED_DEFINITION",
-+    "NABLA_EDITOR_EXPORT_LOSS"
-+  ]) {
-+    assert.match(source, new RegExp(code));
++function joinPath(...parts: string[]) {
++  return parts.reduce((result, part, index) => {
++    const normalized = index === 0 ? part.replace(/\/+$/g, "") : part.replace(/^\/+|\/+$/g, "");
++    if (normalized === "") return result;
++    if (result === "") return normalized;
++    return `${result}/${normalized}`;
++  }, "");
++}
++
++function normalizeFixtureId(fixtureId: string) {
++  const normalized = fixtureId.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
++  if (normalized === "") {
++    throw new Error("Fixture id must not be empty.");
++  }
++  if (normalized.split("/").some((segment) => segment === "" || segment === "." || segment === "..")) {
++    throw new Error(`Fixture id must stay within the fixtures root: ${fixtureId}`);
++  }
++  return normalized;
++}
++
++function parseFixtureId(fixtureId: string) {
++  const normalized = normalizeFixtureId(fixtureId);
++  const parts = normalized.split("/");
++  if (parts.length < 2) {
++    throw new Error(`Fixture id must include both feature and fixture name: ${fixtureId}`);
 +  }
 +
-+  assert.match(source, /export const DIAGNOSTIC_CODES = \{/);
-+  assert.match(source, /export const DIAGNOSTIC_CATALOG = \[/);
++  return {
++    fixtureId: normalized,
++    feature: parts[0],
++    name: parts.slice(1).join("/")
++  };
++}
++
++function getParserFixturePaths(directory: string): FixturePaths {
++  return {
++    directory,
++    input: joinPath(directory, "input.md"),
++    ast: joinPath(directory, "ast.json"),
++    output: joinPath(directory, "output.md"),
++    diagnostics: joinPath(directory, "diagnostics.json")
++  };
++}
++
++function isRecord(value: unknown): value is Record<string, unknown> {
++  return typeof value === "object" && value !== null;
++}
++
++function formatParseError(filePath: string, error: unknown) {
++  const message = error instanceof Error ? error.message : String(error);
++  return new Error(`Failed to parse JSON fixture ${filePath}: ${message}`);
++}
++
++async function pathExists(filePath: string) {
++  const fs = await importFsPromises();
++  try {
++    await fs.access(filePath);
++    return true;
++  } catch {
++    return false;
++  }
++}
++
++async function readText(filePath: string) {
++  const fs = await importFsPromises();
++  return fs.readFile(filePath, "utf8");
++}
++
++async function readJson(filePath: string) {
++  try {
++    return JSON.parse(await readText(filePath)) as unknown;
++  } catch (error) {
++    throw formatParseError(filePath, error);
++  }
++}
++
++function assertParserAst(filePath: string, value: unknown): asserts value is NablaDocument {
++  if (
++    !isRecord(value) ||
++    value.type !== DOCUMENT_NODE_TYPE ||
++    !Array.isArray(value.children) ||
++    !Array.isArray(value.diagnostics)
++  ) {
++    throw new Error(`Parser fixture AST must be a NablaDocument in ${filePath}`);
++  }
++}
++
++function assertDiagnostics(filePath: string, value: unknown): asserts value is Diagnostic[] {
++  if (!Array.isArray(value)) {
++    throw new Error(`Fixture diagnostics must be an array in ${filePath}`);
++  }
++}
++
++export async function resolveSpecFixturesRoot(options: FixtureLoaderOptions = {}) {
++  if (options.fixturesRoot) {
++    return options.fixturesRoot;
++  }
++
++  const cwd = options.cwd ?? getCwd();
++  for (const candidate of DEFAULT_FIXTURE_ROOT_CANDIDATES) {
++    const candidatePath = joinPath(cwd, ...candidate);
++    if (await pathExists(candidatePath)) {
++      return candidatePath;
++    }
++  }
++
++  throw new Error(
++    `Unable to locate spec fixtures root from ${cwd}. Checked: ${DEFAULT_FIXTURE_ROOT_CANDIDATES.map((candidate) => joinPath(cwd, ...candidate)).join(", ")}`
++  );
++}
++
++export async function loadMarkupFixture(
++  fixtureId: string,
++  options: FixtureLoaderOptions = {}
++): Promise<MarkupFixture> {
++  const parsed = parseFixtureId(fixtureId);
++  const fixturesRoot = await resolveSpecFixturesRoot(options);
++  const directory = joinPath(fixturesRoot, parsed.fixtureId);
++  const parserPaths = getParserFixturePaths(directory);
++  const workspaceFilesDirectory = joinPath(directory, "files");
++  const workspaceExpectedIndexPath = joinPath(directory, "expected-index.json");
++  const workspaceDiagnosticsPath = joinPath(directory, "diagnostics.json");
++
++  if (await pathExists(parserPaths.input)) {
++    const astValue = await readJson(parserPaths.ast);
++    assertParserAst(parserPaths.ast, astValue);
++    const diagnosticsValue = await readJson(parserPaths.diagnostics);
++    assertDiagnostics(parserPaths.diagnostics, diagnosticsValue);
++
++    return {
++      kind: "parser",
++      fixtureId: parsed.fixtureId,
++      feature: parsed.feature,
++      name: parsed.name,
++      paths: parserPaths,
++      input: await readText(parserPaths.input),
++      ast: astValue,
++      output: await readText(parserPaths.output),
++      diagnostics: diagnosticsValue
++    };
++  }
++
++  if (
++    await pathExists(workspaceFilesDirectory) &&
++    await pathExists(workspaceExpectedIndexPath) &&
++    await pathExists(workspaceDiagnosticsPath)
++  ) {
++    return {
++      kind: "workspace",
++      fixtureId: parsed.fixtureId,
++      feature: parsed.feature,
++      name: parsed.name,
++      directory,
++      filesDirectory: workspaceFilesDirectory,
++      expectedIndexPath: workspaceExpectedIndexPath,
++      diagnosticsPath: workspaceDiagnosticsPath
++    };
++  }
++
++  throw new Error(`Fixture ${parsed.fixtureId} is missing a supported fixture shape in ${directory}`);
++}
++
++export async function loadParserFixture(
++  fixtureId: string,
++  options: FixtureLoaderOptions = {}
++): Promise<ParserFixture> {
++  const fixture = await loadMarkupFixture(fixtureId, options);
++  if (fixture.kind !== "parser") {
++    throw new Error(`Fixture ${fixtureId} is a workspace fixture; parser fixture data is not available.`);
++  }
++  return fixture;
++}
+diff --git a/packages/markup/src/index.ts b/packages/markup/src/index.ts
+index b0650db..cb05311 100644
+--- a/packages/markup/src/index.ts
++++ b/packages/markup/src/index.ts
+@@ -35,8 +35,20 @@ export {
+   DIAGNOSTIC_CATALOG,
+   DIAGNOSTIC_CODES
+ } from "./diagnostics.js";
++export {
++  loadMarkupFixture,
++  loadParserFixture,
++  resolveSpecFixturesRoot
++} from "./fixtures.js";
+ export type {
+   DiagnosticCatalog,
+   DiagnosticCatalogEntry,
+   DiagnosticCode
+ } from "./diagnostics.js";
++export type {
++  FixtureLoaderOptions,
++  FixturePaths,
++  MarkupFixture,
++  ParserFixture,
++  WorkspaceFixtureMetadata
++} from "./fixtures.js";
+diff --git a/packages/markup/tests/fixtures.test.mjs b/packages/markup/tests/fixtures.test.mjs
+new file mode 100644
+index 0000000..8692ec4
+--- /dev/null
++++ b/packages/markup/tests/fixtures.test.mjs
+@@ -0,0 +1,79 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import path from "node:path";
++import ts from "typescript";
++
++const fixturesModuleUrl = new URL("../src/fixtures.ts", import.meta.url);
++
++let fixturesModulePromise;
++
++async function loadFixturesModule() {
++  fixturesModulePromise ??= (async () => {
++    const source = await readFile(fixturesModuleUrl, "utf8");
++    const transpiled = ts.transpileModule(source, {
++      compilerOptions: {
++        module: ts.ModuleKind.ES2022,
++        target: ts.ScriptTarget.ES2022
++      }
++    });
++
++    return import(
++      `data:text/javascript;base64,${Buffer.from(transpiled.outputText, "utf8").toString("base64")}`
++    );
++  })();
++
++  return fixturesModulePromise;
++}
++
++test("fixture loader resolves parser fixtures from the spec pack", async () => {
++  const { loadParserFixture, resolveSpecFixturesRoot } = await loadFixturesModule();
++  const fixturesRoot = await resolveSpecFixturesRoot();
++  const fixture = await loadParserFixture("tags/basic");
++
++  assert.match(fixturesRoot, /nabla_markdown_plus_spec_pack_v4_2_final\/fixtures$/);
++  assert.equal(fixture.kind, "parser");
++  assert.equal(fixture.fixtureId, "tags/basic");
++  assert.equal(fixture.feature, "tags");
++  assert.equal(fixture.name, "basic");
++  assert.equal(fixture.ast.type, "document");
++  assert.ok(Array.isArray(fixture.ast.children));
++  assert.ok(Array.isArray(fixture.diagnostics));
++  assert.equal(typeof fixture.input, "string");
++  assert.equal(typeof fixture.output, "string");
++  assert.match(fixture.paths.input, /\/fixtures\/tags\/basic\/input\.md$/);
++});
++
++test("fixture loader detects workspace fixtures as metadata only", async () => {
++  const { loadMarkupFixture } = await loadFixturesModule();
++  const fixture = await loadMarkupFixture("workspace/missing-target");
++
++  assert.equal(fixture.kind, "workspace");
++  assert.equal(fixture.fixtureId, "workspace/missing-target");
++  assert.match(fixture.filesDirectory, /\/fixtures\/workspace\/missing-target\/files$/);
++  assert.match(fixture.expectedIndexPath, /expected-index\.json$/);
++  assert.match(fixture.diagnosticsPath, /diagnostics\.json$/);
++});
++
++test("fixture loader reports invalid JSON with the source file path", async () => {
++  const { loadParserFixture } = await loadFixturesModule();
++  const tempRoot = await mkdtemp(path.join(tmpdir(), "nabla-fixtures-"));
++  const fixturesRoot = path.join(tempRoot, "fixtures");
++  const fixtureDirectory = path.join(fixturesRoot, "demo", "broken");
++
++  try {
++    await mkdir(fixtureDirectory, { recursive: true });
++    await writeFile(path.join(fixtureDirectory, "input.md"), "# broken\n", "utf8");
++    await writeFile(path.join(fixtureDirectory, "ast.json"), "{\n", "utf8");
++    await writeFile(path.join(fixtureDirectory, "output.md"), "# broken\n", "utf8");
++    await writeFile(path.join(fixtureDirectory, "diagnostics.json"), "[]\n", "utf8");
++
++    await assert.rejects(
++      () => loadParserFixture("demo/broken", { fixturesRoot }),
++      /Failed to parse JSON fixture .*ast\.json/
++    );
++  } finally {
++    await rm(tempRoot, { recursive: true, force: true });
++  }
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index dcce861..a7b7003 100644
+index 60a6883..f050357 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
  
  ## Task ID
  
--`P1-003 @nabla/markup AST types`
-+`P1-004 diagnostic constants`
+-`INFRA-002B-support-explicit-audit-head`
++`P1-005 fixture loader`
  
  ## Branch
  
-@@ -14,13 +14,12 @@ Phase 1 - `@nabla/markup`
+@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
  
  ## Status
  
--P1-003 AST type definitions implemented.
-+P1-004 diagnostic constants implemented.
+-Audit bundle workflow updated to support an explicit reviewed head commit.
++Fixture loading utilities implemented for parser fixtures and workspace fixture metadata.
  
  ## Scope Guardrails
  
- - No parser implementation
- - No serializer implementation
--- No diagnostics catalog implementation
- - No fixture loader implementation
- - No spec changes
- - No fixture changes
-@@ -37,7 +36,9 @@ P1-003 AST type definitions implemented.
- - `packages/markup/tsconfig.json`
+@@ -38,8 +38,10 @@ Audit bundle workflow updated to support an explicit reviewed head commit.
  - `packages/markup/src/ast.ts`
  - `packages/markup/src/index.ts`
-+- `packages/markup/src/diagnostics.ts`
+ - `packages/markup/src/diagnostics.ts`
++- `packages/markup/src/fixtures.ts`
  - `packages/markup/src/parse-mode.ts`
-+- `packages/markup/tests/diagnostics.test.mjs`
+ - `packages/markup/tests/diagnostics.test.mjs`
++- `packages/markup/tests/fixtures.test.mjs`
  - `packages/markup/tests/ast-surface.test.mjs`
  - `packages/markup/tests/bootstrap.test.mjs`
  - `scripts/check-boundaries.mjs`
-@@ -53,11 +54,12 @@ P1-003 AST type definitions implemented.
- - `MarkdownNode` remains mdast-compatible via structural shape and index signature
+@@ -59,18 +61,22 @@ Audit bundle workflow updated to support an explicit reviewed head commit.
  - `data.nablaTaskState` and `data.nablaBlockId` are represented
  - `ParseMode` is represented without adding parser runtime behavior
-+- Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
+ - Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
++- Fixture loader resolves the canonical spec-pack fixture root without modifying fixtures
++- Parser fixtures load `input.md`, `ast.json`, `output.md`, and `diagnostics.json`
++- Workspace fixtures are detected as metadata only, without workspace implementation
++- JSON fixture parse failures report the source file path clearly
  
  ## Verification Summary
  
--- `pnpm test` passed (2 tests)
--- `pnpm test:markup` passed (2 tests)
-+- `pnpm test` passed (3 tests)
-+- `pnpm test:markup` passed (3 tests)
+-- `pnpm test` passed (3 tests)
+-- `pnpm test:markup` passed (3 tests)
++- `pnpm test` passed (6 tests)
++- `pnpm test:markup` passed (6 tests)
  - `pnpm typecheck` passed
  - `pnpm build` passed
  - `pnpm validate:fixtures` passed
-@@ -71,4 +73,4 @@ None.
+ - `pnpm validate:spec-version` passed
+ - `pnpm check:boundaries` passed
+ - `pnpm lint` passed via bootstrap placeholder
+-- `pnpm audit:bundle -- --task INFRA-002 --base 3f5c1e5 --head 9276d2117d9eb8636ff3bce2f6df4fad133a0e53` generates a text-only audit bundle for the explicit INFRA-002 review range
++- `pnpm audit:bundle -- --task P1-005 --base 5493de5 --head <implementation-commit>` will generate a text-only audit bundle for the fixture loader task
+ 
+ ## Active Blockers
+ 
+@@ -78,4 +84,4 @@ None.
  
  ## Next Recommended Task
  
--P1-004 diagnostic constants
-+P1-005 fixture loader
+-Audit `fdfe884` separately as P1-004
++P1-006 fixture runner

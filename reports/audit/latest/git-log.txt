@@ -1,1 +1,1 @@
-fdfe884 feat(markup): add diagnostic constants
+2462637 feat(markup): add fixture loader

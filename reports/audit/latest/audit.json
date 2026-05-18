@@ -1,26 +1,26 @@
 {
-  "taskId": "P1-004",
-  "baseCommit": "3f5c1e5",
-  "headCommit": "fdfe884",
+  "taskId": "P1-005",
+  "baseCommit": "5493de5",
+  "headCommit": "2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-18T20:32:15.785Z",
-  "currentHead": "a9571a4267f53eedeee1f8be2002458dcde8b850",
+  "timestamp": "2026-05-18T20:42:09.466Z",
+  "currentHead": "2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
   "currentWorkingTreeStatus": "",
   "changedFiles": [
-    "packages/markup/src/diagnostics.ts",
+    "packages/markup/src/fixtures.ts",
     "packages/markup/src/index.ts",
-    "packages/markup/tests/diagnostics.test.mjs",
+    "packages/markup/tests/fixtures.test.mjs",
     "reports/IMPLEMENTATION_PROGRESS.md"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 3f5c1e5..fdfe884",
-    "git diff --stat 3f5c1e5..fdfe884",
-    "git diff 3f5c1e5..fdfe884",
-    "git log --oneline 3f5c1e5..fdfe884",
-    "git ls-tree -r --name-only fdfe884",
+    "git diff --name-only 5493de5..2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
+    "git diff --stat 5493de5..2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
+    "git diff 5493de5..2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
+    "git log --oneline 5493de5..2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
+    "git ls-tree -r --name-only 2462637a79c2c71f0446554f1de3a9fb8ceb44e8",
     "git remote get-url origin"
   ],
   "rawUrls": {
