@@ -1,1 +1,1 @@
-9276d21 chore: add audit bundle workflow
+fdfe884 feat(markup): add diagnostic constants
