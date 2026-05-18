@@ -1,4 +1,4 @@
-packages/markup/src/extensions/footnotes.ts
+packages/markup/src/extensions/callouts.ts
 packages/markup/src/parser.ts
 packages/markup/src/serializer.ts
-packages/markup/tests/footnotes.test.mjs
+packages/markup/tests/wiki-links.test.mjs

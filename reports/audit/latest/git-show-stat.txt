@@ -1,5 +1,5 @@
- packages/markup/src/extensions/footnotes.ts | 106 +++++++++++++++++++++
- packages/markup/src/parser.ts               |  47 ++++++++-
- packages/markup/src/serializer.ts           |  11 ++-
- packages/markup/tests/footnotes.test.mjs    | 142 ++++++++++++++++++++++++++++
- 4 files changed, 302 insertions(+), 4 deletions(-)
+ packages/markup/src/extensions/callouts.ts | 220 +++++++++++++++++++++++++++++
+ packages/markup/src/parser.ts              |  95 ++++++++++++-
+ packages/markup/src/serializer.ts          |  13 +-
+ packages/markup/tests/wiki-links.test.mjs  |  30 ++++
+ 4 files changed, 354 insertions(+), 4 deletions(-)

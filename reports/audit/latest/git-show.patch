@@ -1,298 +1,428 @@
-diff --git a/packages/markup/src/extensions/footnotes.ts b/packages/markup/src/extensions/footnotes.ts
+diff --git a/packages/markup/src/extensions/callouts.ts b/packages/markup/src/extensions/callouts.ts
 new file mode 100644
-index 0000000..6d84118
+index 0000000..a592051
 --- /dev/null
-+++ b/packages/markup/src/extensions/footnotes.ts
-@@ -0,0 +1,106 @@
-+import type { Diagnostic, FootnoteReferenceNode, FootnoteDefinitionNode, MarkdownNode, NablaDocument, NablaBlockNode } from "../ast.js";
-+import { DIAGNOSTIC_CODES } from "../diagnostics.js";
++++ b/packages/markup/src/extensions/callouts.ts
+@@ -0,0 +1,220 @@
++import type { CalloutNode, FoldState, SyntaxStatus, MarkdownNode, NablaBlockNode, ToggleNode } from "../ast.js";
 +
-+export function parseFootnoteReference(raw: string): FootnoteReferenceNode | null {
-+  if (!raw.startsWith("[^")) return null;
++const CALLOUT_CANONICAL_RE = /^\[!([A-Za-z][A-Za-z0-9_-]*)](\>|v)?[ \t]*(.*)$/;
++const CALLOUT_COMPATIBLE_RE = /^> \[!([A-Za-z][A-Za-z0-9_-]*)]\s*(.*)$/;
++const TOGGLE_RE = /^\](\>|v)[ \t]*(.*)$/;
 +
-+  const closeBracket = raw.indexOf("]");
-+  if (closeBracket === -1 || closeBracket < 3) return null;
++export type CalloutMarkerResult = {
++  calloutType: string;
++  foldState?: FoldState;
++  title: string;
++  syntax: SyntaxStatus;
++  rawMarker: string;
++};
 +
-+  const id = raw.slice(2, closeBracket);
-+  if (id.length === 0 || /\s/.test(id)) return null;
++export function parseCalloutMarker(line: string): CalloutMarkerResult | null {
++  const canonical = line.match(CALLOUT_CANONICAL_RE);
++  if (canonical) {
++    const calloutType = canonical[1];
++    const foldMarker = canonical[2];
++    const title = canonical[3];
++    let rawMarker = `[!${calloutType}]`;
++    let foldState: FoldState | undefined;
 +
-+  return {
-+    type: "footnoteReference",
-+    id,
-+    raw: raw.slice(0, closeBracket + 1)
-+  };
++    if (foldMarker === ">") {
++      foldState = "closed";
++      rawMarker = `[!${calloutType}]>`;
++    } else if (foldMarker === "v") {
++      foldState = "open";
++      rawMarker = `[!${calloutType}]v`;
++    }
++
++    return { calloutType, foldState, title, syntax: "canonical", rawMarker };
++  }
++
++  const compatible = line.match(CALLOUT_COMPATIBLE_RE);
++  if (compatible) {
++    return {
++      calloutType: compatible[1],
++      foldState: undefined,
++      title: compatible[2],
++      syntax: "compatible",
++      rawMarker: `> [!${compatible[1]}]`
++    };
++  }
++
++  return null;
 +}
 +
-+export function parseFootnoteDefinitionLine(line: string): { id: string; content: string; raw: string } | null {
-+  const match = line.match(/^\[\^([^\s\]]+)\]:\s*(.*)$/);
++export type ToggleMarkerResult = {
++  foldState: FoldState;
++  title: string;
++  rawMarker: "]>" | "]v";
++};
++
++export function parseToggleMarker(line: string): ToggleMarkerResult | null {
++  const match = line.match(TOGGLE_RE);
 +  if (!match) return null;
 +
++  const foldMarker = match[1];
++
 +  return {
-+    id: match[1],
-+    content: match[2],
-+    raw: line
++    foldState: foldMarker === ">" ? "closed" : "open",
++    title: match[2],
++    rawMarker: `]${foldMarker}` as "]>" | "]v"
 +  };
 +}
 +
-+export function buildFootnoteDefinition(id: string, content: string, raw: string): FootnoteDefinitionNode {
-+  return {
-+    type: "footnoteDefinition",
-+    id,
-+    children: [
-+      {
-+        type: "paragraph",
-+        children: [{ type: "text", value: content }]
-+      }
-+    ],
-+    raw
-+  };
++export function isTabIndented(line: string): boolean {
++  return line.length > 0 && line[0] === "\t";
 +}
 +
-+export function serializeFootnoteReference(node: FootnoteReferenceNode): string {
-+  return node.raw;
-+}
++export function collectTabIndentedChildren(lines: string[], startIndex: number): { childLines: string[]; endIndex: number } {
++  const childLines: string[] = [];
++  let i = startIndex;
++  let hadContent = false;
 +
-+export function serializeFootnoteDefinition(node: FootnoteDefinitionNode): string {
-+  return `\n${node.raw}`;
-+}
++  while (i < lines.length) {
++    const line = lines[i];
 +
-+export function collectFootnoteIds(
-+  doc: NablaDocument
-+): { referenceIds: string[]; definitionIds: string[] } {
-+  const referenceIds: string[] = [];
-+  const definitionIds: string[] = [];
++    if (line.trim() === "") {
++      if (!hadContent) break;
 +
-+  function walkChildren(children: Array<MarkdownNode | NablaBlockNode>) {
-+    for (const child of children) {
-+      if (child.type === "footnoteReference") {
-+        referenceIds.push((child as FootnoteReferenceNode).id);
-+      } else if (child.type === "footnoteDefinition") {
-+        definitionIds.push((child as FootnoteDefinitionNode).id);
++      if (i + 1 < lines.length && isTabIndented(lines[i + 1])) {
++        childLines.push("");
++        i += 1;
++        continue;
 +      }
-+      if ("children" in child && Array.isArray(child.children)) {
-+        walkChildren(child.children as Array<MarkdownNode | NablaBlockNode>);
-+      }
++
++      break;
++    }
++
++    if (isTabIndented(line)) {
++      childLines.push(line.slice(1));
++      hadContent = true;
++      i += 1;
++    } else {
++      if (!hadContent) break;
++      break;
 +    }
 +  }
 +
-+  walkChildren(doc.children);
++  while (childLines.length > 0 && childLines[childLines.length - 1] === "") {
++    childLines.pop();
++  }
 +
-+  return { referenceIds, definitionIds };
++  return { childLines, endIndex: i - 1 };
 +}
 +
-+export function collectFootnoteDiagnostics(
-+  referenceIds: string[],
-+  definitionIds: string[]
-+): Diagnostic[] {
-+  const diagnostics: Diagnostic[] = [];
-+  const refSet = new Set(referenceIds);
-+  const defSet = new Set(definitionIds);
++export function collectCompatibleChildren(lines: string[], startIndex: number): { childLines: string[]; endIndex: number } {
++  const childLines: string[] = [];
++  let i = startIndex;
++  let hadContent = false;
 +
-+  for (const id of referenceIds) {
-+    if (!defSet.has(id)) {
-+      diagnostics.push({
-+        severity: "warning",
-+        code: DIAGNOSTIC_CODES.FOOTNOTE_MISSING_DEFINITION,
-+        message: "Footnote reference has no matching definition."
-+      });
++  while (i < lines.length) {
++    const line = lines[i];
++
++    if (line.trim() === "") {
++      if (!hadContent) break;
++
++      if (i + 1 < lines.length && lines[i + 1].startsWith("> ")) {
++        childLines.push("");
++        i += 1;
++        continue;
++      }
++
++      break;
++    }
++
++    if (line.startsWith("> ")) {
++      childLines.push(line.slice(2));
++      hadContent = true;
++      i += 1;
++    } else {
++      if (!hadContent) break;
++      break;
 +    }
 +  }
 +
-+  for (const id of definitionIds) {
-+    if (!refSet.has(id)) {
-+      diagnostics.push({
-+        severity: "info",
-+        code: DIAGNOSTIC_CODES.FOOTNOTE_UNUSED_DEFINITION,
-+        message: "Footnote definition is not referenced."
-+      });
-+    }
++  while (childLines.length > 0 && childLines[childLines.length - 1] === "") {
++    childLines.pop();
 +  }
 +
-+  return diagnostics;
++  return { childLines, endIndex: i - 1 };
 +}
++
++export function collectToggleChildLines(lines: string[], startIndex: number): { childLines: string[]; endIndex: number } {
++  return collectTabIndentedChildren(lines, startIndex);
++}
++
++export function serializeCallout(node: CalloutNode): string {
++  const title = node.title.map((child) => (child as { value?: string }).value ?? "").join("");
++
++  const marker = node.syntax === "compatible"
++    ? `[!${node.calloutType}]`
++    : node.rawMarker;
++
++  const header = `${marker} ${title}`;
++
++  if (node.children.length === 0) {
++    return `\n${header}`;
++  }
++
++  const childOutputs: string[] = [];
++  for (const child of node.children) {
++    childOutputs.push(serializeChildBlock(child as MarkdownNode | NablaBlockNode));
++  }
++
++  return `\n${header}\n${childOutputs.join("\n\n")}`;
++}
++
++export function serializeToggle(node: ToggleNode): string {
++  const title = node.title.map((child) => (child as { value?: string }).value ?? "").join("");
++  const header = `${node.rawMarker} ${title}`;
++
++  if (node.children.length === 0) {
++    return `\n${header}`;
++  }
++
++  const childOutputs: string[] = [];
++  for (const child of node.children) {
++    childOutputs.push(serializeChildBlock(child as MarkdownNode | NablaBlockNode));
++  }
++
++  return `\n${header}\n${childOutputs.join("\n\n")}`;
++}
++
++function serializeChildBlock(node: MarkdownNode | NablaBlockNode): string {
++  if (node.type === "paragraph" && Array.isArray(node.children)) {
++    const text = node.children.map((child) => (child as { value?: string }).value ?? "").join("");
++    return `\t${text}`;
++  }
++
++  if (node.type === "code") {
++    const lang = typeof node.lang === "string" ? node.lang : "";
++    const value = typeof node.value === "string" ? node.value : "";
++    const codeLines = value.split("\n");
++    const indentedCode = codeLines.map((l) => `\t${l}`).join("\n");
++    return `\t\`\`\`${lang}\n${indentedCode}\n\t\`\`\``;
++  }
++
++  if (node.type === "callout") {
++    const inner = serializeCallout(node as CalloutNode);
++    return inner
++      .replace(/^\n/, "")
++      .split("\n")
++      .map((l) => `\t${l}`)
++      .join("\n");
++  }
++
++  if (node.type === "toggle") {
++    const inner = serializeToggle(node as ToggleNode);
++    return inner
++      .replace(/^\n/, "")
++      .split("\n")
++      .map((l) => `\t${l}`)
++      .join("\n");
++  }
++
++  return "";
++}
+\ No newline at end of file
 diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index 6b877de..8e8dfb8 100644
+index 8e8dfb8..935053a 100644
 --- a/packages/markup/src/parser.ts
 +++ b/packages/markup/src/parser.ts
 @@ -1,4 +1,4 @@
--import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode } from "./ast.js";
+-import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode } from "./ast.js";
++import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode, CalloutNode, ToggleNode, FoldState, SyntaxStatus } from "./ast.js";
  import type { ParseMode } from "./parse-mode.js";
  import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
  import { parseWikiLink } from "./extensions/wiki-links.js";
-@@ -7,6 +7,7 @@ import { parseHighlight } from "./extensions/highlights.js";
- import { parsePrivateCommentBlock } from "./extensions/comments.js";
+@@ -8,6 +8,7 @@ import { parsePrivateCommentBlock } from "./extensions/comments.js";
  import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
  import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
-+import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefinition, collectFootnoteIds, collectFootnoteDiagnostics } from "./extensions/footnotes.js";
+ import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefinition, collectFootnoteIds, collectFootnoteDiagnostics } from "./extensions/footnotes.js";
++import { parseCalloutMarker, parseToggleMarker, collectTabIndentedChildren, collectCompatibleChildren } from "./extensions/callouts.js";
  
  export type ParseOptions = {
    mode?: ParseMode;
-@@ -60,7 +61,8 @@ type BlockSpec =
-   | { kind: "html"; value: string }
+@@ -62,7 +63,9 @@ type BlockSpec =
    | { kind: "listItem"; taskState?: TaskState; text: string }
    | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic }
--  | { kind: "thematicBreak" };
-+  | { kind: "thematicBreak" }
-+  | { kind: "footnoteDefinition"; id: string; content: string; raw: string };
+   | { kind: "thematicBreak" }
+-  | { kind: "footnoteDefinition"; id: string; content: string; raw: string };
++  | { kind: "footnoteDefinition"; id: string; content: string; raw: string }
++  | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string }
++  | { kind: "toggle"; foldState: FoldState; title: string; rawMarker: string; childContent: string };
  
  function parseBlocks(source: string): BlockSpec[] {
    const lines = source.split("\n");
-@@ -193,6 +195,13 @@ function parseBlocks(source: string): BlockSpec[] {
+@@ -202,6 +205,54 @@ function parseBlocks(source: string): BlockSpec[] {
        continue;
      }
  
-+    const fnDefMatch = parseFootnoteDefinitionLine(line);
-+    if (fnDefMatch !== null) {
++    const calloutMarker = parseCalloutMarker(line);
++    if (calloutMarker !== null) {
 +      flushParagraph();
-+      blocks.push({ kind: "footnoteDefinition", id: fnDefMatch.id, content: fnDefMatch.content, raw: fnDefMatch.raw });
++
++      if (calloutMarker.syntax === "compatible") {
++        const { childLines, endIndex } = collectCompatibleChildren(lines, i + 1);
++        blocks.push({
++          kind: "callout",
++          calloutType: calloutMarker.calloutType,
++          foldState: calloutMarker.foldState,
++          title: calloutMarker.title,
++          syntax: calloutMarker.syntax,
++          rawMarker: calloutMarker.rawMarker,
++          childContent: childLines.join("\n")
++        });
++        i = endIndex;
++      } else {
++        const { childLines, endIndex } = collectTabIndentedChildren(lines, i + 1);
++        blocks.push({
++          kind: "callout",
++          calloutType: calloutMarker.calloutType,
++          foldState: calloutMarker.foldState,
++          title: calloutMarker.title,
++          syntax: calloutMarker.syntax,
++          rawMarker: calloutMarker.rawMarker,
++          childContent: childLines.join("\n")
++        });
++        i = endIndex;
++      }
++
++      continue;
++    }
++
++    const toggleMarker = parseToggleMarker(line);
++    if (toggleMarker !== null) {
++      flushParagraph();
++      const { childLines, endIndex } = collectTabIndentedChildren(lines, i + 1);
++      blocks.push({
++        kind: "toggle",
++        foldState: toggleMarker.foldState,
++        title: toggleMarker.title,
++        rawMarker: toggleMarker.rawMarker,
++        childContent: childLines.join("\n")
++      });
++      i = endIndex;
 +      continue;
 +    }
 +
      paragraphLines.push(line);
    }
  
-@@ -295,6 +304,30 @@ function parseParagraphChildren(source: string) {
-       continue;
-     }
- 
-+    if (source[index] === "[" && source[index + 1] === "^") {
-+      if (
-+        isOffsetProtected(protectedRegions, index) ||
-+        inlineHtmlContainers.some((region) => index >= region.start && index < region.end)
-+      ) {
-+        index += 2;
-+        continue;
-+      }
-+
-+      const fnRef = parseFootnoteReference(source.slice(index));
-+      if (fnRef !== null) {
-+        if (bufferStart < index) {
-+          children.push(createTextNode(source.slice(bufferStart, index)));
-+        }
-+        children.push(fnRef as MarkdownNode);
-+        bufferStart = index + fnRef.raw.length;
-+        index = bufferStart;
-+        continue;
-+      }
-+
-+      index += 2;
-+      continue;
-+    }
-+
-     if (source[index] === "=" && index + 1 < source.length && source[index + 1] === "=") {
-       if (
-         isOffsetProtected(protectedRegions, index) ||
-@@ -406,6 +439,8 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
-       docChildren.push({
-         type: "thematicBreak"
+@@ -464,6 +515,46 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
+           ]
+         }))
        } as MarkdownNode);
-+    } else if (block.kind === "footnoteDefinition") {
-+      docChildren.push(buildFootnoteDefinition(block.id, block.content, block.raw) as unknown as NablaBlockNode);
-     } else if (block.kind === "listItem") {
-       const items: Array<{ taskState?: TaskState; text: string }> = [
-         { taskState: block.taskState, text: block.text }
-@@ -432,11 +467,17 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
++    } else if (block.kind === "callout") {
++      const titleDoc = parse(block.title);
++      const titleChildren = titleDoc.children.length === 1 && titleDoc.children[0].type === "paragraph"
++        ? (titleDoc.children[0] as MarkdownNode).children ?? []
++        : [];
++      const childDoc = block.childContent !== "" ? parse(block.childContent) : null;
++      allDiagnostics.push(...titleDoc.diagnostics);
++      if (childDoc) {
++        allDiagnostics.push(...childDoc.diagnostics);
++      }
++
++      const calloutNode: CalloutNode = {
++        type: "callout",
++        calloutType: block.calloutType,
++        title: titleChildren as import("./ast.js").NablaInlineNode[],
++        ...(block.foldState ? { foldState: block.foldState } : {}),
++        children: childDoc ? (childDoc.children as Array<MarkdownNode | NablaBlockNode>) : [],
++        syntax: block.syntax,
++        rawMarker: block.rawMarker
++      };
++
++      docChildren.push(calloutNode as unknown as NablaBlockNode);
++    } else if (block.kind === "toggle") {
++      const titleDoc = parse(block.title);
++      const titleChildren = titleDoc.children.length === 1 && titleDoc.children[0].type === "paragraph"
++        ? (titleDoc.children[0] as MarkdownNode).children ?? []
++        : [];
++      const childDoc = block.childContent !== "" ? parse(block.childContent) : null;
++      allDiagnostics.push(...titleDoc.diagnostics);
++      if (childDoc) {
++        allDiagnostics.push(...childDoc.diagnostics);
++      }
++
++      docChildren.push({
++        type: "toggle",
++        title: titleChildren as import("./ast.js").NablaInlineNode[],
++        foldState: block.foldState,
++        children: childDoc ? (childDoc.children as Array<MarkdownNode | NablaBlockNode>) : [],
++        rawMarker: block.rawMarker
++      } as ToggleNode);
      }
    }
  
--  return {
-+  const doc: NablaDocument = {
-     type: DOCUMENT_NODE_TYPE,
-     children: docChildren,
-     diagnostics: allDiagnostics
-   };
-+
-+  const { referenceIds, definitionIds } = collectFootnoteIds(doc);
-+  const footnoteDiagnostics = collectFootnoteDiagnostics(referenceIds, definitionIds);
-+  doc.diagnostics.push(...footnoteDiagnostics);
-+
-+  return doc;
- }
- 
- function normalizeSource(markdown: string) {
 diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
-index f88248d..80d2dbd 100644
+index 80d2dbd..625c31b 100644
 --- a/packages/markup/src/serializer.ts
 +++ b/packages/markup/src/serializer.ts
-@@ -1,9 +1,10 @@
--import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode } from "./ast.js";
+@@ -1,10 +1,11 @@
+-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode } from "./ast.js";
++import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode } from "./ast.js";
  import { serializeWikiLink } from "./extensions/wiki-links.js";
  import { serializeTag } from "./extensions/tags.js";
  import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
  import { taskStateToMarker } from "./extensions/task-states.js";
  import { serializeFrontmatter } from "./extensions/frontmatter.js";
-+import { serializeFootnoteReference, serializeFootnoteDefinition } from "./extensions/footnotes.js";
+ import { serializeFootnoteReference, serializeFootnoteDefinition } from "./extensions/footnotes.js";
++import { serializeCallout, serializeToggle } from "./extensions/callouts.js";
  
  export type SerializeOptions = {
    lineEnding?: "lf" | "crlf";
-@@ -41,6 +42,10 @@ function serializeInlineNode(node: MarkdownNode) {
-     return serializeColorHighlight(node as ColorHighlightNode);
+@@ -104,6 +105,14 @@ function serializeBlockNode(node: MarkdownNode) {
+       .join("\n");
    }
  
-+  if (node.type === "footnoteReference") {
-+    return serializeFootnoteReference(node as FootnoteReferenceNode);
++  if (node.type === "callout") {
++    return serializeCallout(node as CalloutNode);
++  }
++
++  if (node.type === "toggle") {
++    return serializeToggle(node as ToggleNode);
 +  }
 +
    return "";
  }
  
-@@ -89,6 +94,10 @@ function serializeBlockNode(node: MarkdownNode) {
-     return serializeFrontmatter(fmNode.raw);
-   }
+@@ -128,7 +137,7 @@ function serializeListItem(node: MarkdownNode): string {
+ }
  
-+  if (node.type === "footnoteDefinition") {
-+    return serializeFootnoteDefinition(node as FootnoteDefinitionNode);
-+  }
-+
-   if (node.type === "list" && Array.isArray(node.children)) {
-     return node.children
-       .map((child) => serializeListItem(child as MarkdownNode))
-diff --git a/packages/markup/tests/footnotes.test.mjs b/packages/markup/tests/footnotes.test.mjs
-new file mode 100644
-index 0000000..0989123
---- /dev/null
-+++ b/packages/markup/tests/footnotes.test.mjs
-@@ -0,0 +1,142 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+import { loadTsModule as loadRuntimeTsModule } from "./helpers/load-ts-module.mjs";
-+
-+const parserModuleUrl = new URL("../src/parser.ts", import.meta.url);
-+const serializerModuleUrl = new URL("../src/serializer.ts", import.meta.url);
-+const fixturesModuleUrl = new URL("../src/fixtures.ts", import.meta.url);
-+
-+const footnoteFixtureIds = [
-+  "footnotes/basic",
-+  "footnotes/missing-definition",
-+  "footnotes/unused-definition"
+ export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
+-  const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n");
++  const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n").replace(/^\n/, "");
+   const normalizedOutput = output === "" ? "" : `${output}\n`;
+   return normalizeLineEnding(normalizedOutput, options.lineEnding);
+ }
+diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
+index d87da1f..a765ce5 100644
+--- a/packages/markup/tests/wiki-links.test.mjs
++++ b/packages/markup/tests/wiki-links.test.mjs
+@@ -35,6 +35,16 @@ const commentFixtureIds = [
+   "comments/protected-region"
+ ];
+ 
++const calloutFixtureIds = [
++  "callouts/canonical",
++  "callouts/compatible",
++  "callouts/fold-states",
++  "callouts/empty",
++  "callouts/blank-child",
++  "callouts/fenced-child",
++  "callouts/nested-child"
 +];
 +
-+let parserPromise;
-+let serializerPromise;
-+let fixturesPromise;
-+
-+async function loadTsModule(moduleUrl) {
-+  return loadRuntimeTsModule(moduleUrl);
-+}
-+
-+async function loadParserModule() {
-+  parserPromise ??= loadTsModule(parserModuleUrl);
-+  return parserPromise;
-+}
-+
-+async function loadSerializerModule() {
-+  serializerPromise ??= loadTsModule(serializerModuleUrl);
-+  return serializerPromise;
-+}
-+
-+async function loadFixturesModule() {
-+  fixturesPromise ??= loadTsModule(fixturesModuleUrl);
-+  return fixturesPromise;
-+}
-+
-+test("footnote fixtures parse and serialize according to the checked-in contracts", async () => {
+ let parserModulePromise;
+ let serializerModulePromise;
+ let fixturesModulePromise;
+@@ -118,6 +128,26 @@ test("comment fixtures parse and serialize according to the checked-in contracts
+   }
+ });
+ 
++test("callout fixtures parse and serialize according to the checked-in contracts", async () => {
 +  const { parse } = await loadParserModule();
 +  const { serialize } = await loadSerializerModule();
 +  const {
@@ -302,7 +432,7 @@ index 0000000..0989123
 +    loadParserFixture
 +  } = await loadFixturesModule();
 +
-+  for (const fixtureId of footnoteFixtureIds) {
++  for (const fixtureId of calloutFixtureIds) {
 +    const fixture = await loadParserFixture(fixtureId);
 +    const parsed = parse(fixture.input);
 +
@@ -312,88 +442,5 @@ index 0000000..0989123
 +  }
 +});
 +
-+test("parse basic footnote reference and definition", async () => {
-+  const { parse } = await loadParserModule();
-+  const result = parse("Text[^a].\n\n[^a]: Footnote content.");
-+
-+  const ref = result.children[0].children[1];
-+  assert.equal(ref.type, "footnoteReference");
-+  assert.equal(ref.id, "a");
-+  assert.equal(ref.raw, "[^a]");
-+
-+  const def = result.children[1];
-+  assert.equal(def.type, "footnoteDefinition");
-+  assert.equal(def.id, "a");
-+  assert.equal(def.raw, "[^a]: Footnote content.");
-+});
-+
-+test("parse missing footnote definition yields diagnostic", async () => {
-+  const { parse } = await loadParserModule();
-+  const result = parse("Text[^missing].");
-+
-+  assert.equal(result.diagnostics.length, 1);
-+  assert.equal(result.diagnostics[0].severity, "warning");
-+  assert.equal(result.diagnostics[0].code, "NABLA_FOOTNOTE_MISSING_DEFINITION");
-+  assert.equal(result.diagnostics[0].message, "Footnote reference has no matching definition.");
-+});
-+
-+test("parse unused footnote definition yields diagnostic", async () => {
-+  const { parse } = await loadParserModule();
-+  const result = parse("Text.\n\n[^unused]: Unused.");
-+
-+  assert.equal(result.diagnostics.length, 1);
-+  assert.equal(result.diagnostics[0].severity, "info");
-+  assert.equal(result.diagnostics[0].code, "NABLA_FOOTNOTE_UNUSED_DEFINITION");
-+  assert.equal(result.diagnostics[0].message, "Footnote definition is not referenced.");
-+});
-+
-+test("parse footnote and tooltip with no conflict", async () => {
-+  const { parse } = await loadParserModule();
-+  const result = parse("Text[^a] and word^[tip].");
-+
-+  const ref = result.children[0].children[1];
-+  assert.equal(ref.type, "footnoteReference");
-+  assert.equal(ref.id, "a");
-+});
-+
-+test("serialize footnote round-trips", async () => {
-+  const { parse } = await loadParserModule();
-+  const { serialize } = await loadSerializerModule();
-+
-+  const input = "Text[^a].\n\n[^a]: Footnote content.";
-+  const parsed = parse(input);
-+  const output = serialize(parsed).trimEnd();
-+
-+  assert.equal(output, input);
-+});
-+
-+test("serialize missing definition round-trips", async () => {
-+  const { parse } = await loadParserModule();
-+  const { serialize } = await loadSerializerModule();
-+
-+  const input = "Text[^missing].";
-+  const parsed = parse(input);
-+  const output = serialize(parsed).trimEnd();
-+
-+  assert.equal(output, input);
-+});
-+
-+test("serialize unused definition round-trips", async () => {
-+  const { parse } = await loadParserModule();
-+  const { serialize } = await loadSerializerModule();
-+
-+  const input = "Text.\n\n[^unused]: Unused.";
-+  const parsed = parse(input);
-+  const output = serialize(parsed).trimEnd();
-+
-+  assert.equal(output, input);
-+});
-+
-+test("footnote reference in protected region remains literal", async () => {
-+  const { parse } = await loadParserModule();
-+  const result = parse("`[^a]`");
-+
-+  assert.equal(result.children[0].children[0].type, "inlineCode");
-+  assert.equal(result.children[0].children[0].value, "[^a]");
-+  assert.equal(result.diagnostics.length, 0);
-+});
+ test("tag parser handles single and nested tag values", async () => {
+   const { parse } = await loadParserModule();

@@ -6,6 +6,7 @@ package.json
 packages/markup/package.json
 packages/markup/src/ast.ts
 packages/markup/src/diagnostics.ts
+packages/markup/src/extensions/callouts.ts
 packages/markup/src/extensions/comments.ts
 packages/markup/src/extensions/footnotes.ts
 packages/markup/src/extensions/frontmatter.ts

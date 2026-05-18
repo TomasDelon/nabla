@@ -1,1 +1,1 @@
-c941a21 feat(markup): implement footnote parsing
+88a3c82 feat(markup): implement callout parsing and serialization
