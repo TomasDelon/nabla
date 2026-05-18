@@ -3,6 +3,7 @@ import type { ParseMode } from "./parse-mode.js";
 import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
 import { parseWikiLink } from "./extensions/wiki-links.js";
 import { parseTag } from "./extensions/tags.js";
+import { parseHighlight } from "./extensions/highlights.js";
 
 export type ParseOptions = {
   mode?: ParseMode;
@@ -154,6 +155,29 @@ function parseParagraphChildren(source: string) {
       }
 
       index = closingIndex + 2;
+      continue;
+    }
+
+    if (source[index] === "=" && index + 1 < source.length && source[index + 1] === "=") {
+      if (
+        isOffsetProtected(protectedRegions, index) ||
+        inlineHtmlContainers.some((region) => index >= region.start && index < region.end)
+      ) {
+        index += 2;
+        continue;
+      }
+
+      const parsed = parseHighlight(source.slice(index));
+      if ("node" in parsed) {
+        if (bufferStart < index) {
+          children.push(createTextNode(source.slice(bufferStart, index)));
+        }
+        children.push(parsed.node as MarkdownNode);
+        bufferStart = index + parsed.length;
+      } else if (parsed.diagnostics) {
+        diagnostics.push(...parsed.diagnostics);
+      }
+      index += parsed.length;
       continue;
     }
 

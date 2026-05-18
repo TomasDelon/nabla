@@ -1,6 +1,7 @@
-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode } from "./ast.js";
 import { serializeWikiLink } from "./extensions/wiki-links.js";
 import { serializeTag } from "./extensions/tags.js";
+import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
 
 export type SerializeOptions = {
   lineEnding?: "lf" | "crlf";
@@ -24,6 +25,14 @@ function serializeInlineNode(node: MarkdownNode) {
 
   if (node.type === "tag") {
     return serializeTag(node as TagNode);
+  }
+
+  if (node.type === "highlight") {
+    return serializeHighlight(node as HighlightNode);
+  }
+
+  if (node.type === "colorHighlight") {
+    return serializeColorHighlight(node as ColorHighlightNode);
   }
 
   return "";

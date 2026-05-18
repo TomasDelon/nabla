@@ -21,6 +21,13 @@ const tagFixtureIds = [
   "tags/basic"
 ];
 
+const highlightFixtureIds = [
+  "highlights/basic",
+  "highlights/hex-3-and-8",
+  "highlights/invalid-color",
+  "highlights/unclosed"
+];
+
 let parserModulePromise;
 let serializerModulePromise;
 let fixturesModulePromise;
@@ -55,6 +62,26 @@ test("tag fixtures parse and serialize according to the checked-in contracts", a
   } = await loadFixturesModule();
 
   for (const fixtureId of tagFixtureIds) {
+    const fixture = await loadParserFixture(fixtureId);
+    const parsed = parse(fixture.input);
+
+    compareFixtureAst(parsed, fixture.ast);
+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
+    compareFixtureOutput(serialize(parsed), fixture.output);
+  }
+});
+
+test("highlight fixtures parse and serialize according to the checked-in contracts", async () => {
+  const { parse } = await loadParserModule();
+  const { serialize } = await loadSerializerModule();
+  const {
+    compareFixtureAst,
+    compareFixtureDiagnostics,
+    compareFixtureOutput,
+    loadParserFixture
+  } = await loadFixturesModule();
+
+  for (const fixtureId of highlightFixtureIds) {
     const fixture = await loadParserFixture(fixtureId);
     const parsed = parse(fixture.input);
 
