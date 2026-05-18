@@ -1,5 +1,5 @@
- packages/markup/src/fixtures.ts         | 122 ++++++++++++++++++++++++++++++++
- packages/markup/src/index.ts            |   9 +++
- packages/markup/tests/fixtures.test.mjs |  96 +++++++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md      |  15 ++--
- 4 files changed, 236 insertions(+), 6 deletions(-)
+ packages/markup/src/index.ts              |  2 ++
+ packages/markup/src/serializer.ts         | 19 ++++++++++++
+ packages/markup/tests/serializer.test.mjs | 48 +++++++++++++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md        | 16 +++++++----
+ 4 files changed, 79 insertions(+), 6 deletions(-)

@@ -1,314 +1,112 @@
-diff --git a/packages/markup/src/fixtures.ts b/packages/markup/src/fixtures.ts
-index 8fce256..8dc5101 100644
---- a/packages/markup/src/fixtures.ts
-+++ b/packages/markup/src/fixtures.ts
-@@ -5,6 +5,10 @@ export type FixtureLoaderOptions = {
-   fixturesRoot?: string;
- };
- 
-+export type ExpectedDiagnostic = Pick<Diagnostic, "severity" | "code" | "message"> & {
-+  position?: Diagnostic["position"];
-+};
-+
- export type FixturePaths = {
-   directory: string;
-   input: string;
-@@ -38,8 +42,19 @@ export type WorkspaceFixtureMetadata = {
- 
- export type MarkupFixture = ParserFixture | WorkspaceFixtureMetadata;
- 
-+export type ParserFixtureExpectation = {
-+  input: string;
-+  ast: NablaDocument;
-+  output: string;
-+  diagnostics: Diagnostic[];
-+};
-+
- type FsPromisesModule = {
-   access(filePath: string): Promise<void>;
-+  readdir(
-+    filePath: string,
-+    options: { withFileTypes: true }
-+  ): Promise<Array<{ name: string; isDirectory(): boolean }>>;
-   readFile(filePath: string, encoding: string): Promise<string>;
- };
- 
-@@ -129,6 +144,11 @@ async function pathExists(filePath: string) {
-   }
- }
- 
-+async function readDirectoryEntries(filePath: string) {
-+  const fs = await importFsPromises();
-+  return fs.readdir(filePath, { withFileTypes: true });
-+}
-+
- async function readText(filePath: string) {
-   const fs = await importFsPromises();
-   return fs.readFile(filePath, "utf8");
-@@ -159,6 +179,24 @@ function assertDiagnostics(filePath: string, value: unknown): asserts value is D
-   }
- }
- 
-+function formatComparisonError(label: string, details: string) {
-+  return new Error(`${label} comparison failed: ${details}`);
-+}
-+
-+function stringifyForComparison(value: unknown) {
-+  return JSON.stringify(value, null, 2);
-+}
-+
-+function compareStructuredValue(label: string, actual: unknown, expected: unknown) {
-+  if (stringifyForComparison(actual) !== stringifyForComparison(expected)) {
-+    throw formatComparisonError(label, `expected ${stringifyForComparison(expected)} but received ${stringifyForComparison(actual)}`);
-+  }
-+}
-+
-+function hasPosition(value: ExpectedDiagnostic) {
-+  return value.position !== undefined;
-+}
-+
- export async function resolveSpecFixturesRoot(options: FixtureLoaderOptions = {}) {
-   if (options.fixturesRoot) {
-     return options.fixturesRoot;
-@@ -238,3 +276,87 @@ export async function loadParserFixture(
-   }
-   return fixture;
- }
-+
-+export async function listParserFixtureIds(options: FixtureLoaderOptions = {}) {
-+  const fixturesRoot = await resolveSpecFixturesRoot(options);
-+  const featureEntries = await readDirectoryEntries(fixturesRoot);
-+  const fixtureIds: string[] = [];
-+
-+  for (const featureEntry of featureEntries) {
-+    if (!featureEntry.isDirectory()) continue;
-+    const featureDirectory = joinPath(fixturesRoot, featureEntry.name);
-+    const fixtureEntries = await readDirectoryEntries(featureDirectory);
-+
-+    for (const fixtureEntry of fixtureEntries) {
-+      if (!fixtureEntry.isDirectory()) continue;
-+      const fixtureId = `${featureEntry.name}/${fixtureEntry.name}`;
-+      const parserPaths = getParserFixturePaths(joinPath(featureDirectory, fixtureEntry.name));
-+      if (await pathExists(parserPaths.input)) {
-+        fixtureIds.push(fixtureId);
-+      }
-+    }
-+  }
-+
-+  return fixtureIds.sort();
-+}
-+
-+export async function loadAllParserFixtures(options: FixtureLoaderOptions = {}) {
-+  const fixtureIds = await listParserFixtureIds(options);
-+  return Promise.all(fixtureIds.map((fixtureId) => loadParserFixture(fixtureId, options)));
-+}
-+
-+export function compareFixtureInput(actual: string, expected: string) {
-+  if (actual !== expected) {
-+    throw formatComparisonError("input", `expected ${JSON.stringify(expected)} but received ${JSON.stringify(actual)}`);
-+  }
-+}
-+
-+export function compareFixtureAst(actual: NablaDocument, expected: NablaDocument) {
-+  compareStructuredValue("ast", actual, expected);
-+}
-+
-+export function compareFixtureOutput(actual: string, expected: string) {
-+  if (actual !== expected) {
-+    throw formatComparisonError("output", `expected ${JSON.stringify(expected)} but received ${JSON.stringify(actual)}`);
-+  }
-+}
-+
-+export function compareFixtureDiagnostics(actual: Diagnostic[], expected: ExpectedDiagnostic[]) {
-+  if (actual.length !== expected.length) {
-+    throw formatComparisonError(
-+      "diagnostics",
-+      `expected ${expected.length} entries but received ${actual.length}`
-+    );
-+  }
-+
-+  for (const [index, actualDiagnostic] of actual.entries()) {
-+    const expectedDiagnostic = expected[index];
-+    compareStructuredValue(`diagnostics[${index}].core`, {
-+      severity: actualDiagnostic.severity,
-+      code: actualDiagnostic.code,
-+      message: actualDiagnostic.message
-+    }, {
-+      severity: expectedDiagnostic.severity,
-+      code: expectedDiagnostic.code,
-+      message: expectedDiagnostic.message
-+    });
-+
-+    if (hasPosition(expectedDiagnostic)) {
-+      compareStructuredValue(
-+        `diagnostics[${index}].position`,
-+        actualDiagnostic.position,
-+        expectedDiagnostic.position
-+      );
-+    }
-+  }
-+}
-+
-+export function compareParserFixtureExpectation(
-+  actual: ParserFixtureExpectation,
-+  expected: ParserFixture
-+) {
-+  compareFixtureInput(actual.input, expected.input);
-+  compareFixtureAst(actual.ast, expected.ast);
-+  compareFixtureOutput(actual.output, expected.output);
-+  compareFixtureDiagnostics(actual.diagnostics, expected.diagnostics);
-+}
 diff --git a/packages/markup/src/index.ts b/packages/markup/src/index.ts
-index cb05311..de61e19 100644
+index de61e19..2a7828a 100644
 --- a/packages/markup/src/index.ts
 +++ b/packages/markup/src/index.ts
-@@ -36,6 +36,13 @@ export {
+@@ -35,6 +35,7 @@ export {
+   DIAGNOSTIC_CATALOG,
    DIAGNOSTIC_CODES
  } from "./diagnostics.js";
++export { serialize } from "./serializer.js";
  export {
-+  compareFixtureAst,
-+  compareFixtureDiagnostics,
-+  compareFixtureInput,
-+  compareFixtureOutput,
-+  compareParserFixtureExpectation,
-+  listParserFixtureIds,
-+  loadAllParserFixtures,
-   loadMarkupFixture,
-   loadParserFixture,
-   resolveSpecFixturesRoot
-@@ -46,9 +53,11 @@ export type {
+   compareFixtureAst,
+   compareFixtureDiagnostics,
+@@ -52,6 +53,7 @@ export type {
+   DiagnosticCatalogEntry,
    DiagnosticCode
  } from "./diagnostics.js";
++export type { SerializeOptions } from "./serializer.js";
  export type {
-+  ExpectedDiagnostic,
+   ExpectedDiagnostic,
    FixtureLoaderOptions,
-   FixturePaths,
-   MarkupFixture,
-+  ParserFixtureExpectation,
-   ParserFixture,
-   WorkspaceFixtureMetadata
- } from "./fixtures.js";
-diff --git a/packages/markup/tests/fixtures.test.mjs b/packages/markup/tests/fixtures.test.mjs
-index 8692ec4..9425b75 100644
---- a/packages/markup/tests/fixtures.test.mjs
-+++ b/packages/markup/tests/fixtures.test.mjs
-@@ -45,6 +45,18 @@ test("fixture loader resolves parser fixtures from the spec pack", async () => {
-   assert.match(fixture.paths.input, /\/fixtures\/tags\/basic\/input\.md$/);
- });
- 
-+test("fixture runner can iterate parser fixtures without including workspace fixtures", async () => {
-+  const { listParserFixtureIds, loadAllParserFixtures } = await loadFixturesModule();
-+  const fixtureIds = await listParserFixtureIds();
-+  const fixtures = await loadAllParserFixtures();
+diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
+new file mode 100644
+index 0000000..808680f
+--- /dev/null
++++ b/packages/markup/src/serializer.ts
+@@ -0,0 +1,19 @@
++import type { NablaDocument } from "./ast.js";
 +
-+  assert.ok(fixtureIds.length > 0);
-+  assert.ok(fixtureIds.includes("tags/basic"));
-+  assert.ok(!fixtureIds.some((fixtureId) => fixtureId.startsWith("workspace/")));
-+  assert.equal(fixtures.length, fixtureIds.length);
-+  assert.ok(fixtures.every((fixture) => fixture.kind === "parser"));
-+});
++export type SerializeOptions = {
++  lineEnding?: "lf" | "crlf";
++};
 +
- test("fixture loader detects workspace fixtures as metadata only", async () => {
-   const { loadMarkupFixture } = await loadFixturesModule();
-   const fixture = await loadMarkupFixture("workspace/missing-target");
-@@ -77,3 +89,87 @@ test("fixture loader reports invalid JSON with the source file path", async () =
-     await rm(tempRoot, { recursive: true, force: true });
-   }
- });
++function normalizeLineEnding(value: string, lineEnding: SerializeOptions["lineEnding"]) {
++  if (lineEnding === "crlf") {
++    return value.replace(/\n/g, "\r\n");
++  }
++  return value;
++}
 +
-+test("fixture runner comparison helpers accept loaded parser fixture expectations", async () => {
-+  const {
-+    compareFixtureAst,
-+    compareFixtureDiagnostics,
-+    compareFixtureInput,
-+    compareFixtureOutput,
-+    compareParserFixtureExpectation,
-+    loadParserFixture
-+  } = await loadFixturesModule();
-+  const fixture = await loadParserFixture("tags/basic");
++export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
++  void source;
 +
-+  compareFixtureInput(fixture.input, fixture.input);
-+  compareFixtureAst(fixture.ast, fixture.ast);
-+  compareFixtureOutput(fixture.output, fixture.output);
-+  compareFixtureDiagnostics(fixture.diagnostics, fixture.diagnostics);
-+  compareParserFixtureExpectation(
-+    {
-+      input: fixture.input,
-+      ast: fixture.ast,
-+      output: fixture.output,
-+      diagnostics: fixture.diagnostics
-+    },
-+    fixture
-+  );
-+});
++  // P1-007 only establishes the public serializer entry point.
++  return normalizeLineEnding("", options.lineEnding);
++}
+diff --git a/packages/markup/tests/serializer.test.mjs b/packages/markup/tests/serializer.test.mjs
+new file mode 100644
+index 0000000..2ae1887
+--- /dev/null
++++ b/packages/markup/tests/serializer.test.mjs
+@@ -0,0 +1,48 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { readFile } from "node:fs/promises";
++import ts from "typescript";
 +
-+test("fixture runner diagnostics comparison ignores position when the fixture omits it", async () => {
-+  const { compareFixtureDiagnostics } = await loadFixturesModule();
++const serializerModuleUrl = new URL("../src/serializer.ts", import.meta.url);
 +
-+  compareFixtureDiagnostics(
-+    [
-+      {
-+        severity: "warning",
-+        code: "NABLA_LINK_MISSING_TARGET",
-+        message: "missing wiki target",
-+        position: {
-+          start: { line: 1, column: 1, offset: 0 },
-+          end: { line: 1, column: 2, offset: 1 }
-+        }
++let serializerModulePromise;
++
++async function loadSerializerModule() {
++  serializerModulePromise ??= (async () => {
++    const source = await readFile(serializerModuleUrl, "utf8");
++    const transpiled = ts.transpileModule(source, {
++      compilerOptions: {
++        module: ts.ModuleKind.ES2022,
++        target: ts.ScriptTarget.ES2022
 +      }
-+    ],
-+    [
-+      {
-+        severity: "warning",
-+        code: "NABLA_LINK_MISSING_TARGET",
-+        message: "missing wiki target"
-+      }
-+    ]
-+  );
++    });
++
++    return import(
++      `data:text/javascript;base64,${Buffer.from(transpiled.outputText, "utf8").toString("base64")}`
++    );
++  })();
++
++  return serializerModulePromise;
++}
++
++test("serializer skeleton exports a public serialize entry point", async () => {
++  const serializerSource = await readFile(serializerModuleUrl, "utf8");
++  const indexSource = await readFile(new URL("../src/index.ts", import.meta.url), "utf8");
++
++  assert.match(serializerSource, /import type \{ NablaDocument \} from "\.\/ast\.js";/);
++  assert.match(serializerSource, /export function serialize\(source: NablaDocument, options: SerializeOptions = \{\}\)/);
++  assert.match(indexSource, /export \{ serialize \} from "\.\/serializer\.js";/);
 +});
 +
-+test("fixture runner diagnostics comparison requires exact position when the fixture includes it", async () => {
-+  const { compareFixtureDiagnostics } = await loadFixturesModule();
++test("serializer skeleton returns a string placeholder without implementing markdown rules", async () => {
++  const { serialize } = await loadSerializerModule();
++  const document = {
++    type: "document",
++    children: [{ type: "paragraph", children: [{ type: "text", value: "hello" }] }],
++    diagnostics: []
++  };
 +
-+  assert.throws(
-+    () =>
-+      compareFixtureDiagnostics(
-+        [
-+          {
-+            severity: "warning",
-+            code: "NABLA_LINK_MISSING_TARGET",
-+            message: "missing wiki target",
-+            position: {
-+              start: { line: 1, column: 1, offset: 0 },
-+              end: { line: 1, column: 2, offset: 1 }
-+            }
-+          }
-+        ],
-+        [
-+          {
-+            severity: "warning",
-+            code: "NABLA_LINK_MISSING_TARGET",
-+            message: "missing wiki target",
-+            position: {
-+              start: { line: 2, column: 1, offset: 2 },
-+              end: { line: 2, column: 2, offset: 3 }
-+            }
-+          }
-+        ]
-+      ),
-+    /diagnostics\[0\]\.position comparison failed/
-+  );
++  assert.equal(serialize(document), "");
++  assert.equal(serialize(document, { lineEnding: "lf" }), "");
++  assert.equal(serialize(document, { lineEnding: "crlf" }), "");
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index f050357..3921f08 100644
+index 3921f08..3a0840b 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
  
  ## Task ID
  
--`P1-005 fixture loader`
-+`P1-006 fixture runner`
+-`P1-006 fixture runner`
++`P1-007 serializer skeleton`
  
  ## Branch
  
@@ -316,41 +114,51 @@ index f050357..3921f08 100644
  
  ## Status
  
--Fixture loading utilities implemented for parser fixtures and workspace fixture metadata.
-+Fixture runner utilities implemented for parser fixture iteration and snapshot comparison.
+-Fixture runner utilities implemented for parser fixture iteration and snapshot comparison.
++Serializer skeleton implemented with a public `serialize` entry point and no feature-specific rules.
  
  ## Scope Guardrails
  
-@@ -63,20 +63,23 @@ Fixture loading utilities implemented for parser fixtures and workspace fixture
- - Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
- - Fixture loader resolves the canonical spec-pack fixture root without modifying fixtures
- - Parser fixtures load `input.md`, `ast.json`, `output.md`, and `diagnostics.json`
-+- Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
-+- Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
-+- Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
+@@ -40,8 +40,10 @@ Fixture runner utilities implemented for parser fixture iteration and snapshot c
+ - `packages/markup/src/diagnostics.ts`
+ - `packages/markup/src/fixtures.ts`
+ - `packages/markup/src/parse-mode.ts`
++- `packages/markup/src/serializer.ts`
+ - `packages/markup/tests/diagnostics.test.mjs`
+ - `packages/markup/tests/fixtures.test.mjs`
++- `packages/markup/tests/serializer.test.mjs`
+ - `packages/markup/tests/ast-surface.test.mjs`
+ - `packages/markup/tests/bootstrap.test.mjs`
+ - `scripts/check-boundaries.mjs`
+@@ -66,20 +68,22 @@ Fixture runner utilities implemented for parser fixture iteration and snapshot c
+ - Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
+ - Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
+ - Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
++- Serializer skeleton exposes a public `serialize` entry point that accepts `NablaDocument` and returns a string
++- Serializer skeleton intentionally does not implement Markdown serialization rules yet
  - Workspace fixtures are detected as metadata only, without workspace implementation
  - JSON fixture parse failures report the source file path clearly
  
  ## Verification Summary
  
--- `pnpm test` passed (6 tests)
--- `pnpm test:markup` passed (6 tests)
-+- `pnpm test` passed (10 tests)
-+- `pnpm test:markup` passed (10 tests)
+-- `pnpm test` passed (10 tests)
+-- `pnpm test:markup` passed (10 tests)
++- `pnpm test` passed (12 tests)
++- `pnpm test:markup` passed (12 tests)
  - `pnpm typecheck` passed
  - `pnpm build` passed
  - `pnpm validate:fixtures` passed
  - `pnpm validate:spec-version` passed
  - `pnpm check:boundaries` passed
  - `pnpm lint` passed via bootstrap placeholder
--- `pnpm audit:bundle -- --task P1-005 --base 5493de5 --head <implementation-commit>` will generate a text-only audit bundle for the fixture loader task
-+- `pnpm audit:bundle -- --task P1-006 --base a1d592e --head <implementation-commit>` will generate a text-only audit bundle for the fixture runner task
+-- `pnpm audit:bundle -- --task P1-006 --base a1d592e --head <implementation-commit>` will generate a text-only audit bundle for the fixture runner task
++- Audit bundle generation is performed after the implementation commit so the recorded `--head` is concrete
  
  ## Active Blockers
  
-@@ -84,4 +87,4 @@ None.
+@@ -87,4 +91,4 @@ None.
  
  ## Next Recommended Task
  
--P1-006 fixture runner
-+P1-007 serializer skeleton
+-P1-007 serializer skeleton
++P1-008 parser skeleton
