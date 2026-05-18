@@ -1,5 +1,5 @@
- packages/markup/src/index.ts          |  2 ++
- packages/markup/src/parser.ts         | 20 +++++++++++++
- packages/markup/tests/parser.test.mjs | 55 +++++++++++++++++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md    | 14 +++++----
- 4 files changed, 86 insertions(+), 5 deletions(-)
+ packages/markup/src/index.ts                     |   5 +
+ packages/markup/src/protected-regions.ts         | 250 +++++++++++++++++++++++
+ packages/markup/tests/protected-regions.test.mjs |  88 ++++++++
+ reports/IMPLEMENTATION_PROGRESS.md               |  14 +-
+ 4 files changed, 352 insertions(+), 5 deletions(-)

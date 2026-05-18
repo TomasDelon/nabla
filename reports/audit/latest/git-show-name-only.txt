@@ -1,4 +1,4 @@
 packages/markup/src/index.ts
-packages/markup/src/parser.ts
-packages/markup/tests/parser.test.mjs
+packages/markup/src/protected-regions.ts
+packages/markup/tests/protected-regions.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

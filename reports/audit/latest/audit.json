@@ -1,26 +1,26 @@
 {
-  "taskId": "P1-008",
-  "baseCommit": "585c154",
-  "headCommit": "907fa1487cdf9620077d244b94da004ac835e48f",
+  "taskId": "P1-009",
+  "baseCommit": "3ff919c",
+  "headCommit": "e89cbf06fc37a8c548ebfe2998b9ad69f272191a",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-18T20:57:09.323Z",
-  "currentHead": "907fa1487cdf9620077d244b94da004ac835e48f",
+  "timestamp": "2026-05-18T21:03:26.903Z",
+  "currentHead": "e89cbf06fc37a8c548ebfe2998b9ad69f272191a",
   "currentWorkingTreeStatus": "",
   "changedFiles": [
     "packages/markup/src/index.ts",
-    "packages/markup/src/parser.ts",
-    "packages/markup/tests/parser.test.mjs",
+    "packages/markup/src/protected-regions.ts",
+    "packages/markup/tests/protected-regions.test.mjs",
     "reports/IMPLEMENTATION_PROGRESS.md"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 585c154..907fa1487cdf9620077d244b94da004ac835e48f",
-    "git diff --stat 585c154..907fa1487cdf9620077d244b94da004ac835e48f",
-    "git diff 585c154..907fa1487cdf9620077d244b94da004ac835e48f",
-    "git log --oneline 585c154..907fa1487cdf9620077d244b94da004ac835e48f",
-    "git ls-tree -r --name-only 907fa1487cdf9620077d244b94da004ac835e48f",
+    "git diff --name-only 3ff919c..e89cbf06fc37a8c548ebfe2998b9ad69f272191a",
+    "git diff --stat 3ff919c..e89cbf06fc37a8c548ebfe2998b9ad69f272191a",
+    "git diff 3ff919c..e89cbf06fc37a8c548ebfe2998b9ad69f272191a",
+    "git log --oneline 3ff919c..e89cbf06fc37a8c548ebfe2998b9ad69f272191a",
+    "git ls-tree -r --name-only e89cbf06fc37a8c548ebfe2998b9ad69f272191a",
     "git remote get-url origin"
   ],
   "rawUrls": {
