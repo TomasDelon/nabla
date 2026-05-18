@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-002 @nabla/markup setup`
+`P1-003 @nabla/markup AST types`
 
 ## Branch
 
@@ -14,14 +14,14 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-P1-002 markup package setup finalized.
+P1-003 AST type definitions implemented.
 
 ## Scope Guardrails
 
-- No AST type implementation
-- No diagnostics catalog implementation
 - No parser implementation
 - No serializer implementation
+- No diagnostics catalog implementation
+- No fixture loader implementation
 - No spec changes
 - No fixture changes
 - No Phase 2+ package work
@@ -35,7 +35,10 @@ P1-002 markup package setup finalized.
 - `tsconfig.base.json`
 - `packages/markup/package.json`
 - `packages/markup/tsconfig.json`
+- `packages/markup/src/ast.ts`
 - `packages/markup/src/index.ts`
+- `packages/markup/src/parse-mode.ts`
+- `packages/markup/tests/ast-surface.test.mjs`
 - `packages/markup/tests/bootstrap.test.mjs`
 - `scripts/check-boundaries.mjs`
 - `scripts/report-unavailable.mjs`
@@ -45,29 +48,27 @@ P1-002 markup package setup finalized.
 
 ## Files Verified
 
-- `@nabla/markup` package metadata correct
-- TypeScript config extends base correctly
-- Package exports prepared (main, types, exports)
-- Root scripts call markup package scripts correctly
+- `@nabla/markup` package metadata and exports remain coherent
+- AST types follow `04_AST_MODEL.md`
+- `MarkdownNode` remains mdast-compatible via structural shape and index signature
+- `data.nablaTaskState` and `data.nablaBlockId` are represented
+- `ParseMode` is represented without adding parser runtime behavior
 
 ## Verification Summary
 
-- `pnpm install` passed
-- `pnpm test` passed (1 test: markup package skeleton exists)
-- `pnpm test:markup` passed (1 test)
+- `pnpm test` passed (2 tests)
+- `pnpm test:markup` passed (2 tests)
 - `pnpm typecheck` passed
 - `pnpm build` passed
 - `pnpm validate:fixtures` passed
 - `pnpm validate:spec-version` passed
 - `pnpm check:boundaries` passed
-- `pnpm lint` exits 1 with expected message (not bootstrapped in P1-001)
-- `pnpm -F @nabla/markup build` passed
-- `pnpm -F @nabla/markup typecheck` passed
+- `pnpm lint` passed via bootstrap placeholder
 
 ## Active Blockers
 
-None - pnpm tooling enabled via corepack cache.
+None.
 
 ## Next Recommended Task
 
-P1-003 @nabla/markup types - implement AST types (out of scope for P1-002)
+P1-004 diagnostic constants

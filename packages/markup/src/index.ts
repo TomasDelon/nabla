@@ -1,1 +1,33 @@
 export const NABLA_MARKUP_PACKAGE = "@nabla/markup";
+
+export type {
+  BlockNodeData,
+  CalloutNode,
+  ColorHighlightNode,
+  Diagnostic,
+  DiagnosticSeverity,
+  FoldState,
+  FoldableHeadingNode,
+  FootnoteDefinitionNode,
+  FootnoteReferenceNode,
+  FrontmatterNode,
+  HighlightNode,
+  MarkdownData,
+  MarkdownNode,
+  NablaBlockNode,
+  NablaDocument,
+  NablaInlineNode,
+  PrivateCommentNode,
+  SourcePoint,
+  SourcePosition,
+  SyntaxStatus,
+  TagNode,
+  TaskState,
+  TextNode,
+  ToggleNode,
+  TooltipNode,
+  TransclusionNode,
+  WikiLinkNode,
+  EmojiShortcodeNode,
+} from "./ast.js";
+export type { ParseMode } from "./parse-mode.js";
