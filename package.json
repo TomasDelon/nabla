@@ -1,0 +1,20 @@
+{
+  "name": "nabla",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.1.3",
+  "scripts": {
+    "build": "tsc -b packages/markup/tsconfig.json",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "lint": "node scripts/report-unavailable.mjs lint \"Lint tooling is not bootstrapped in P1-001\"",
+    "test": "node --test packages/markup/tests/**/*.test.mjs",
+    "test:markup": "node --test packages/markup/tests/**/*.test.mjs",
+    "test:workspace": "node scripts/report-unavailable.mjs test:workspace \"Phase 2 (@nabla/workspace) has not started yet\"",
+    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json",
+    "validate:fixtures": "node scripts/validate-fixtures.mjs",
+    "validate:spec-version": "node scripts/validate-spec-version.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
