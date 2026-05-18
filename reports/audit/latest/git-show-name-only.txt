@@ -1,5 +1,1 @@
-packages/markup/src/extensions/tags.ts
-packages/markup/src/parser.ts
-packages/markup/src/serializer.ts
-packages/markup/tests/parser.test.mjs
 packages/markup/tests/wiki-links.test.mjs

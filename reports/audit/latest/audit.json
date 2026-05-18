@@ -1,27 +1,23 @@
 {
-  "taskId": "P1-011",
-  "baseCommit": "e329f52",
-  "headCommit": "207011a",
+  "taskId": "P1-011-fix-protected-inline-parsing",
+  "baseCommit": "0687334",
+  "headCommit": "5ab4d78",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-18T21:38:24.092Z",
-  "currentHead": "207011af156c6f6afdb98750307f45f4cefb36d8",
+  "timestamp": "2026-05-18T21:44:19.703Z",
+  "currentHead": "5ab4d78e8cb91bebe39778876baa1fafd0d31b57",
   "currentWorkingTreeStatus": "",
   "changedFiles": [
-    "packages/markup/src/extensions/tags.ts",
-    "packages/markup/src/parser.ts",
-    "packages/markup/src/serializer.ts",
-    "packages/markup/tests/parser.test.mjs",
     "packages/markup/tests/wiki-links.test.mjs"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only e329f52..207011a",
-    "git diff --stat e329f52..207011a",
-    "git diff e329f52..207011a",
-    "git log --oneline e329f52..207011a",
-    "git ls-tree -r --name-only 207011a",
+    "git diff --name-only 0687334..5ab4d78",
+    "git diff --stat 0687334..5ab4d78",
+    "git diff 0687334..5ab4d78",
+    "git log --oneline 0687334..5ab4d78",
+    "git ls-tree -r --name-only 5ab4d78",
     "git remote get-url origin"
   ],
   "rawUrls": {

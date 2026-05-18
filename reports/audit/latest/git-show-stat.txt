@@ -1,6 +1,2 @@
- packages/markup/src/extensions/tags.ts    |  24 ++++
- packages/markup/src/parser.ts             | 178 ++++++++++++++++++++++------
- packages/markup/src/serializer.ts         |  25 +++-
- packages/markup/tests/parser.test.mjs     |   5 +-
- packages/markup/tests/wiki-links.test.mjs | 187 ++++++++++++++++++++++++++++++
- 5 files changed, 379 insertions(+), 40 deletions(-)
+ packages/markup/tests/wiki-links.test.mjs | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
