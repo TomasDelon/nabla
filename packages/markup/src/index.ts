@@ -31,3 +31,12 @@ export type {
   EmojiShortcodeNode,
 } from "./ast.js";
 export type { ParseMode } from "./parse-mode.js";
+export {
+  DIAGNOSTIC_CATALOG,
+  DIAGNOSTIC_CODES
+} from "./diagnostics.js";
+export type {
+  DiagnosticCatalog,
+  DiagnosticCatalogEntry,
+  DiagnosticCode
+} from "./diagnostics.js";

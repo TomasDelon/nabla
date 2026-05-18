@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-003 @nabla/markup AST types`
+`P1-004 diagnostic constants`
 
 ## Branch
 
@@ -14,13 +14,12 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-P1-003 AST type definitions implemented.
+P1-004 diagnostic constants implemented.
 
 ## Scope Guardrails
 
 - No parser implementation
 - No serializer implementation
-- No diagnostics catalog implementation
 - No fixture loader implementation
 - No spec changes
 - No fixture changes
@@ -37,7 +36,9 @@ P1-003 AST type definitions implemented.
 - `packages/markup/tsconfig.json`
 - `packages/markup/src/ast.ts`
 - `packages/markup/src/index.ts`
+- `packages/markup/src/diagnostics.ts`
 - `packages/markup/src/parse-mode.ts`
+- `packages/markup/tests/diagnostics.test.mjs`
 - `packages/markup/tests/ast-surface.test.mjs`
 - `packages/markup/tests/bootstrap.test.mjs`
 - `scripts/check-boundaries.mjs`
@@ -53,11 +54,12 @@ P1-003 AST type definitions implemented.
 - `MarkdownNode` remains mdast-compatible via structural shape and index signature
 - `data.nablaTaskState` and `data.nablaBlockId` are represented
 - `ParseMode` is represented without adding parser runtime behavior
+- Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
 
 ## Verification Summary
 
-- `pnpm test` passed (2 tests)
-- `pnpm test:markup` passed (2 tests)
+- `pnpm test` passed (3 tests)
+- `pnpm test:markup` passed (3 tests)
 - `pnpm typecheck` passed
 - `pnpm build` passed
 - `pnpm validate:fixtures` passed
@@ -71,4 +73,4 @@ None.
 
 ## Next Recommended Task
 
-P1-004 diagnostic constants
+P1-005 fixture loader
