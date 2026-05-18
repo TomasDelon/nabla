@@ -35,6 +35,7 @@ export {
   DIAGNOSTIC_CATALOG,
   DIAGNOSTIC_CODES
 } from "./diagnostics.js";
+export { serialize } from "./serializer.js";
 export {
   compareFixtureAst,
   compareFixtureDiagnostics,
@@ -52,6 +53,7 @@ export type {
   DiagnosticCatalogEntry,
   DiagnosticCode
 } from "./diagnostics.js";
+export type { SerializeOptions } from "./serializer.js";
 export type {
   ExpectedDiagnostic,
   FixtureLoaderOptions,

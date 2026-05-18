@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-006 fixture runner`
+`P1-007 serializer skeleton`
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Fixture runner utilities implemented for parser fixture iteration and snapshot comparison.
+Serializer skeleton implemented with a public `serialize` entry point and no feature-specific rules.
 
 ## Scope Guardrails
 
@@ -40,8 +40,10 @@ Fixture runner utilities implemented for parser fixture iteration and snapshot c
 - `packages/markup/src/diagnostics.ts`
 - `packages/markup/src/fixtures.ts`
 - `packages/markup/src/parse-mode.ts`
+- `packages/markup/src/serializer.ts`
 - `packages/markup/tests/diagnostics.test.mjs`
 - `packages/markup/tests/fixtures.test.mjs`
+- `packages/markup/tests/serializer.test.mjs`
 - `packages/markup/tests/ast-surface.test.mjs`
 - `packages/markup/tests/bootstrap.test.mjs`
 - `scripts/check-boundaries.mjs`
@@ -66,20 +68,22 @@ Fixture runner utilities implemented for parser fixture iteration and snapshot c
 - Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
 - Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
 - Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
+- Serializer skeleton exposes a public `serialize` entry point that accepts `NablaDocument` and returns a string
+- Serializer skeleton intentionally does not implement Markdown serialization rules yet
 - Workspace fixtures are detected as metadata only, without workspace implementation
 - JSON fixture parse failures report the source file path clearly
 
 ## Verification Summary
 
-- `pnpm test` passed (10 tests)
-- `pnpm test:markup` passed (10 tests)
+- `pnpm test` passed (12 tests)
+- `pnpm test:markup` passed (12 tests)
 - `pnpm typecheck` passed
 - `pnpm build` passed
 - `pnpm validate:fixtures` passed
 - `pnpm validate:spec-version` passed
 - `pnpm check:boundaries` passed
 - `pnpm lint` passed via bootstrap placeholder
-- `pnpm audit:bundle -- --task P1-006 --base a1d592e --head <implementation-commit>` will generate a text-only audit bundle for the fixture runner task
+- Audit bundle generation is performed after the implementation commit so the recorded `--head` is concrete
 
 ## Active Blockers
 
@@ -87,4 +91,4 @@ None.
 
 ## Next Recommended Task
 
-P1-007 serializer skeleton
+P1-008 parser skeleton
