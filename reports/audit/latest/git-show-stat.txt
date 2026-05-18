@@ -1,6 +1,8 @@
- packages/markup/src/extensions/task-states.ts |  44 +++++++++++
- packages/markup/src/parser.ts                 |  47 +++++++++++-
- packages/markup/src/serializer.ts             |  29 +++++++-
- packages/markup/tests/parser.test.mjs         |  16 +++-
- packages/markup/tests/task-states.test.mjs    | 103 ++++++++++++++++++++++++++
- 5 files changed, 233 insertions(+), 6 deletions(-)
+ packages/markup/package.json                     |   3 +
+ packages/markup/src/extensions/frontmatter.ts    |  40 +++++++
+ packages/markup/src/parser.ts                    |  38 ++++++-
+ packages/markup/src/serializer.ts                |   8 +-
+ packages/markup/tests/frontmatter.test.mjs       | 138 +++++++++++++++++++++++
+ packages/markup/tests/helpers/load-ts-module.mjs |  24 +++-
+ pnpm-lock.yaml                                   |  13 ++-
+ 7 files changed, 256 insertions(+), 8 deletions(-)

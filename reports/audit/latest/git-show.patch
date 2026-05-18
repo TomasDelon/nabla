@@ -1,225 +1,169 @@
-diff --git a/packages/markup/src/extensions/task-states.ts b/packages/markup/src/extensions/task-states.ts
+diff --git a/packages/markup/package.json b/packages/markup/package.json
+index 7c6bcd7..08876a3 100644
+--- a/packages/markup/package.json
++++ b/packages/markup/package.json
+@@ -17,5 +17,8 @@
+   "scripts": {
+     "build": "tsc -p tsconfig.json",
+     "typecheck": "tsc -p tsconfig.json --noEmit"
++  },
++  "dependencies": {
++    "yaml": "^2.9.0"
+   }
+ }
+diff --git a/packages/markup/src/extensions/frontmatter.ts b/packages/markup/src/extensions/frontmatter.ts
 new file mode 100644
-index 0000000..b22b777
+index 0000000..127823d
 --- /dev/null
-+++ b/packages/markup/src/extensions/task-states.ts
-@@ -0,0 +1,44 @@
-+import type { TaskState } from "../ast.js";
++++ b/packages/markup/src/extensions/frontmatter.ts
+@@ -0,0 +1,40 @@
++import { parse as parseYaml } from "yaml";
 +
-+const TASK_STATE_MAP: Record<string, TaskState> = {
-+  " ": "unchecked",
-+  x: "checked",
-+  "-": "cancelled",
-+  "!": "important"
-+};
-+
-+const TASK_STATE_TO_MARKER: Record<TaskState, string> = {
-+  unchecked: " ",
-+  checked: "x",
-+  cancelled: "-",
-+  important: "!"
-+};
-+
-+export function parseTaskStateMarker(line: string): {
-+  state: TaskState;
-+  text: string;
++export function parseFrontmatterBlock(
++  lines: string[],
++  startIndex: number
++): {
++  raw: string;
++  data: Record<string, unknown> | null;
++  endIndex: number;
 +} | null {
-+  const match = line.match(/^- \[(.)\] (.*)$/);
-+  if (!match) return null;
++  if (lines[startIndex] !== "---") return null;
 +
-+  const marker = match[1];
-+  const state = TASK_STATE_MAP[marker];
-+  if (state === undefined) return null;
++  let endIndex = -1;
++  for (let i = startIndex + 1; i < lines.length; i++) {
++    if (lines[i] === "---") {
++      endIndex = i;
++      break;
++    }
++  }
 +
-+  return { state, text: match[2] };
++  if (endIndex === -1) return null;
++
++  const raw = lines.slice(startIndex + 1, endIndex).join("\n");
++
++  let data: Record<string, unknown> | null = null;
++  try {
++    const parsed = parseYaml(raw);
++    if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
++      data = parsed as Record<string, unknown>;
++    }
++  } catch {
++    /* data remains null — invalid YAML */
++  }
++
++  return { raw, data, endIndex };
 +}
 +
-+export function parseListMarkerPrefix(line: string): {
-+  rest: string;
-+} | null {
-+  if (!line.startsWith("- ")) return null;
-+  return { rest: line.slice(2) };
-+}
-+
-+export function hasBracketMarker(rest: string): boolean {
-+  return /^\[.\] /.test(rest);
-+}
-+
-+export function taskStateToMarker(state: TaskState): string {
-+  return TASK_STATE_TO_MARKER[state];
++export function serializeFrontmatter(raw: string): string {
++  return `---\n${raw}\n---`;
 +}
 diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index 4f695dc..c4fa68e 100644
+index c4fa68e..0b6fd19 100644
 --- a/packages/markup/src/parser.ts
 +++ b/packages/markup/src/parser.ts
-@@ -1,10 +1,11 @@
--import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState } from "./ast.js";
+@@ -1,4 +1,4 @@
+-import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState } from "./ast.js";
++import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic } from "./ast.js";
  import type { ParseMode } from "./parse-mode.js";
  import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
  import { parseWikiLink } from "./extensions/wiki-links.js";
- import { parseTag } from "./extensions/tags.js";
+@@ -6,6 +6,7 @@ import { parseTag } from "./extensions/tags.js";
  import { parseHighlight } from "./extensions/highlights.js";
  import { parsePrivateCommentBlock } from "./extensions/comments.js";
-+import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
+ import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
++import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
  
  export type ParseOptions = {
    mode?: ParseMode;
-@@ -55,7 +56,8 @@ type BlockSpec =
-   | { kind: "code"; lang: string; value: string }
+@@ -57,7 +58,8 @@ type BlockSpec =
    | { kind: "paragraph"; text: string }
    | { kind: "privateComment"; value: string; raw: string }
--  | { kind: "html"; value: string };
-+  | { kind: "html"; value: string }
-+  | { kind: "listItem"; taskState?: TaskState; text: string };
+   | { kind: "html"; value: string }
+-  | { kind: "listItem"; taskState?: TaskState; text: string };
++  | { kind: "listItem"; taskState?: TaskState; text: string }
++  | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic };
  
  function parseBlocks(source: string): BlockSpec[] {
    const lines = source.split("\n");
-@@ -123,6 +125,21 @@ function parseBlocks(source: string): BlockSpec[] {
-       continue;
-     }
+@@ -74,6 +76,29 @@ function parseBlocks(source: string): BlockSpec[] {
+   for (let i = 0; i < lines.length; i++) {
+     const line = lines[i];
  
-+    const listPrefix = parseListMarkerPrefix(line);
-+    if (listPrefix !== null) {
-+      flushParagraph();
-+      const taskState = parseTaskStateMarker(line);
-+      if (taskState !== null) {
-+        blocks.push({ kind: "listItem", taskState: taskState.state, text: taskState.text });
-+      } else if (hasBracketMarker(listPrefix.rest)) {
-+        blocks.push({ kind: "listItem", text: listPrefix.rest });
-+      } else {
-+        paragraphLines.push(line);
++    if (i === 0 && line === "---") {
++      const fmResult = parseFrontmatterBlock(lines, 0);
++      if (fmResult !== null) {
++        const isInvalid = fmResult.data === null;
++        blocks.push({
++          kind: "frontmatter",
++          raw: fmResult.raw,
++          data: fmResult.data,
++          ...(isInvalid
++            ? {
++                diagnostic: {
++                  severity: "warning" as const,
++                  code: "NABLA_FRONTMATTER_INVALID",
++                  message: "Frontmatter could not be parsed."
++                }
++              }
++            : {})
++        });
++        i = fmResult.endIndex;
 +        continue;
 +      }
-+      continue;
 +    }
 +
-     if (line.startsWith("<!--")) {
+     const fenceMatch = line.match(FENCE_PATTERN);
+     if (fenceMatch) {
        flushParagraph();
-       const closingIndex = line.indexOf("-->");
-@@ -317,7 +334,8 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
-   const blocks = parseBlocks(source);
-   const docChildren: Array<MarkdownNode | NablaBlockNode> = [];
- 
--  for (const block of blocks) {
-+  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
-+    const block = blocks[blockIndex];
-     if (block.kind === "paragraph") {
-       const { children, diagnostics } = parseParagraphChildren(block.text);
-       allDiagnostics.push(...diagnostics);
-@@ -343,6 +361,29 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
+@@ -361,6 +386,15 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
          type: "html",
          value: block.value
        } as MarkdownNode);
-+    } else if (block.kind === "listItem") {
-+      const items: Array<{ taskState?: TaskState; text: string }> = [
-+        { taskState: block.taskState, text: block.text }
-+      ];
-+      while (blockIndex + 1 < blocks.length && blocks[blockIndex + 1].kind === "listItem") {
-+        blockIndex++;
-+        const nextBlock = blocks[blockIndex] as BlockSpec & { kind: "listItem" };
-+        items.push({ taskState: nextBlock.taskState, text: nextBlock.text });
++    } else if (block.kind === "frontmatter") {
++      if (block.diagnostic) {
++        allDiagnostics.push(block.diagnostic);
 +      }
 +      docChildren.push({
-+        type: "list",
-+        ordered: false,
-+        children: items.map((item) => ({
-+          type: "listItem",
-+          ...(item.taskState ? { data: { nablaTaskState: item.taskState } } : {}),
-+          children: [
-+            {
-+              type: "paragraph",
-+              children: [{ type: "text", value: item.text }]
-+            }
-+          ]
-+        }))
-+      } as MarkdownNode);
-     }
-   }
- 
++        type: "frontmatter",
++        raw: block.raw,
++        data: block.data
++      } as FrontmatterNode);
+     } else if (block.kind === "listItem") {
+       const items: Array<{ taskState?: TaskState; text: string }> = [
+         { taskState: block.taskState, text: block.text }
 diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
-index b984220..612547a 100644
+index 612547a..4b7f023 100644
 --- a/packages/markup/src/serializer.ts
 +++ b/packages/markup/src/serializer.ts
-@@ -1,7 +1,8 @@
--import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState } from "./ast.js";
+@@ -1,8 +1,9 @@
+-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState } from "./ast.js";
++import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode } from "./ast.js";
  import { serializeWikiLink } from "./extensions/wiki-links.js";
  import { serializeTag } from "./extensions/tags.js";
  import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
-+import { taskStateToMarker } from "./extensions/task-states.js";
+ import { taskStateToMarker } from "./extensions/task-states.js";
++import { serializeFrontmatter } from "./extensions/frontmatter.js";
  
  export type SerializeOptions = {
    lineEnding?: "lf" | "crlf";
-@@ -78,9 +79,35 @@ function serializeBlockNode(node: MarkdownNode) {
+@@ -79,6 +80,11 @@ function serializeBlockNode(node: MarkdownNode) {
      return typeof node.value === "string" ? node.value : "";
    }
  
-+  if (node.type === "list" && Array.isArray(node.children)) {
-+    return node.children
-+      .map((child) => serializeListItem(child as MarkdownNode))
-+      .join("\n");
++  if (node.type === "frontmatter") {
++    const fmNode = node as unknown as FrontmatterNode;
++    return serializeFrontmatter(fmNode.raw);
 +  }
 +
-   return "";
- }
- 
-+function serializeListItem(node: MarkdownNode): string {
-+  const data = node.data as { nablaTaskState?: TaskState } | undefined;
-+  const taskState = data?.nablaTaskState;
-+
-+  const paragraph = (Array.isArray(node.children) ? node.children : [])
-+    .find((child) => (child as MarkdownNode).type === "paragraph") as MarkdownNode | undefined;
-+  const text = paragraph
-+    ? (Array.isArray(paragraph.children) ? paragraph.children : [])
-+        .map((child) => serializeInlineNode(child as MarkdownNode))
-+        .join("")
-+    : "";
-+
-+  if (taskState) {
-+    const marker = taskStateToMarker(taskState);
-+    return `- [${marker}] ${text}`;
-+  }
-+
-+  return `- ${text}`;
-+}
-+
- export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
-   const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n");
-   const normalizedOutput = output === "" ? "" : `${output}\n`;
-diff --git a/packages/markup/tests/parser.test.mjs b/packages/markup/tests/parser.test.mjs
-index 57a7c18..ad944a9 100644
---- a/packages/markup/tests/parser.test.mjs
-+++ b/packages/markup/tests/parser.test.mjs
-@@ -40,8 +40,20 @@ test("parser returns a minimal paragraph document when no wiki link grammar appl
-     type: "document",
-     children: [
-       {
--        type: "paragraph",
--        children: [{ type: "text", value: "- [ ] task" }]
-+        type: "list",
-+        ordered: false,
-+        children: [
-+          {
-+            type: "listItem",
-+            data: { nablaTaskState: "unchecked" },
-+            children: [
-+              {
-+                type: "paragraph",
-+                children: [{ type: "text", value: "task" }]
-+              }
-+            ]
-+          }
-+        ]
-       }
-     ],
-     diagnostics: []
-diff --git a/packages/markup/tests/task-states.test.mjs b/packages/markup/tests/task-states.test.mjs
+   if (node.type === "list" && Array.isArray(node.children)) {
+     return node.children
+       .map((child) => serializeListItem(child as MarkdownNode))
+diff --git a/packages/markup/tests/frontmatter.test.mjs b/packages/markup/tests/frontmatter.test.mjs
 new file mode 100644
-index 0000000..110ca78
+index 0000000..f4857d2
 --- /dev/null
-+++ b/packages/markup/tests/task-states.test.mjs
-@@ -0,0 +1,103 @@
++++ b/packages/markup/tests/frontmatter.test.mjs
+@@ -0,0 +1,138 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +import { loadTsModule as loadRuntimeTsModule } from "./helpers/load-ts-module.mjs";
@@ -227,15 +171,17 @@ index 0000000..110ca78
 +const parserModuleUrl = new URL("../src/parser.ts", import.meta.url);
 +const serializerModuleUrl = new URL("../src/serializer.ts", import.meta.url);
 +const fixturesModuleUrl = new URL("../src/fixtures.ts", import.meta.url);
++const frontmatterModuleUrl = new URL("../src/extensions/frontmatter.ts", import.meta.url);
 +
-+const taskStateFixtureIds = [
-+  "task-states/basic",
-+  "task-states/unsupported-marker"
++const frontmatterFixtureIds = [
++  "frontmatter/valid",
++  "frontmatter/invalid"
 +];
 +
 +let parserPromise;
 +let serializerPromise;
 +let fixturesPromise;
++let frontmatterPromise;
 +
 +async function loadTsModule(moduleUrl) {
 +  return loadRuntimeTsModule(moduleUrl);
@@ -256,7 +202,12 @@ index 0000000..110ca78
 +  return fixturesPromise;
 +}
 +
-+test("task state fixtures parse and serialize according to the checked-in contracts", async () => {
++async function loadFrontmatterModule() {
++  frontmatterPromise ??= loadTsModule(frontmatterModuleUrl);
++  return frontmatterPromise;
++}
++
++test("frontmatter fixtures parse and serialize according to the checked-in contracts", async () => {
 +  const { parse } = await loadParserModule();
 +  const { serialize } = await loadSerializerModule();
 +  const {
@@ -266,7 +217,7 @@ index 0000000..110ca78
 +    loadParserFixture
 +  } = await loadFixturesModule();
 +
-+  for (const fixtureId of taskStateFixtureIds) {
++  for (const fixtureId of frontmatterFixtureIds) {
 +    const fixture = await loadParserFixture(fixtureId);
 +    const parsed = parse(fixture.input);
 +
@@ -276,50 +227,146 @@ index 0000000..110ca78
 +  }
 +});
 +
-+test("parse unmaps task state markers to data.nablaTaskState", async () => {
++test("parse valid frontmatter yields correct raw and data", async () => {
 +  const { parse } = await loadParserModule();
++  const result = parse("---\ntitle: Analyse\ntags: [math]\n---\n# Course");
 +
-+  const result = parse("- [ ] a\n- [x] b\n- [-] c\n- [!] d");
-+  const list = result.children[0];
-+  const items = list.children;
-+
-+  assert.equal(items[0].data.nablaTaskState, "unchecked");
-+  assert.equal(items[1].data.nablaTaskState, "checked");
-+  assert.equal(items[2].data.nablaTaskState, "cancelled");
-+  assert.equal(items[3].data.nablaTaskState, "important");
++  const frontmatter = result.children[0];
++  assert.equal(frontmatter.type, "frontmatter");
++  assert.equal(frontmatter.raw, "title: Analyse\ntags: [math]");
++  assert.deepEqual(frontmatter.data, { title: "Analyse", tags: ["math"] });
 +});
 +
-+test("parse leaves unsupported markers as literal text without task state", async () => {
++test("parse invalid frontmatter yields raw with null data and diagnostic", async () => {
 +  const { parse } = await loadParserModule();
++  const result = parse("---\ntitle: [broken\n---\nText");
 +
-+  const result = parse("- [?] maybe");
-+  const list = result.children[0];
-+  const item = list.children[0];
++  const frontmatter = result.children[0];
++  assert.equal(frontmatter.type, "frontmatter");
++  assert.equal(frontmatter.raw, "title: [broken");
++  assert.equal(frontmatter.data, null);
 +
-+  assert.equal(item.data, undefined);
-+  const paragraph = item.children[0];
-+  const text = paragraph.children[0];
-+  assert.equal(text.value, "[?] maybe");
++  assert.equal(result.diagnostics.length, 1);
++  assert.equal(result.diagnostics[0].severity, "warning");
++  assert.equal(result.diagnostics[0].code, "NABLA_FRONTMATTER_INVALID");
++  assert.equal(result.diagnostics[0].message, "Frontmatter could not be parsed.");
 +});
 +
-+test("serialize emits canonical task state markers", async () => {
++test("parse --- not at document start is not frontmatter", async () => {
++  const { parse } = await loadParserModule();
++  const result = parse("text\n---\nmore");
++  const firstChild = result.children[0];
++
++  assert.notEqual(firstChild.type, "frontmatter");
++});
++
++test("parse --- without closing delimiter is not frontmatter", async () => {
++  const { parse } = await loadParserModule();
++  const result = parse("---\ntitle: Analyse");
++  const firstChild = result.children[0];
++
++  assert.notEqual(firstChild.type, "frontmatter");
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("serialize valid frontmatter round-trips", async () => {
 +  const { parse } = await loadParserModule();
 +  const { serialize } = await loadSerializerModule();
 +
-+  const input = "- [ ] a\n- [x] b\n- [-] c\n- [!] d";
++  const input = "---\ntitle: Analyse\ntags: [math]\n---\n# Course";
 +  const parsed = parse(input);
 +  const output = serialize(parsed).trimEnd();
 +
 +  assert.equal(output, input);
 +});
 +
-+test("serialize emits literal text for unsupported markers", async () => {
++test("serialize invalid frontmatter round-trips", async () => {
 +  const { parse } = await loadParserModule();
 +  const { serialize } = await loadSerializerModule();
 +
-+  const input = "- [?] maybe";
++  const input = "---\ntitle: [broken\n---\nText";
 +  const parsed = parse(input);
 +  const output = serialize(parsed).trimEnd();
 +
 +  assert.equal(output, input);
 +});
++
++test("parseFrontmatterBlock returns null for non-frontmatter start", async () => {
++  const { parseFrontmatterBlock } = await loadFrontmatterModule();
++  const result = parseFrontmatterBlock(["text", "---", "content", "---"], 0);
++  assert.equal(result, null);
++});
++
++test("parseFrontmatterBlock returns null when no closing ---", async () => {
++  const { parseFrontmatterBlock } = await loadFrontmatterModule();
++  const result = parseFrontmatterBlock(["---", "title: broken"], 0);
++  assert.equal(result, null);
++});
+diff --git a/packages/markup/tests/helpers/load-ts-module.mjs b/packages/markup/tests/helpers/load-ts-module.mjs
+index 9ad6ec8..842b0e4 100644
+--- a/packages/markup/tests/helpers/load-ts-module.mjs
++++ b/packages/markup/tests/helpers/load-ts-module.mjs
+@@ -34,12 +34,28 @@ export async function loadTsModule(moduleUrl, cache = new Map()) {
+ 
+   let rewritten = transpiled;
+   const localSpecifiers = new Set();
++  const bareSpecifiers = new Set();
+ 
+-  for (const match of transpiled.matchAll(/(?:from\s+|import\()"(\.{1,2}\/[^"\n]+)"/g)) {
+-    localSpecifiers.add(match[1]);
++  for (const match of transpiled.matchAll(/(?:from\s+|import\()"([^"\n]+)"/g)) {
++    const specifier = match[1];
++    if (specifier.startsWith(".")) {
++      localSpecifiers.add(specifier);
++    } else {
++      bareSpecifiers.add(specifier);
++    }
++  }
++  for (const match of transpiled.matchAll(/(?:from\s+|import\()'([^'\n]+)'/g)) {
++    const specifier = match[1];
++    if (specifier.startsWith(".")) {
++      localSpecifiers.add(specifier);
++    } else {
++      bareSpecifiers.add(specifier);
++    }
+   }
+-  for (const match of transpiled.matchAll(/(?:from\s+|import\()'(\.{1,2}\/[^'\n]+)'/g)) {
+-    localSpecifiers.add(match[1]);
++
++  for (const specifier of bareSpecifiers) {
++    const resolvedUrl = await import.meta.resolve(specifier, moduleUrl.href);
++    rewritten = rewritten.replaceAll(specifier, resolvedUrl);
+   }
+ 
+   for (const specifier of localSpecifiers) {
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 0642cc7..5b64340 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -12,7 +12,11 @@ importers:
+         specifier: ^5.6.3
+         version: 5.9.3
+ 
+-  packages/markup: {}
++  packages/markup:
++    dependencies:
++      yaml:
++        specifier: ^2.9.0
++        version: 2.9.0
+ 
+ packages:
+ 
+@@ -21,6 +25,13 @@ packages:
+     engines: {node: '>=14.17'}
+     hasBin: true
+ 
++  yaml@2.9.0:
++    resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
++    engines: {node: '>= 14.6'}
++    hasBin: true
++
+ snapshots:
+ 
+   typescript@5.9.3: {}
++
++  yaml@2.9.0: {}
