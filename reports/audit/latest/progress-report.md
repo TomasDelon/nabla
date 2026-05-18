@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-010 wiki-links`
+`P1-012 highlights`
 
 ## Branch
 
@@ -14,90 +14,41 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Wiki-link parsing and serialization implemented against the checked-in fixture contracts.
+Highlight parsing and serialization implemented against the checked-in fixture contracts.
+
+All 5 highlight fixture groups pass:
+- `highlights/basic` — simple `==text==` and color `=={#hex}text==` highlight parsing
+- `highlights/hex-3-and-8` — 3-digit and 8-digit hex color parsing
+- `highlights/invalid-color` — invalid hex color produces warning, literal text preserved
+- `highlights/protected-region` — highlight syntax remains literal inside inline code and fenced code
+- `highlights/unclosed` — unclosed highlight produces warning, literal text preserved
 
 ## Scope Guardrails
 
-- No parser implementation
-- No serializer implementation
-- No AST implementation
-- No diagnostics implementation
 - No workspace/editor/components/app
 - No spec changes
 - No fixture changes
 
 ## Files Created
 
-- `.gitignore`
-- `README.md`
-- `package.json`
-- `pnpm-workspace.yaml`
-- `tsconfig.base.json`
-- `packages/markup/package.json`
-- `packages/markup/tsconfig.json`
-- `packages/markup/src/ast.ts`
-- `packages/markup/src/index.ts`
-- `packages/markup/src/diagnostics.ts`
-- `packages/markup/src/fixtures.ts`
-- `packages/markup/src/extensions/wiki-links.ts`
-- `packages/markup/src/parse-mode.ts`
-- `packages/markup/src/parser.ts`
-- `packages/markup/src/protected-regions.ts`
-- `packages/markup/src/serializer.ts`
-- `packages/markup/tests/diagnostics.test.mjs`
-- `packages/markup/tests/fixtures.test.mjs`
-- `packages/markup/tests/helpers/load-ts-module.mjs`
-- `packages/markup/tests/parser.test.mjs`
-- `packages/markup/tests/protected-regions.test.mjs`
-- `packages/markup/tests/serializer.test.mjs`
-- `packages/markup/tests/wiki-links.test.mjs`
-- `packages/markup/tests/ast-surface.test.mjs`
-- `packages/markup/tests/bootstrap.test.mjs`
-- `scripts/check-boundaries.mjs`
-- `scripts/report-unavailable.mjs`
-- `scripts/validate-fixtures.mjs`
-- `scripts/validate-spec-version.mjs`
-- `scripts/create-audit-bundle.mjs`
-- `reports/decisions/IDR-0001-audit-bundle-workflow.md`
-- `reports/audit/latest/`
-- `pnpm-lock.yaml`
+- `packages/markup/src/extensions/highlights.ts`
 
-## Files Verified
+## Files Modified
 
-- `@nabla/markup` package metadata and exports remain coherent
-- AST types follow `04_AST_MODEL.md`
-- `MarkdownNode` remains mdast-compatible via structural shape and index signature
-- `data.nablaTaskState` and `data.nablaBlockId` are represented
-- `ParseMode` is represented without adding parser runtime behavior
-- Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
-- Fixture loader resolves the canonical spec-pack fixture root without modifying fixtures
-- Parser fixtures load `input.md`, `ast.json`, `output.md`, and `diagnostics.json`
-- Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
-- Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
-- Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
-- Wiki-link parser matches the specified target/alias/heading/block grammar and preserves invalid combined targets as literal text with diagnostics
-- Wiki-link serializer canonicalizes compatible block syntax to `^` form and preserves escaped wiki-link characters
-- Wiki-link parsing stays disabled inside protected code and HTML regions
-- Parser skeleton exposes a public `parse` entry point that accepts Markdown source and returns a `NablaDocument`
-- Parser skeleton intentionally does not implement Markdown or Nabla parsing rules yet
-- Protected-region utilities identify standalone spans for inline code, fenced code blocks, indented code blocks, raw HTML blocks, and inline HTML
-- Protected-region utilities do not implement Nabla feature parsing inside those spans
-- Serializer skeleton exposes a public `serialize` entry point that accepts `NablaDocument` and returns a string
-- Serializer skeleton intentionally does not implement Markdown serialization rules yet
-- Workspace fixtures are detected as metadata only, without workspace implementation
-- JSON fixture parse failures report the source file path clearly
+- `packages/markup/src/parser.ts` — import `parseHighlight`, add `==` handling in inline parser
+- `packages/markup/src/serializer.ts` — import `serializeHighlight`/`serializeColorHighlight`, dispatch by node type
+- `packages/markup/tests/wiki-links.test.mjs` — add `highlightFixtureIds` and fixture-driven test
+- `reports/IMPLEMENTATION_PROGRESS.md` — updated for P1-012
 
 ## Verification Summary
 
-- `pnpm test` passed (21 tests)
-- `pnpm test:markup` passed (21 tests)
-- `pnpm typecheck` passed
-- `pnpm build` passed
-- `pnpm validate:fixtures` passed
-- `pnpm validate:spec-version` passed
-- `pnpm check:boundaries` passed
-- `pnpm lint` passed via bootstrap placeholder
-- Audit bundle generation is performed after the implementation commit so the recorded `--head` is concrete
+- `node --test packages/markup/tests/**/*.test.mjs` — 35 tests pass (1 new highlight fixture test)
+- `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
+- `node scripts/validate-fixtures.mjs` — fixture validation passed
+- `node scripts/validate-spec-version.mjs` — spec version validation passed
+- `node scripts/check-boundaries.mjs` — boundary check passed
+- `node scripts/report-unavailable.mjs lint` — lint unavailable (bootstrap placeholder)
+- `tsc -b packages/markup/tsconfig.json` — build passed
 
 ## Active Blockers
 
@@ -105,4 +56,4 @@ None.
 
 ## Next Recommended Task
 
-P1-011 tags
+P1-013 comments

@@ -1,34 +1,337 @@
-diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
-index 764d048..71660e8 100644
---- a/packages/markup/tests/wiki-links.test.mjs
-+++ b/packages/markup/tests/wiki-links.test.mjs
-@@ -197,6 +197,30 @@ test("tag parser leaves syntax inside protected regions literal", async () => {
-   });
- });
- 
-+test("tag parser parses tags outside inline code but protects tags inside backticks", async () => {
-+  const { parse } = await loadParserModule();
+diff --git a/packages/markup/src/extensions/highlights.ts b/packages/markup/src/extensions/highlights.ts
+new file mode 100644
+index 0000000..e7c54b9
+--- /dev/null
++++ b/packages/markup/src/extensions/highlights.ts
+@@ -0,0 +1,83 @@
++import type { HighlightNode, ColorHighlightNode, Diagnostic } from "../ast.js";
++import { DIAGNOSTIC_CODES } from "../diagnostics.js";
 +
-+  assert.deepEqual(parse("See `#tag` and #tag."), {
-+    type: "document",
-+    children: [
++const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
++
++function isValidHexColor(color: string): boolean {
++  return HEX_COLOR.test(color);
++}
++
++export function parseHighlight(source: string): {
++  node?: HighlightNode | ColorHighlightNode;
++  diagnostics?: Diagnostic[];
++  length: number;
++} {
++  if (source.length >= 5 && source[2] === "{" && source[3] === "#") {
++    const closeBrace = source.indexOf("}", 4);
++    if (closeBrace !== -1) {
++      const color = source.slice(3, closeBrace);
++      const contentStart = closeBrace + 1;
++      const closingIndex = source.indexOf("==", contentStart);
++
++      if (closingIndex !== -1) {
++        if (isValidHexColor(color)) {
++          const content = source.slice(contentStart, closingIndex);
++          return {
++            node: {
++              type: "colorHighlight",
++              color,
++              children: [{ type: "text", value: content }],
++              raw: source.slice(0, closingIndex + 2)
++            } as ColorHighlightNode,
++            length: closingIndex + 2
++          };
++        }
++
++        return {
++          diagnostics: [
++            {
++              severity: "warning",
++              code: DIAGNOSTIC_CODES.HIGHLIGHT_INVALID_COLOR,
++              message: "Invalid highlight color."
++            }
++          ],
++          length: closingIndex + 2
++        };
++      }
++    }
++  }
++
++  const closingIndex = source.indexOf("==", 2);
++  if (closingIndex !== -1) {
++    const content = source.slice(2, closingIndex);
++    return {
++      node: {
++        type: "highlight",
++        children: [{ type: "text", value: content }],
++        raw: source.slice(0, closingIndex + 2)
++      } as HighlightNode,
++      length: closingIndex + 2
++    };
++  }
++
++  return {
++    diagnostics: [
 +      {
-+        type: "paragraph",
-+        children: [
-+          { type: "text", value: "See `#tag` and " },
-+          {
-+            type: "tag",
-+            value: "tag",
-+            segments: ["tag"],
-+            raw: "#tag"
-+          },
-+          { type: "text", value: "." }
-+        ]
++        severity: "warning",
++        code: DIAGNOSTIC_CODES.HIGHLIGHT_UNCLOSED,
++        message: "Highlight is not closed."
 +      }
 +    ],
-+    diagnostics: []
-+  });
++    length: 2
++  };
++}
++
++export function serializeHighlight(node: HighlightNode): string {
++  const content = node.children.map((child) => (child as { value?: string }).value ?? "").join("");
++  return `==${content}==`;
++}
++
++export function serializeColorHighlight(node: ColorHighlightNode): string {
++  const content = node.children.map((child) => (child as { value?: string }).value ?? "").join("");
++  return `=={${node.color}}${content}==`;
++}
+diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
+index 5d26128..c88bd1c 100644
+--- a/packages/markup/src/parser.ts
++++ b/packages/markup/src/parser.ts
+@@ -3,6 +3,7 @@ import type { ParseMode } from "./parse-mode.js";
+ import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
+ import { parseWikiLink } from "./extensions/wiki-links.js";
+ import { parseTag } from "./extensions/tags.js";
++import { parseHighlight } from "./extensions/highlights.js";
+ 
+ export type ParseOptions = {
+   mode?: ParseMode;
+@@ -157,6 +158,29 @@ function parseParagraphChildren(source: string) {
+       continue;
+     }
+ 
++    if (source[index] === "=" && index + 1 < source.length && source[index + 1] === "=") {
++      if (
++        isOffsetProtected(protectedRegions, index) ||
++        inlineHtmlContainers.some((region) => index >= region.start && index < region.end)
++      ) {
++        index += 2;
++        continue;
++      }
++
++      const parsed = parseHighlight(source.slice(index));
++      if ("node" in parsed) {
++        if (bufferStart < index) {
++          children.push(createTextNode(source.slice(bufferStart, index)));
++        }
++        children.push(parsed.node as MarkdownNode);
++        bufferStart = index + parsed.length;
++      } else if (parsed.diagnostics) {
++        diagnostics.push(...parsed.diagnostics);
++      }
++      index += parsed.length;
++      continue;
++    }
++
+     if (source[index] === "#") {
+       if (
+         isOffsetProtected(protectedRegions, index) ||
+diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
+index 321293b..3a5dea7 100644
+--- a/packages/markup/src/serializer.ts
++++ b/packages/markup/src/serializer.ts
+@@ -1,6 +1,7 @@
+-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode } from "./ast.js";
++import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode } from "./ast.js";
+ import { serializeWikiLink } from "./extensions/wiki-links.js";
+ import { serializeTag } from "./extensions/tags.js";
++import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
+ 
+ export type SerializeOptions = {
+   lineEnding?: "lf" | "crlf";
+@@ -26,6 +27,14 @@ function serializeInlineNode(node: MarkdownNode) {
+     return serializeTag(node as TagNode);
+   }
+ 
++  if (node.type === "highlight") {
++    return serializeHighlight(node as HighlightNode);
++  }
++
++  if (node.type === "colorHighlight") {
++    return serializeColorHighlight(node as ColorHighlightNode);
++  }
++
+   return "";
+ }
+ 
+diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
+index 71660e8..c0b6785 100644
+--- a/packages/markup/tests/wiki-links.test.mjs
++++ b/packages/markup/tests/wiki-links.test.mjs
+@@ -21,6 +21,13 @@ const tagFixtureIds = [
+   "tags/basic"
+ ];
+ 
++const highlightFixtureIds = [
++  "highlights/basic",
++  "highlights/hex-3-and-8",
++  "highlights/invalid-color",
++  "highlights/unclosed"
++];
++
+ let parserModulePromise;
+ let serializerModulePromise;
+ let fixturesModulePromise;
+@@ -64,6 +71,26 @@ test("tag fixtures parse and serialize according to the checked-in contracts", a
+   }
+ });
+ 
++test("highlight fixtures parse and serialize according to the checked-in contracts", async () => {
++  const { parse } = await loadParserModule();
++  const { serialize } = await loadSerializerModule();
++  const {
++    compareFixtureAst,
++    compareFixtureDiagnostics,
++    compareFixtureOutput,
++    loadParserFixture
++  } = await loadFixturesModule();
++
++  for (const fixtureId of highlightFixtureIds) {
++    const fixture = await loadParserFixture(fixtureId);
++    const parsed = parse(fixture.input);
++
++    compareFixtureAst(parsed, fixture.ast);
++    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
++    compareFixtureOutput(serialize(parsed), fixture.output);
++  }
 +});
 +
- test("tag and wiki link interop work correctly", async () => {
+ test("tag parser handles single and nested tag values", async () => {
    const { parse } = await loadParserModule();
+ 
+diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
+index 11337ed..58718bf 100644
+--- a/reports/IMPLEMENTATION_PROGRESS.md
++++ b/reports/IMPLEMENTATION_PROGRESS.md
+@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
+ 
+ ## Task ID
+ 
+-`P1-010 wiki-links`
++`P1-012 highlights`
+ 
+ ## Branch
+ 
+@@ -14,90 +14,41 @@ Phase 1 - `@nabla/markup`
+ 
+ ## Status
+ 
+-Wiki-link parsing and serialization implemented against the checked-in fixture contracts.
++Highlight parsing and serialization implemented against the checked-in fixture contracts.
++
++All 5 highlight fixture groups pass:
++- `highlights/basic` — simple `==text==` and color `=={#hex}text==` highlight parsing
++- `highlights/hex-3-and-8` — 3-digit and 8-digit hex color parsing
++- `highlights/invalid-color` — invalid hex color produces warning, literal text preserved
++- `highlights/protected-region` — highlight syntax remains literal inside inline code and fenced code
++- `highlights/unclosed` — unclosed highlight produces warning, literal text preserved
+ 
+ ## Scope Guardrails
+ 
+-- No parser implementation
+-- No serializer implementation
+-- No AST implementation
+-- No diagnostics implementation
+ - No workspace/editor/components/app
+ - No spec changes
+ - No fixture changes
+ 
+ ## Files Created
+ 
+-- `.gitignore`
+-- `README.md`
+-- `package.json`
+-- `pnpm-workspace.yaml`
+-- `tsconfig.base.json`
+-- `packages/markup/package.json`
+-- `packages/markup/tsconfig.json`
+-- `packages/markup/src/ast.ts`
+-- `packages/markup/src/index.ts`
+-- `packages/markup/src/diagnostics.ts`
+-- `packages/markup/src/fixtures.ts`
+-- `packages/markup/src/extensions/wiki-links.ts`
+-- `packages/markup/src/parse-mode.ts`
+-- `packages/markup/src/parser.ts`
+-- `packages/markup/src/protected-regions.ts`
+-- `packages/markup/src/serializer.ts`
+-- `packages/markup/tests/diagnostics.test.mjs`
+-- `packages/markup/tests/fixtures.test.mjs`
+-- `packages/markup/tests/helpers/load-ts-module.mjs`
+-- `packages/markup/tests/parser.test.mjs`
+-- `packages/markup/tests/protected-regions.test.mjs`
+-- `packages/markup/tests/serializer.test.mjs`
+-- `packages/markup/tests/wiki-links.test.mjs`
+-- `packages/markup/tests/ast-surface.test.mjs`
+-- `packages/markup/tests/bootstrap.test.mjs`
+-- `scripts/check-boundaries.mjs`
+-- `scripts/report-unavailable.mjs`
+-- `scripts/validate-fixtures.mjs`
+-- `scripts/validate-spec-version.mjs`
+-- `scripts/create-audit-bundle.mjs`
+-- `reports/decisions/IDR-0001-audit-bundle-workflow.md`
+-- `reports/audit/latest/`
+-- `pnpm-lock.yaml`
+-
+-## Files Verified
+-
+-- `@nabla/markup` package metadata and exports remain coherent
+-- AST types follow `04_AST_MODEL.md`
+-- `MarkdownNode` remains mdast-compatible via structural shape and index signature
+-- `data.nablaTaskState` and `data.nablaBlockId` are represented
+-- `ParseMode` is represented without adding parser runtime behavior
+-- Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
+-- Fixture loader resolves the canonical spec-pack fixture root without modifying fixtures
+-- Parser fixtures load `input.md`, `ast.json`, `output.md`, and `diagnostics.json`
+-- Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
+-- Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
+-- Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
+-- Wiki-link parser matches the specified target/alias/heading/block grammar and preserves invalid combined targets as literal text with diagnostics
+-- Wiki-link serializer canonicalizes compatible block syntax to `^` form and preserves escaped wiki-link characters
+-- Wiki-link parsing stays disabled inside protected code and HTML regions
+-- Parser skeleton exposes a public `parse` entry point that accepts Markdown source and returns a `NablaDocument`
+-- Parser skeleton intentionally does not implement Markdown or Nabla parsing rules yet
+-- Protected-region utilities identify standalone spans for inline code, fenced code blocks, indented code blocks, raw HTML blocks, and inline HTML
+-- Protected-region utilities do not implement Nabla feature parsing inside those spans
+-- Serializer skeleton exposes a public `serialize` entry point that accepts `NablaDocument` and returns a string
+-- Serializer skeleton intentionally does not implement Markdown serialization rules yet
+-- Workspace fixtures are detected as metadata only, without workspace implementation
+-- JSON fixture parse failures report the source file path clearly
++- `packages/markup/src/extensions/highlights.ts`
++
++## Files Modified
++
++- `packages/markup/src/parser.ts` — import `parseHighlight`, add `==` handling in inline parser
++- `packages/markup/src/serializer.ts` — import `serializeHighlight`/`serializeColorHighlight`, dispatch by node type
++- `packages/markup/tests/wiki-links.test.mjs` — add `highlightFixtureIds` and fixture-driven test
++- `reports/IMPLEMENTATION_PROGRESS.md` — updated for P1-012
+ 
+ ## Verification Summary
+ 
+-- `pnpm test` passed (21 tests)
+-- `pnpm test:markup` passed (21 tests)
+-- `pnpm typecheck` passed
+-- `pnpm build` passed
+-- `pnpm validate:fixtures` passed
+-- `pnpm validate:spec-version` passed
+-- `pnpm check:boundaries` passed
+-- `pnpm lint` passed via bootstrap placeholder
+-- Audit bundle generation is performed after the implementation commit so the recorded `--head` is concrete
++- `node --test packages/markup/tests/**/*.test.mjs` — 35 tests pass (1 new highlight fixture test)
++- `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
++- `node scripts/validate-fixtures.mjs` — fixture validation passed
++- `node scripts/validate-spec-version.mjs` — spec version validation passed
++- `node scripts/check-boundaries.mjs` — boundary check passed
++- `node scripts/report-unavailable.mjs lint` — lint unavailable (bootstrap placeholder)
++- `tsc -b packages/markup/tsconfig.json` — build passed
+ 
+ ## Active Blockers
+ 
+@@ -105,4 +56,4 @@ None.
+ 
+ ## Next Recommended Task
+ 
+-P1-011 tags
++P1-013 comments

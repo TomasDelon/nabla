@@ -1,2 +1,6 @@
- packages/markup/tests/wiki-links.test.mjs | 24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+ packages/markup/src/extensions/highlights.ts | 83 +++++++++++++++++++++++
+ packages/markup/src/parser.ts                | 24 +++++++
+ packages/markup/src/serializer.ts            | 11 +++-
+ packages/markup/tests/wiki-links.test.mjs    | 27 ++++++++
+ reports/IMPLEMENTATION_PROGRESS.md           | 99 +++++++---------------------
+ 5 files changed, 169 insertions(+), 75 deletions(-)

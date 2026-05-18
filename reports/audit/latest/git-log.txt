@@ -1,1 +1,1 @@
-5ab4d78 fix(markup): repair protected inline parsing
+ca8bfaa feat(markup): implement highlight parsing
