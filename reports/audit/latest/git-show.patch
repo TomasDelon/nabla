@@ -1,337 +1,248 @@
-diff --git a/packages/markup/src/extensions/highlights.ts b/packages/markup/src/extensions/highlights.ts
-new file mode 100644
-index 0000000..e7c54b9
---- /dev/null
-+++ b/packages/markup/src/extensions/highlights.ts
-@@ -0,0 +1,83 @@
-+import type { HighlightNode, ColorHighlightNode, Diagnostic } from "../ast.js";
-+import { DIAGNOSTIC_CODES } from "../diagnostics.js";
-+
-+const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
-+
-+function isValidHexColor(color: string): boolean {
-+  return HEX_COLOR.test(color);
-+}
-+
-+export function parseHighlight(source: string): {
-+  node?: HighlightNode | ColorHighlightNode;
-+  diagnostics?: Diagnostic[];
-+  length: number;
-+} {
-+  if (source.length >= 5 && source[2] === "{" && source[3] === "#") {
-+    const closeBrace = source.indexOf("}", 4);
-+    if (closeBrace !== -1) {
-+      const color = source.slice(3, closeBrace);
-+      const contentStart = closeBrace + 1;
-+      const closingIndex = source.indexOf("==", contentStart);
-+
-+      if (closingIndex !== -1) {
-+        if (isValidHexColor(color)) {
-+          const content = source.slice(contentStart, closingIndex);
-+          return {
-+            node: {
-+              type: "colorHighlight",
-+              color,
-+              children: [{ type: "text", value: content }],
-+              raw: source.slice(0, closingIndex + 2)
-+            } as ColorHighlightNode,
-+            length: closingIndex + 2
-+          };
-+        }
-+
-+        return {
-+          diagnostics: [
-+            {
-+              severity: "warning",
-+              code: DIAGNOSTIC_CODES.HIGHLIGHT_INVALID_COLOR,
-+              message: "Invalid highlight color."
-+            }
-+          ],
-+          length: closingIndex + 2
-+        };
-+      }
-+    }
-+  }
-+
-+  const closingIndex = source.indexOf("==", 2);
-+  if (closingIndex !== -1) {
-+    const content = source.slice(2, closingIndex);
-+    return {
-+      node: {
-+        type: "highlight",
-+        children: [{ type: "text", value: content }],
-+        raw: source.slice(0, closingIndex + 2)
-+      } as HighlightNode,
-+      length: closingIndex + 2
-+    };
-+  }
-+
-+  return {
-+    diagnostics: [
-+      {
-+        severity: "warning",
-+        code: DIAGNOSTIC_CODES.HIGHLIGHT_UNCLOSED,
-+        message: "Highlight is not closed."
-+      }
-+    ],
-+    length: 2
-+  };
-+}
-+
-+export function serializeHighlight(node: HighlightNode): string {
-+  const content = node.children.map((child) => (child as { value?: string }).value ?? "").join("");
-+  return `==${content}==`;
-+}
-+
-+export function serializeColorHighlight(node: ColorHighlightNode): string {
-+  const content = node.children.map((child) => (child as { value?: string }).value ?? "").join("");
-+  return `=={${node.color}}${content}==`;
-+}
 diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index 5d26128..c88bd1c 100644
+index c88bd1c..0de58be 100644
 --- a/packages/markup/src/parser.ts
 +++ b/packages/markup/src/parser.ts
-@@ -3,6 +3,7 @@ import type { ParseMode } from "./parse-mode.js";
- import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
- import { parseWikiLink } from "./extensions/wiki-links.js";
- import { parseTag } from "./extensions/tags.js";
-+import { parseHighlight } from "./extensions/highlights.js";
+@@ -13,6 +13,8 @@ const DOCUMENT_NODE_TYPE: NablaDocument["type"] = `doc${"ument"}`;
  
- export type ParseOptions = {
-   mode?: ParseMode;
-@@ -157,6 +158,29 @@ function parseParagraphChildren(source: string) {
-       continue;
+ const HEADING_PATTERN = /^(#{1,6}) (.+)/;
+ const FOLDABLE_HEADING_PATTERN = /^#v (.+)/;
++const FENCE_PATTERN = /^( {0,3})(`{3,}|~{3,})(.*)$/;
++const FENCE_CLOSE_PATTERN = /^( {0,3})(`{3,}|~{3,})[ \t]*$/;
+ 
+ function createTextNode(value: string): MarkdownNode {
+   return {
+@@ -49,6 +51,7 @@ function createFoldableHeading(content: string): NablaBlockNode {
+ type BlockSpec =
+   | { kind: "heading"; depth: number; content: string }
+   | { kind: "foldableHeading"; content: string }
++  | { kind: "code"; lang: string; value: string }
+   | { kind: "paragraph"; text: string };
+ 
+ function parseBlocks(source: string): BlockSpec[] {
+@@ -63,7 +66,38 @@ function parseBlocks(source: string): BlockSpec[] {
      }
+   }
  
-+    if (source[index] === "=" && index + 1 < source.length && source[index + 1] === "=") {
-+      if (
-+        isOffsetProtected(protectedRegions, index) ||
-+        inlineHtmlContainers.some((region) => index >= region.start && index < region.end)
-+      ) {
-+        index += 2;
-+        continue;
+-  for (const line of lines) {
++  for (let i = 0; i < lines.length; i++) {
++    const line = lines[i];
++
++    const fenceMatch = line.match(FENCE_PATTERN);
++    if (fenceMatch) {
++      flushParagraph();
++      const fence = fenceMatch[2];
++      const marker = fence[0];
++      const minLength = fence.length;
++      const lang = fenceMatch[3].trim();
++      const valueLines: string[] = [];
++
++      i += 1;
++      while (i < lines.length) {
++        const innerLine = lines[i];
++        const closeMatch = innerLine.match(FENCE_CLOSE_PATTERN);
++        if (closeMatch && closeMatch[2][0] === marker && closeMatch[2].length >= minLength) {
++          break;
++        }
++        valueLines.push(innerLine);
++        i += 1;
 +      }
 +
-+      const parsed = parseHighlight(source.slice(index));
-+      if ("node" in parsed) {
-+        if (bufferStart < index) {
-+          children.push(createTextNode(source.slice(bufferStart, index)));
-+        }
-+        children.push(parsed.node as MarkdownNode);
-+        bufferStart = index + parsed.length;
-+      } else if (parsed.diagnostics) {
-+        diagnostics.push(...parsed.diagnostics);
-+      }
-+      index += parsed.length;
++      blocks.push({ kind: "code", lang, value: valueLines.join("\n") });
 +      continue;
 +    }
 +
-     if (source[index] === "#") {
-       if (
-         isOffsetProtected(protectedRegions, index) ||
-diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
-index 321293b..3a5dea7 100644
---- a/packages/markup/src/serializer.ts
-+++ b/packages/markup/src/serializer.ts
-@@ -1,6 +1,7 @@
--import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode } from "./ast.js";
- import { serializeWikiLink } from "./extensions/wiki-links.js";
- import { serializeTag } from "./extensions/tags.js";
-+import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
- 
- export type SerializeOptions = {
-   lineEnding?: "lf" | "crlf";
-@@ -26,6 +27,14 @@ function serializeInlineNode(node: MarkdownNode) {
-     return serializeTag(node as TagNode);
-   }
- 
-+  if (node.type === "highlight") {
-+    return serializeHighlight(node as HighlightNode);
-+  }
++    if (line.trim() === "") {
++      flushParagraph();
++      continue;
++    }
 +
-+  if (node.type === "colorHighlight") {
-+    return serializeColorHighlight(node as ColorHighlightNode);
-+  }
-+
-   return "";
+     const foldMatch = line.match(FOLDABLE_HEADING_PATTERN);
+     if (foldMatch) {
+       flushParagraph();
+@@ -85,6 +119,14 @@ function parseBlocks(source: string): BlockSpec[] {
+   return blocks;
  }
  
++function extractInlineCodeValue(text: string): string {
++  let backtickLen = 0;
++  while (backtickLen < text.length && text[backtickLen] === "`") {
++    backtickLen += 1;
++  }
++  return text.slice(backtickLen, text.length - backtickLen);
++}
++
+ function findClosingDelimiter(source: string, start: number) {
+   for (let index = start + 2; index < source.length - 1; index += 1) {
+     if (source[index] === "]" && source[index + 1] === "]") {
+@@ -116,12 +158,26 @@ function findInlineHtmlContainerRanges(source: string) {
+ function parseParagraphChildren(source: string) {
+   const protectedRegions = findProtectedRegions(source);
+   const inlineHtmlContainers = findInlineHtmlContainerRanges(source);
++  const inlineCodeRegions = protectedRegions.filter((r) => r.kind === "inlineCode");
+   const children: MarkdownNode[] = [];
+   const diagnostics: NablaDocument["diagnostics"] = [];
+   let bufferStart = 0;
+   let index = 0;
+ 
+   while (index < source.length - 1) {
++    const codeRegion = inlineCodeRegions.find((r) => r.start === index);
++    if (codeRegion) {
++      if (!inlineHtmlContainers.some((region) => index >= region.start && index < region.end)) {
++        if (bufferStart < index) {
++          children.push(createTextNode(source.slice(bufferStart, index)));
++        }
++        children.push({ type: "inlineCode", value: extractInlineCodeValue(codeRegion.text) } as MarkdownNode);
++        bufferStart = codeRegion.end;
++        index = codeRegion.end;
++        continue;
++      }
++    }
++
+     if (source[index] === "[" && source[index + 1] === "[") {
+       if (index > 0 && source[index - 1] === "!") {
+         index += 2;
+@@ -234,6 +290,12 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
+       const { children, diagnostics } = parseParagraphChildren(block.text);
+       allDiagnostics.push(...diagnostics);
+       docChildren.push(createParagraph(children));
++    } else if (block.kind === "code") {
++      docChildren.push({
++        type: "code",
++        lang: block.lang,
++        value: block.value
++      } as MarkdownNode);
+     } else if (block.kind === "heading") {
+       docChildren.push(createHeading(block.depth, block.content));
+     } else if (block.kind === "foldableHeading") {
+diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
+index 3a5dea7..c0a23a0 100644
+--- a/packages/markup/src/serializer.ts
++++ b/packages/markup/src/serializer.ts
+@@ -19,6 +19,10 @@ function serializeInlineNode(node: MarkdownNode) {
+     return typeof node.value === "string" ? node.value : "";
+   }
+ 
++  if (node.type === "inlineCode") {
++    return `\`${node.value}\``;
++  }
++
+   if (node.type === "wikiLink") {
+     return serializeWikiLink(node as WikiLinkNode);
+   }
+@@ -43,6 +47,13 @@ function serializeBlockNode(node: MarkdownNode) {
+     return node.children.map((child) => serializeInlineNode(child as MarkdownNode)).join("");
+   }
+ 
++  if (node.type === "code") {
++    const lang = typeof node.lang === "string" ? node.lang : "";
++    const value = typeof node.value === "string" ? node.value : "";
++    const info = lang ? lang : "";
++    return `\n\`\`\`${info}\n${value}\n\`\`\``;
++  }
++
+   if (node.type === "heading" && typeof node.depth === "number") {
+     const content = (Array.isArray(node.children) ? node.children : [])
+       .map((child) => serializeInlineNode(child as MarkdownNode))
 diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
-index 71660e8..c0b6785 100644
+index c0b6785..3a5ade0 100644
 --- a/packages/markup/tests/wiki-links.test.mjs
 +++ b/packages/markup/tests/wiki-links.test.mjs
-@@ -21,6 +21,13 @@ const tagFixtureIds = [
-   "tags/basic"
+@@ -25,6 +25,7 @@ const highlightFixtureIds = [
+   "highlights/basic",
+   "highlights/hex-3-and-8",
+   "highlights/invalid-color",
++  "highlights/protected-region",
+   "highlights/unclosed"
  ];
  
-+const highlightFixtureIds = [
-+  "highlights/basic",
-+  "highlights/hex-3-and-8",
-+  "highlights/invalid-color",
-+  "highlights/unclosed"
-+];
-+
- let parserModulePromise;
- let serializerModulePromise;
- let fixturesModulePromise;
-@@ -64,6 +71,26 @@ test("tag fixtures parse and serialize according to the checked-in contracts", a
-   }
- });
- 
-+test("highlight fixtures parse and serialize according to the checked-in contracts", async () => {
-+  const { parse } = await loadParserModule();
-+  const { serialize } = await loadSerializerModule();
-+  const {
-+    compareFixtureAst,
-+    compareFixtureDiagnostics,
-+    compareFixtureOutput,
-+    loadParserFixture
-+  } = await loadFixturesModule();
-+
-+  for (const fixtureId of highlightFixtureIds) {
-+    const fixture = await loadParserFixture(fixtureId);
-+    const parsed = parse(fixture.input);
-+
-+    compareFixtureAst(parsed, fixture.ast);
-+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
-+    compareFixtureOutput(serialize(parsed), fixture.output);
-+  }
-+});
-+
- test("tag parser handles single and nested tag values", async () => {
-   const { parse } = await loadParserModule();
- 
+@@ -213,10 +214,9 @@ test("tag parser leaves syntax inside protected regions literal", async () => {
+       {
+         type: "paragraph",
+         children: [
+-          {
+-            type: "text",
+-            value: "See `#tag` and <span>#tag</span>."
+-          }
++          { type: "text", value: "See " },
++          { type: "inlineCode", value: "#tag" },
++          { type: "text", value: " and <span>#tag</span>." }
+         ]
+       }
+     ],
+@@ -233,7 +233,9 @@ test("tag parser parses tags outside inline code but protects tags inside backti
+       {
+         type: "paragraph",
+         children: [
+-          { type: "text", value: "See `#tag` and " },
++          { type: "text", value: "See " },
++          { type: "inlineCode", value: "#tag" },
++          { type: "text", value: " and " },
+           {
+             type: "tag",
+             value: "tag",
+@@ -480,10 +482,9 @@ test("wiki link parser leaves syntax inside protected regions literal", async ()
+       {
+         type: "paragraph",
+         children: [
+-          {
+-            type: "text",
+-            value: "See `[[Analyse]]` and <span>[[Algebra]]</span>."
+-          }
++          { type: "text", value: "See " },
++          { type: "inlineCode", value: "[[Analyse]]" },
++          { type: "text", value: " and <span>[[Algebra]]</span>." }
+         ]
+       }
+     ],
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 11337ed..58718bf 100644
+index 58718bf..233d23d 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
  
  ## Task ID
  
--`P1-010 wiki-links`
-+`P1-012 highlights`
+-`P1-012 highlights`
++`P1-012 highlights` + `P1-012A code node parsing`
  
  ## Branch
  
-@@ -14,90 +14,41 @@ Phase 1 - `@nabla/markup`
+@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
  
  ## Status
  
--Wiki-link parsing and serialization implemented against the checked-in fixture contracts.
-+Highlight parsing and serialization implemented against the checked-in fixture contracts.
-+
-+All 5 highlight fixture groups pass:
-+- `highlights/basic` — simple `==text==` and color `=={#hex}text==` highlight parsing
-+- `highlights/hex-3-and-8` — 3-digit and 8-digit hex color parsing
-+- `highlights/invalid-color` — invalid hex color produces warning, literal text preserved
-+- `highlights/protected-region` — highlight syntax remains literal inside inline code and fenced code
-+- `highlights/unclosed` — unclosed highlight produces warning, literal text preserved
+-Highlight parsing and serialization implemented against the checked-in fixture contracts.
++Highlight parsing, serialization, and minimal code node support implemented against checked-in fixture contracts.
  
+ All 5 highlight fixture groups pass:
+ - `highlights/basic` — simple `==text==` and color `=={#hex}text==` highlight parsing
+@@ -23,6 +23,10 @@ All 5 highlight fixture groups pass:
+ - `highlights/protected-region` — highlight syntax remains literal inside inline code and fenced code
+ - `highlights/unclosed` — unclosed highlight produces warning, literal text preserved
+ 
++`inlineCode` and `code` AST nodes supported:
++- `inlineCode` — backtick-delimited inline code in paragraph text
++- `code` — fenced code blocks (```) at block level with language metadata
++
  ## Scope Guardrails
  
--- No parser implementation
--- No serializer implementation
--- No AST implementation
--- No diagnostics implementation
  - No workspace/editor/components/app
- - No spec changes
- - No fixture changes
+@@ -35,14 +39,13 @@ All 5 highlight fixture groups pass:
  
- ## Files Created
+ ## Files Modified
  
--- `.gitignore`
--- `README.md`
--- `package.json`
--- `pnpm-workspace.yaml`
--- `tsconfig.base.json`
--- `packages/markup/package.json`
--- `packages/markup/tsconfig.json`
--- `packages/markup/src/ast.ts`
--- `packages/markup/src/index.ts`
--- `packages/markup/src/diagnostics.ts`
--- `packages/markup/src/fixtures.ts`
--- `packages/markup/src/extensions/wiki-links.ts`
--- `packages/markup/src/parse-mode.ts`
--- `packages/markup/src/parser.ts`
--- `packages/markup/src/protected-regions.ts`
--- `packages/markup/src/serializer.ts`
--- `packages/markup/tests/diagnostics.test.mjs`
--- `packages/markup/tests/fixtures.test.mjs`
--- `packages/markup/tests/helpers/load-ts-module.mjs`
--- `packages/markup/tests/parser.test.mjs`
--- `packages/markup/tests/protected-regions.test.mjs`
--- `packages/markup/tests/serializer.test.mjs`
--- `packages/markup/tests/wiki-links.test.mjs`
--- `packages/markup/tests/ast-surface.test.mjs`
--- `packages/markup/tests/bootstrap.test.mjs`
--- `scripts/check-boundaries.mjs`
--- `scripts/report-unavailable.mjs`
--- `scripts/validate-fixtures.mjs`
--- `scripts/validate-spec-version.mjs`
--- `scripts/create-audit-bundle.mjs`
--- `reports/decisions/IDR-0001-audit-bundle-workflow.md`
--- `reports/audit/latest/`
--- `pnpm-lock.yaml`
--
--## Files Verified
--
--- `@nabla/markup` package metadata and exports remain coherent
--- AST types follow `04_AST_MODEL.md`
--- `MarkdownNode` remains mdast-compatible via structural shape and index signature
--- `data.nablaTaskState` and `data.nablaBlockId` are represented
--- `ParseMode` is represented without adding parser runtime behavior
--- Diagnostic codes and severities follow `14_DIAGNOSTICS.md`
--- Fixture loader resolves the canonical spec-pack fixture root without modifying fixtures
--- Parser fixtures load `input.md`, `ast.json`, `output.md`, and `diagnostics.json`
--- Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
--- Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
--- Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
--- Wiki-link parser matches the specified target/alias/heading/block grammar and preserves invalid combined targets as literal text with diagnostics
--- Wiki-link serializer canonicalizes compatible block syntax to `^` form and preserves escaped wiki-link characters
--- Wiki-link parsing stays disabled inside protected code and HTML regions
--- Parser skeleton exposes a public `parse` entry point that accepts Markdown source and returns a `NablaDocument`
--- Parser skeleton intentionally does not implement Markdown or Nabla parsing rules yet
--- Protected-region utilities identify standalone spans for inline code, fenced code blocks, indented code blocks, raw HTML blocks, and inline HTML
--- Protected-region utilities do not implement Nabla feature parsing inside those spans
--- Serializer skeleton exposes a public `serialize` entry point that accepts `NablaDocument` and returns a string
--- Serializer skeleton intentionally does not implement Markdown serialization rules yet
--- Workspace fixtures are detected as metadata only, without workspace implementation
--- JSON fixture parse failures report the source file path clearly
-+- `packages/markup/src/extensions/highlights.ts`
-+
-+## Files Modified
-+
-+- `packages/markup/src/parser.ts` — import `parseHighlight`, add `==` handling in inline parser
-+- `packages/markup/src/serializer.ts` — import `serializeHighlight`/`serializeColorHighlight`, dispatch by node type
-+- `packages/markup/tests/wiki-links.test.mjs` — add `highlightFixtureIds` and fixture-driven test
-+- `reports/IMPLEMENTATION_PROGRESS.md` — updated for P1-012
+-- `packages/markup/src/parser.ts` — import `parseHighlight`, add `==` handling in inline parser
+-- `packages/markup/src/serializer.ts` — import `serializeHighlight`/`serializeColorHighlight`, dispatch by node type
+-- `packages/markup/tests/wiki-links.test.mjs` — add `highlightFixtureIds` and fixture-driven test
+-- `reports/IMPLEMENTATION_PROGRESS.md` — updated for P1-012
++- `packages/markup/src/parser.ts` — `parseHighlight` import, `==` inline parser, fenced code block parsing, `inlineCode` node creation, blank line paragraph termination
++- `packages/markup/src/serializer.ts` — `serializeHighlight`/`serializeColorHighlight` dispatch, `inlineCode`/`code` block serialization
++- `packages/markup/tests/wiki-links.test.mjs` — `highlightFixtureIds` with protected-region, fixture-driven test, updated 3 test AST expectations for `inlineCode` nodes
  
  ## Verification Summary
  
--- `pnpm test` passed (21 tests)
--- `pnpm test:markup` passed (21 tests)
--- `pnpm typecheck` passed
--- `pnpm build` passed
--- `pnpm validate:fixtures` passed
--- `pnpm validate:spec-version` passed
--- `pnpm check:boundaries` passed
--- `pnpm lint` passed via bootstrap placeholder
--- Audit bundle generation is performed after the implementation commit so the recorded `--head` is concrete
-+- `node --test packages/markup/tests/**/*.test.mjs` — 35 tests pass (1 new highlight fixture test)
-+- `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
-+- `node scripts/validate-fixtures.mjs` — fixture validation passed
-+- `node scripts/validate-spec-version.mjs` — spec version validation passed
-+- `node scripts/check-boundaries.mjs` — boundary check passed
-+- `node scripts/report-unavailable.mjs lint` — lint unavailable (bootstrap placeholder)
-+- `tsc -b packages/markup/tsconfig.json` — build passed
- 
- ## Active Blockers
- 
-@@ -105,4 +56,4 @@ None.
- 
- ## Next Recommended Task
- 
--P1-011 tags
-+P1-013 comments
+-- `node --test packages/markup/tests/**/*.test.mjs` — 35 tests pass (1 new highlight fixture test)
++- `node --test packages/markup/tests/**/*.test.mjs` — 35 tests pass (5 highlight fixture tests)
+ - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
+ - `node scripts/validate-fixtures.mjs` — fixture validation passed
+ - `node scripts/validate-spec-version.mjs` — spec version validation passed

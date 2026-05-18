@@ -1,1 +1,1 @@
-ca8bfaa feat(markup): implement highlight parsing
+02fff90 feat(markup): add minimal code node parsing

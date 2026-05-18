@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-012 highlights`
+`P1-012 highlights` + `P1-012A code node parsing`
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Highlight parsing and serialization implemented against the checked-in fixture contracts.
+Highlight parsing, serialization, and minimal code node support implemented against checked-in fixture contracts.
 
 All 5 highlight fixture groups pass:
 - `highlights/basic` — simple `==text==` and color `=={#hex}text==` highlight parsing
@@ -22,6 +22,10 @@ All 5 highlight fixture groups pass:
 - `highlights/invalid-color` — invalid hex color produces warning, literal text preserved
 - `highlights/protected-region` — highlight syntax remains literal inside inline code and fenced code
 - `highlights/unclosed` — unclosed highlight produces warning, literal text preserved
+
+`inlineCode` and `code` AST nodes supported:
+- `inlineCode` — backtick-delimited inline code in paragraph text
+- `code` — fenced code blocks (```) at block level with language metadata
 
 ## Scope Guardrails
 
@@ -35,14 +39,13 @@ All 5 highlight fixture groups pass:
 
 ## Files Modified
 
-- `packages/markup/src/parser.ts` — import `parseHighlight`, add `==` handling in inline parser
-- `packages/markup/src/serializer.ts` — import `serializeHighlight`/`serializeColorHighlight`, dispatch by node type
-- `packages/markup/tests/wiki-links.test.mjs` — add `highlightFixtureIds` and fixture-driven test
-- `reports/IMPLEMENTATION_PROGRESS.md` — updated for P1-012
+- `packages/markup/src/parser.ts` — `parseHighlight` import, `==` inline parser, fenced code block parsing, `inlineCode` node creation, blank line paragraph termination
+- `packages/markup/src/serializer.ts` — `serializeHighlight`/`serializeColorHighlight` dispatch, `inlineCode`/`code` block serialization
+- `packages/markup/tests/wiki-links.test.mjs` — `highlightFixtureIds` with protected-region, fixture-driven test, updated 3 test AST expectations for `inlineCode` nodes
 
 ## Verification Summary
 
-- `node --test packages/markup/tests/**/*.test.mjs` — 35 tests pass (1 new highlight fixture test)
+- `node --test packages/markup/tests/**/*.test.mjs` — 35 tests pass (5 highlight fixture tests)
 - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
 - `node scripts/validate-fixtures.mjs` — fixture validation passed
 - `node scripts/validate-spec-version.mjs` — spec version validation passed

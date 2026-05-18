@@ -1,4 +1,3 @@
-packages/markup/src/extensions/highlights.ts
 packages/markup/src/parser.ts
 packages/markup/src/serializer.ts
 packages/markup/tests/wiki-links.test.mjs
