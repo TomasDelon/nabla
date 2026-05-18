@@ -1,0 +1,5 @@
+ packages/markup/src/diagnostics.ts         | 66 ++++++++++++++++++++++++++++++
+ packages/markup/src/index.ts               |  9 ++++
+ packages/markup/tests/diagnostics.test.mjs | 41 +++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md         | 14 ++++---
+ 4 files changed, 124 insertions(+), 6 deletions(-)

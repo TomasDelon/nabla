@@ -1,0 +1,37 @@
+{
+  "taskId": "INFRA-002",
+  "baseCommit": "3f5c1e5",
+  "headCommit": "fdfe884b5f08a6a5d9dbf8e8956cca0212f04ab3",
+  "currentBranch": "phase-1-markup-core",
+  "timestamp": "2026-05-18T20:08:58.964Z",
+  "gitStatus": " M package.json\n M reports/IMPLEMENTATION_PROGRESS.md\n?? reports/decisions/\n?? scripts/create-audit-bundle.mjs",
+  "changedFiles": [
+    "packages/markup/src/diagnostics.ts",
+    "packages/markup/src/index.ts",
+    "packages/markup/tests/diagnostics.test.mjs",
+    "reports/IMPLEMENTATION_PROGRESS.md"
+  ],
+  "commandsUsed": [
+    "git branch --show-current",
+    "git rev-parse HEAD",
+    "git status --short",
+    "git diff --name-only 3f5c1e5..HEAD",
+    "git diff --stat 3f5c1e5 HEAD",
+    "git diff 3f5c1e5 HEAD",
+    "git log --oneline 3f5c1e5..HEAD",
+    "git ls-tree -r --name-only HEAD",
+    "git remote get-url origin"
+  ],
+  "rawUrls": {
+    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/AUDIT_INDEX.md",
+    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/audit.json",
+    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-show.patch",
+    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-show-name-only.txt",
+    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-status.txt",
+    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-log.txt",
+    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-branch.txt",
+    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-show-stat.txt",
+    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/package-json.txt",
+    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/progress-report.md"
+  }
+}
