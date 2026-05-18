@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-009 protected regions`
+`P1-010 wiki-links`
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Protected-region utilities implemented for Markdown code and HTML spans before Nabla parsing.
+Wiki-link parsing and serialization implemented against the checked-in fixture contracts.
 
 ## Scope Guardrails
 
@@ -39,15 +39,18 @@ Protected-region utilities implemented for Markdown code and HTML spans before N
 - `packages/markup/src/index.ts`
 - `packages/markup/src/diagnostics.ts`
 - `packages/markup/src/fixtures.ts`
+- `packages/markup/src/extensions/wiki-links.ts`
 - `packages/markup/src/parse-mode.ts`
 - `packages/markup/src/parser.ts`
 - `packages/markup/src/protected-regions.ts`
 - `packages/markup/src/serializer.ts`
 - `packages/markup/tests/diagnostics.test.mjs`
 - `packages/markup/tests/fixtures.test.mjs`
+- `packages/markup/tests/helpers/load-ts-module.mjs`
 - `packages/markup/tests/parser.test.mjs`
 - `packages/markup/tests/protected-regions.test.mjs`
 - `packages/markup/tests/serializer.test.mjs`
+- `packages/markup/tests/wiki-links.test.mjs`
 - `packages/markup/tests/ast-surface.test.mjs`
 - `packages/markup/tests/bootstrap.test.mjs`
 - `scripts/check-boundaries.mjs`
@@ -72,6 +75,9 @@ Protected-region utilities implemented for Markdown code and HTML spans before N
 - Fixture runner iterates parser fixtures without treating workspace fixtures as parser fixtures
 - Fixture runner exposes comparison helpers for input, AST, output, and diagnostics snapshots
 - Diagnostics comparison follows the snapshot policy by requiring `position` only when present in the fixture expectation
+- Wiki-link parser matches the specified target/alias/heading/block grammar and preserves invalid combined targets as literal text with diagnostics
+- Wiki-link serializer canonicalizes compatible block syntax to `^` form and preserves escaped wiki-link characters
+- Wiki-link parsing stays disabled inside protected code and HTML regions
 - Parser skeleton exposes a public `parse` entry point that accepts Markdown source and returns a `NablaDocument`
 - Parser skeleton intentionally does not implement Markdown or Nabla parsing rules yet
 - Protected-region utilities identify standalone spans for inline code, fenced code blocks, indented code blocks, raw HTML blocks, and inline HTML
@@ -83,8 +89,8 @@ Protected-region utilities implemented for Markdown code and HTML spans before N
 
 ## Verification Summary
 
-- `pnpm test` passed (18 tests)
-- `pnpm test:markup` passed (18 tests)
+- `pnpm test` passed (21 tests)
+- `pnpm test:markup` passed (21 tests)
 - `pnpm typecheck` passed
 - `pnpm build` passed
 - `pnpm validate:fixtures` passed
@@ -99,4 +105,4 @@ None.
 
 ## Next Recommended Task
 
-P1-010 wiki-links
+P1-011 tags
