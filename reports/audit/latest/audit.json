@@ -1,25 +1,26 @@
 {
-  "taskId": "P1-015A",
-  "baseCommit": "7a0cf2a",
-  "headCommit": "39975e1",
+  "taskId": "P1-016",
+  "baseCommit": "6dd8bf3",
+  "headCommit": "c941a21975c15b645379d139d763335c5cc42df3",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-18T22:53:51.789Z",
-  "currentHead": "39975e138c33a3833e7c2c5cca402ec9d8abc86b",
+  "timestamp": "2026-05-18T23:02:41.865Z",
+  "currentHead": "c941a21975c15b645379d139d763335c5cc42df3",
   "currentWorkingTreeStatus": "",
   "changedFiles": [
+    "packages/markup/src/extensions/footnotes.ts",
     "packages/markup/src/parser.ts",
     "packages/markup/src/serializer.ts",
-    "packages/markup/tests/frontmatter.test.mjs"
+    "packages/markup/tests/footnotes.test.mjs"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 7a0cf2a..39975e1",
-    "git diff --stat 7a0cf2a..39975e1",
-    "git diff 7a0cf2a..39975e1",
-    "git log --oneline 7a0cf2a..39975e1",
-    "git ls-tree -r --name-only 39975e1",
+    "git diff --name-only 6dd8bf3..c941a21975c15b645379d139d763335c5cc42df3",
+    "git diff --stat 6dd8bf3..c941a21975c15b645379d139d763335c5cc42df3",
+    "git diff 6dd8bf3..c941a21975c15b645379d139d763335c5cc42df3",
+    "git log --oneline 6dd8bf3..c941a21975c15b645379d139d763335c5cc42df3",
+    "git ls-tree -r --name-only c941a21975c15b645379d139d763335c5cc42df3",
     "git remote get-url origin"
   ],
   "rawUrls": {

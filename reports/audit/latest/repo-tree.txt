@@ -7,6 +7,7 @@ packages/markup/package.json
 packages/markup/src/ast.ts
 packages/markup/src/diagnostics.ts
 packages/markup/src/extensions/comments.ts
+packages/markup/src/extensions/footnotes.ts
 packages/markup/src/extensions/frontmatter.ts
 packages/markup/src/extensions/highlights.ts
 packages/markup/src/extensions/tags.ts
@@ -22,6 +23,7 @@ packages/markup/tests/ast-surface.test.mjs
 packages/markup/tests/bootstrap.test.mjs
 packages/markup/tests/diagnostics.test.mjs
 packages/markup/tests/fixtures.test.mjs
+packages/markup/tests/footnotes.test.mjs
 packages/markup/tests/frontmatter.test.mjs
 packages/markup/tests/helpers/load-ts-module.mjs
 packages/markup/tests/parser.test.mjs

@@ -1,1 +1,1 @@
-39975e1 feat(markup): add minimal thematic break parsing
+c941a21 feat(markup): implement footnote parsing

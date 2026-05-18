@@ -1,4 +1,5 @@
- packages/markup/src/parser.ts              | 13 ++++++++++++-
- packages/markup/src/serializer.ts          |  4 ++++
- packages/markup/tests/frontmatter.test.mjs | 13 ++++++++++++-
- 3 files changed, 28 insertions(+), 2 deletions(-)
+ packages/markup/src/extensions/footnotes.ts | 106 +++++++++++++++++++++
+ packages/markup/src/parser.ts               |  47 ++++++++-
+ packages/markup/src/serializer.ts           |  11 ++-
+ packages/markup/tests/footnotes.test.mjs    | 142 ++++++++++++++++++++++++++++
+ 4 files changed, 302 insertions(+), 4 deletions(-)
