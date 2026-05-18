@@ -1,5 +1,5 @@
- packages/markup/src/parser.ts             | 64 ++++++++++++++++++++++++++++++-
- packages/markup/src/serializer.ts         | 11 ++++++
- packages/markup/tests/wiki-links.test.mjs | 19 ++++-----
- reports/IMPLEMENTATION_PROGRESS.md        | 17 ++++----
- 4 files changed, 94 insertions(+), 17 deletions(-)
+ packages/markup/src/extensions/comments.ts | 29 ++++++++++++++++++
+ packages/markup/src/parser.ts              | 47 ++++++++++++++++++++++++++++--
+ packages/markup/src/serializer.ts          | 10 ++++++-
+ packages/markup/tests/wiki-links.test.mjs  | 26 +++++++++++++++++
+ 4 files changed, 109 insertions(+), 3 deletions(-)
