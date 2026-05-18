@@ -80,6 +80,10 @@ function serializeBlockNode(node: MarkdownNode) {
     return typeof node.value === "string" ? node.value : "";
   }
 
+  if (node.type === "thematicBreak") {
+    return "\n---\n";
+  }
+
   if (node.type === "frontmatter") {
     const fmNode = node as unknown as FrontmatterNode;
     return serializeFrontmatter(fmNode.raw);

@@ -59,7 +59,8 @@ type BlockSpec =
   | { kind: "privateComment"; value: string; raw: string }
   | { kind: "html"; value: string }
   | { kind: "listItem"; taskState?: TaskState; text: string }
-  | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic };
+  | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic }
+  | { kind: "thematicBreak" };
 
 function parseBlocks(source: string): BlockSpec[] {
   const lines = source.split("\n");
@@ -125,6 +126,12 @@ function parseBlocks(source: string): BlockSpec[] {
 
     if (line.trim() === "") {
       flushParagraph();
+      continue;
+    }
+
+    if (line === "---" && i !== 0) {
+      flushParagraph();
+      blocks.push({ kind: "thematicBreak" });
       continue;
     }
 
@@ -395,6 +402,10 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
         raw: block.raw,
         data: block.data
       } as FrontmatterNode);
+    } else if (block.kind === "thematicBreak") {
+      docChildren.push({
+        type: "thematicBreak"
+      } as MarkdownNode);
     } else if (block.kind === "listItem") {
       const items: Array<{ taskState?: TaskState; text: string }> = [
         { taskState: block.taskState, text: block.text }

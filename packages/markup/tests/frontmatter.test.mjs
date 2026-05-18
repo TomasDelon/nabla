@@ -9,7 +9,8 @@ const frontmatterModuleUrl = new URL("../src/extensions/frontmatter.ts", import.
 
 const frontmatterFixtureIds = [
   "frontmatter/valid",
-  "frontmatter/invalid"
+  "frontmatter/invalid",
+  "frontmatter/horizontal-rule"
 ];
 
 let parserPromise;
@@ -135,4 +136,14 @@ test("parseFrontmatterBlock returns null when no closing ---", async () => {
   const { parseFrontmatterBlock } = await loadFrontmatterModule();
   const result = parseFrontmatterBlock(["---", "title: broken"], 0);
   assert.equal(result, null);
+});
+
+test("thematic break round-trips", async () => {
+  const { parse } = await loadParserModule();
+  const { serialize } = await loadSerializerModule();
+
+  const input = "a\n\n---\n\nb";
+  const parsed = parse(input);
+  const output = serialize(parsed).trimEnd();
+  assert.equal(output, input);
 });
