@@ -1,10 +1,11 @@
-import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState } from "./ast.js";
 import type { ParseMode } from "./parse-mode.js";
 import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
 import { parseWikiLink } from "./extensions/wiki-links.js";
 import { parseTag } from "./extensions/tags.js";
 import { parseHighlight } from "./extensions/highlights.js";
 import { parsePrivateCommentBlock } from "./extensions/comments.js";
+import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
 
 export type ParseOptions = {
   mode?: ParseMode;
@@ -55,7 +56,8 @@ type BlockSpec =
   | { kind: "code"; lang: string; value: string }
   | { kind: "paragraph"; text: string }
   | { kind: "privateComment"; value: string; raw: string }
-  | { kind: "html"; value: string };
+  | { kind: "html"; value: string }
+  | { kind: "listItem"; taskState?: TaskState; text: string };
 
 function parseBlocks(source: string): BlockSpec[] {
   const lines = source.split("\n");
@@ -120,6 +122,21 @@ function parseBlocks(source: string): BlockSpec[] {
       flushParagraph();
       blocks.push({ kind: "privateComment", value: privateMatch.value, raw: privateMatch.raw });
       i = privateMatch.endIndex;
+      continue;
+    }
+
+    const listPrefix = parseListMarkerPrefix(line);
+    if (listPrefix !== null) {
+      flushParagraph();
+      const taskState = parseTaskStateMarker(line);
+      if (taskState !== null) {
+        blocks.push({ kind: "listItem", taskState: taskState.state, text: taskState.text });
+      } else if (hasBracketMarker(listPrefix.rest)) {
+        blocks.push({ kind: "listItem", text: listPrefix.rest });
+      } else {
+        paragraphLines.push(line);
+        continue;
+      }
       continue;
     }
 
@@ -317,7 +334,8 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
   const blocks = parseBlocks(source);
   const docChildren: Array<MarkdownNode | NablaBlockNode> = [];
 
-  for (const block of blocks) {
+  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
+    const block = blocks[blockIndex];
     if (block.kind === "paragraph") {
       const { children, diagnostics } = parseParagraphChildren(block.text);
       allDiagnostics.push(...diagnostics);
@@ -342,6 +360,29 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
       docChildren.push({
         type: "html",
         value: block.value
+      } as MarkdownNode);
+    } else if (block.kind === "listItem") {
+      const items: Array<{ taskState?: TaskState; text: string }> = [
+        { taskState: block.taskState, text: block.text }
+      ];
+      while (blockIndex + 1 < blocks.length && blocks[blockIndex + 1].kind === "listItem") {
+        blockIndex++;
+        const nextBlock = blocks[blockIndex] as BlockSpec & { kind: "listItem" };
+        items.push({ taskState: nextBlock.taskState, text: nextBlock.text });
+      }
+      docChildren.push({
+        type: "list",
+        ordered: false,
+        children: items.map((item) => ({
+          type: "listItem",
+          ...(item.taskState ? { data: { nablaTaskState: item.taskState } } : {}),
+          children: [
+            {
+              type: "paragraph",
+              children: [{ type: "text", value: item.text }]
+            }
+          ]
+        }))
       } as MarkdownNode);
     }
   }

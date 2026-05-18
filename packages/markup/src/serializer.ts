@@ -1,7 +1,8 @@
-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState } from "./ast.js";
 import { serializeWikiLink } from "./extensions/wiki-links.js";
 import { serializeTag } from "./extensions/tags.js";
 import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
+import { taskStateToMarker } from "./extensions/task-states.js";
 
 export type SerializeOptions = {
   lineEnding?: "lf" | "crlf";
@@ -78,7 +79,33 @@ function serializeBlockNode(node: MarkdownNode) {
     return typeof node.value === "string" ? node.value : "";
   }
 
+  if (node.type === "list" && Array.isArray(node.children)) {
+    return node.children
+      .map((child) => serializeListItem(child as MarkdownNode))
+      .join("\n");
+  }
+
   return "";
+}
+
+function serializeListItem(node: MarkdownNode): string {
+  const data = node.data as { nablaTaskState?: TaskState } | undefined;
+  const taskState = data?.nablaTaskState;
+
+  const paragraph = (Array.isArray(node.children) ? node.children : [])
+    .find((child) => (child as MarkdownNode).type === "paragraph") as MarkdownNode | undefined;
+  const text = paragraph
+    ? (Array.isArray(paragraph.children) ? paragraph.children : [])
+        .map((child) => serializeInlineNode(child as MarkdownNode))
+        .join("")
+    : "";
+
+  if (taskState) {
+    const marker = taskStateToMarker(taskState);
+    return `- [${marker}] ${text}`;
+  }
+
+  return `- ${text}`;
 }
 
 export function serialize(source: NablaDocument, options: SerializeOptions = {}) {

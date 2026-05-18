@@ -40,8 +40,20 @@ test("parser returns a minimal paragraph document when no wiki link grammar appl
     type: "document",
     children: [
       {
-        type: "paragraph",
-        children: [{ type: "text", value: "- [ ] task" }]
+        type: "list",
+        ordered: false,
+        children: [
+          {
+            type: "listItem",
+            data: { nablaTaskState: "unchecked" },
+            children: [
+              {
+                type: "paragraph",
+                children: [{ type: "text", value: "task" }]
+              }
+            ]
+          }
+        ]
       }
     ],
     diagnostics: []
