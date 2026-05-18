@@ -1,4 +1,4 @@
-import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic } from "./ast.js";
+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode } from "./ast.js";
 import type { ParseMode } from "./parse-mode.js";
 import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
 import { parseWikiLink } from "./extensions/wiki-links.js";
@@ -7,6 +7,7 @@ import { parseHighlight } from "./extensions/highlights.js";
 import { parsePrivateCommentBlock } from "./extensions/comments.js";
 import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
 import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
+import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefinition, collectFootnoteIds, collectFootnoteDiagnostics } from "./extensions/footnotes.js";
 
 export type ParseOptions = {
   mode?: ParseMode;
@@ -60,7 +61,8 @@ type BlockSpec =
   | { kind: "html"; value: string }
   | { kind: "listItem"; taskState?: TaskState; text: string }
   | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic }
-  | { kind: "thematicBreak" };
+  | { kind: "thematicBreak" }
+  | { kind: "footnoteDefinition"; id: string; content: string; raw: string };
 
 function parseBlocks(source: string): BlockSpec[] {
   const lines = source.split("\n");
@@ -193,6 +195,13 @@ function parseBlocks(source: string): BlockSpec[] {
       continue;
     }
 
+    const fnDefMatch = parseFootnoteDefinitionLine(line);
+    if (fnDefMatch !== null) {
+      flushParagraph();
+      blocks.push({ kind: "footnoteDefinition", id: fnDefMatch.id, content: fnDefMatch.content, raw: fnDefMatch.raw });
+      continue;
+    }
+
     paragraphLines.push(line);
   }
 
@@ -292,6 +301,30 @@ function parseParagraphChildren(source: string) {
       }
 
       index = closingIndex + 2;
+      continue;
+    }
+
+    if (source[index] === "[" && source[index + 1] === "^") {
+      if (
+        isOffsetProtected(protectedRegions, index) ||
+        inlineHtmlContainers.some((region) => index >= region.start && index < region.end)
+      ) {
+        index += 2;
+        continue;
+      }
+
+      const fnRef = parseFootnoteReference(source.slice(index));
+      if (fnRef !== null) {
+        if (bufferStart < index) {
+          children.push(createTextNode(source.slice(bufferStart, index)));
+        }
+        children.push(fnRef as MarkdownNode);
+        bufferStart = index + fnRef.raw.length;
+        index = bufferStart;
+        continue;
+      }
+
+      index += 2;
       continue;
     }
 
@@ -406,6 +439,8 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
       docChildren.push({
         type: "thematicBreak"
       } as MarkdownNode);
+    } else if (block.kind === "footnoteDefinition") {
+      docChildren.push(buildFootnoteDefinition(block.id, block.content, block.raw) as unknown as NablaBlockNode);
     } else if (block.kind === "listItem") {
       const items: Array<{ taskState?: TaskState; text: string }> = [
         { taskState: block.taskState, text: block.text }
@@ -432,11 +467,17 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
     }
   }
 
-  return {
+  const doc: NablaDocument = {
     type: DOCUMENT_NODE_TYPE,
     children: docChildren,
     diagnostics: allDiagnostics
   };
+
+  const { referenceIds, definitionIds } = collectFootnoteIds(doc);
+  const footnoteDiagnostics = collectFootnoteDiagnostics(referenceIds, definitionIds);
+  doc.diagnostics.push(...footnoteDiagnostics);
+
+  return doc;
 }
 
 function normalizeSource(markdown: string) {

@@ -1,9 +1,10 @@
-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode } from "./ast.js";
 import { serializeWikiLink } from "./extensions/wiki-links.js";
 import { serializeTag } from "./extensions/tags.js";
 import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
 import { taskStateToMarker } from "./extensions/task-states.js";
 import { serializeFrontmatter } from "./extensions/frontmatter.js";
+import { serializeFootnoteReference, serializeFootnoteDefinition } from "./extensions/footnotes.js";
 
 export type SerializeOptions = {
   lineEnding?: "lf" | "crlf";
@@ -39,6 +40,10 @@ function serializeInlineNode(node: MarkdownNode) {
 
   if (node.type === "colorHighlight") {
     return serializeColorHighlight(node as ColorHighlightNode);
+  }
+
+  if (node.type === "footnoteReference") {
+    return serializeFootnoteReference(node as FootnoteReferenceNode);
   }
 
   return "";
@@ -87,6 +92,10 @@ function serializeBlockNode(node: MarkdownNode) {
   if (node.type === "frontmatter") {
     const fmNode = node as unknown as FrontmatterNode;
     return serializeFrontmatter(fmNode.raw);
+  }
+
+  if (node.type === "footnoteDefinition") {
+    return serializeFootnoteDefinition(node as FootnoteDefinitionNode);
   }
 
   if (node.type === "list" && Array.isArray(node.children)) {
