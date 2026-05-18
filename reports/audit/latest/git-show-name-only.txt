@@ -1,4 +1,8 @@
-packages/markup/src/index.ts
-packages/markup/src/protected-regions.ts
-packages/markup/tests/protected-regions.test.mjs
+packages/markup/src/extensions/wiki-links.ts
+packages/markup/src/parser.ts
+packages/markup/src/serializer.ts
+packages/markup/tests/helpers/load-ts-module.mjs
+packages/markup/tests/parser.test.mjs
+packages/markup/tests/serializer.test.mjs
+packages/markup/tests/wiki-links.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md
