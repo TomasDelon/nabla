@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-012 highlights` + `P1-012A code node parsing`
+`P1-017 callouts`
 
 ## Branch
 
@@ -14,18 +14,17 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Highlight parsing, serialization, and minimal code node support implemented against checked-in fixture contracts.
+Callout parsing and serialization implemented against checked-in fixture contracts (P1-017).
 
-All 5 highlight fixture groups pass:
-- `highlights/basic` — simple `==text==` and color `=={#hex}text==` highlight parsing
-- `highlights/hex-3-and-8` — 3-digit and 8-digit hex color parsing
-- `highlights/invalid-color` — invalid hex color produces warning, literal text preserved
-- `highlights/protected-region` — highlight syntax remains literal inside inline code and fenced code
-- `highlights/unclosed` — unclosed highlight produces warning, literal text preserved
+All 6 callout fixture groups pass:
+- `callouts/canonical` — standard `[!type] title` syntax with tab-indented children
+- `callouts/compatible` — compatible `> **type** title` syntax
+- `callouts/fold-states` — `[!type +/-]` folded/unfolded callouts
+- `callouts/empty` — callout with no title text or children
+- `callouts/blank-child` — callout with an empty child (blank child line preserved)
+- `callouts/fenced-child` — fenced code block as a child inside a callout
 
-`inlineCode` and `code` AST nodes supported:
-- `inlineCode` — backtick-delimited inline code in paragraph text
-- `code` — fenced code blocks (```) at block level with language metadata
+Note: `callouts/nested-child` is deferred to P1-018 (toggle implementation) since it tests callout+toggle nesting.
 
 ## Scope Guardrails
 
@@ -35,23 +34,18 @@ All 5 highlight fixture groups pass:
 
 ## Files Created
 
-- `packages/markup/src/extensions/highlights.ts`
+- `packages/markup/src/extensions/callouts.ts`
 
 ## Files Modified
 
-- `packages/markup/src/parser.ts` — `parseHighlight` import, `==` inline parser, fenced code block parsing, `inlineCode` node creation, blank line paragraph termination
-- `packages/markup/src/serializer.ts` — `serializeHighlight`/`serializeColorHighlight` dispatch, `inlineCode`/`code` block serialization
-- `packages/markup/tests/wiki-links.test.mjs` — `highlightFixtureIds` with protected-region, fixture-driven test, updated 3 test AST expectations for `inlineCode` nodes
+- `packages/markup/src/parser.ts` — `callout` BlockSpec kind, `parseCalloutMarker` detection in `parseBlocks`, recursive `parse()` for child content, `CalloutNode` construction
+- `packages/markup/src/serializer.ts` — `serializeCallout` dispatch, leading `\n` strip in `serialize()` to normalize first-block separator
+- `packages/markup/tests/wiki-links.test.mjs` — 6 callout fixture IDs and fixture-driven test (nested-child deferred to P1-018)
 
 ## Verification Summary
 
-- `node --test packages/markup/tests/**/*.test.mjs` — 35 tests pass (5 highlight fixture tests)
+- `node --test packages/markup/tests/**/*.test.mjs` — 60 tests pass (6 callout fixture tests)
 - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
-- `node scripts/validate-fixtures.mjs` — fixture validation passed
-- `node scripts/validate-spec-version.mjs` — spec version validation passed
-- `node scripts/check-boundaries.mjs` — boundary check passed
-- `node scripts/report-unavailable.mjs lint` — lint unavailable (bootstrap placeholder)
-- `tsc -b packages/markup/tsconfig.json` — build passed
 
 ## Active Blockers
 
