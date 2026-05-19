@@ -1,11 +1,11 @@
- packages/editor/src/editor.ts                |  18 +++++
- packages/editor/src/index.ts                 |  14 ++++
- packages/editor/src/nodes/highlight.ts       |  68 ++++++++++++++++++
- packages/editor/src/nodes/tag.ts             | 103 +++++++++++++++++++++++++++
- packages/editor/tests/editor.test.mjs        |   6 +-
- packages/editor/tests/public-api.test.mjs    |  13 ++++
- packages/editor/tests/tag-highlight.test.mjs | 100 ++++++++++++++++++++++++++
- packages/editor/tests/task-state.test.mjs    |   4 +-
- packages/editor/tests/wiki-link.test.mjs     |   4 +-
- reports/IMPLEMENTATION_PROGRESS.md           |  16 +++--
- 10 files changed, 339 insertions(+), 7 deletions(-)
+ packages/editor/src/editor.ts                | 12 +++++++
+ packages/editor/src/index.ts                 |  7 ++++
+ packages/editor/src/nodes/emoji.ts           | 51 ++++++++++++++++++++++++++
+ packages/editor/tests/editor.test.mjs        |  2 ++
+ packages/editor/tests/emoji.test.mjs         | 54 ++++++++++++++++++++++++++++
+ packages/editor/tests/public-api.test.mjs    |  9 +++++
+ packages/editor/tests/tag-highlight.test.mjs |  3 +-
+ packages/editor/tests/task-state.test.mjs    |  3 +-
+ packages/editor/tests/wiki-link.test.mjs     |  3 +-
+ reports/IMPLEMENTATION_PROGRESS.md           | 17 ++++++---
+ 10 files changed, 154 insertions(+), 7 deletions(-)

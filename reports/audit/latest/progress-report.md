@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-009` — Tags and Highlights Node Views
+`P3-010` — Emoji Shortcode Node View
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, and tag/highlight helpers created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, and emoji shortcode helpers created.
 
 ### Repairs Applied
 
@@ -98,6 +98,15 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No other Nabla node views added.
 - No dependencies added.
 
+### P3-010 Notes
+
+- Added emoji shortcode support only in `packages/editor/src/nodes/emoji.ts` plus editor integration helpers.
+- Known shortcodes follow the existing public markup registry.
+- Unknown shortcodes remain literal source text and are ignored by the adapter metadata.
+- No emoji picker UI was added.
+- No other Nabla node views added.
+- No dependencies added.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -116,4 +125,4 @@ None.
 
 ## Next Recommended Task
 
-P3-010 (emoji shortcodes) — extend editor-specific behavior to emoji shortcode handling without broadening into unrelated Nabla nodes.
+P3-011 (footnotes/comments) — extend editor-specific behavior to the next accepted Nabla syntax surface without broadening into unrelated node views.

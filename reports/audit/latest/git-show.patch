@@ -1,263 +1,122 @@
 diff --git a/packages/editor/src/editor.ts b/packages/editor/src/editor.ts
-index 29183d5..68c0163 100644
+index 68c0163..39cc403 100644
 --- a/packages/editor/src/editor.ts
 +++ b/packages/editor/src/editor.ts
-@@ -7,6 +7,8 @@ import {
-   setTaskStateInMarkdown,
-   toggleTaskStateInMarkdown,
- } from "./nodes/task-state.js";
-+import { getHighlightNodeViews, getHighlightsFromMarkdown } from "./nodes/highlight.js";
-+import { getTagNodeViews, getTagsFromMarkdown } from "./nodes/tag.js";
+@@ -1,6 +1,10 @@
+ import { defaultMarkdownParser, defaultMarkdownSerializer } from "prosemirror-markdown";
+ import { EditorState as ProseMirrorEditorState } from "prosemirror-state";
+ 
++import {
++  getEmojiNodeViews,
++  getEmojiShortcodesFromMarkdown,
++} from "./nodes/emoji.js";
  import {
-   getWikiLinkNodeViews,
-   getWikiLinksFromMarkdown,
-@@ -14,6 +16,8 @@ import {
+   getTaskStateNodeViews,
+   getTaskStatesFromMarkdown,
+@@ -16,6 +20,7 @@ import {
  } from "./nodes/wiki-link.js";
  
  import type { TaskState } from "@nabla/markup";
-+import type { EditorHighlight } from "./nodes/highlight.js";
-+import type { EditorTag } from "./nodes/tag.js";
++import type { EditorEmojiShortcode } from "./nodes/emoji.js";
+ import type { EditorHighlight } from "./nodes/highlight.js";
+ import type { EditorTag } from "./nodes/tag.js";
  import type { EditorTaskState } from "./nodes/task-state.js";
- import type { EditorWikiLink } from "./nodes/wiki-link.js";
- 
-@@ -21,6 +25,8 @@ export interface Editor {
+@@ -25,6 +30,7 @@ export interface Editor {
    state: ProseMirrorEditorState;
    source: string;
    readonly nodeViews: Readonly<{
-+    readonly highlight: string;
-+    readonly tag: string;
++    readonly emoji: string;
+     readonly highlight: string;
+     readonly tag: string;
      readonly taskState: string;
-     readonly wikiLink: string;
-   }>;
-@@ -61,6 +67,8 @@ function normalizeExportedMarkdown(markdown: string): string {
+@@ -67,6 +73,7 @@ function normalizeExportedMarkdown(markdown: string): string {
  
  function shouldPreserveSource(editor: Editor): boolean {
    return (
-+    getHighlightsFromMarkdown(editor.source).length > 0 ||
-+    getTagsFromMarkdown(editor.source).length > 0 ||
++    getEmojiShortcodesFromMarkdown(editor.source).length > 0 ||
+     getHighlightsFromMarkdown(editor.source).length > 0 ||
+     getTagsFromMarkdown(editor.source).length > 0 ||
      getTaskStatesFromMarkdown(editor.source).length > 0 ||
-     getWikiLinksFromMarkdown(editor.source).length > 0
-   );
-@@ -71,6 +79,8 @@ export function createEditor(): Editor {
+@@ -79,6 +86,7 @@ export function createEditor(): Editor {
      state: createState(""),
      source: "",
      nodeViews: Object.freeze({
-+      ...getHighlightNodeViews(),
-+      ...getTagNodeViews(),
++      ...getEmojiNodeViews(),
+       ...getHighlightNodeViews(),
+       ...getTagNodeViews(),
        ...getTaskStateNodeViews(),
-       ...getWikiLinkNodeViews(),
-     }),
-@@ -117,6 +127,14 @@ export function getWikiLinks(editor: Editor): readonly EditorWikiLink[] {
-   return getWikiLinksFromMarkdown(editor.source);
+@@ -135,6 +143,10 @@ export function getHighlights(editor: Editor): readonly EditorHighlight[] {
+   return getHighlightsFromMarkdown(editor.source);
  }
  
-+export function getTags(editor: Editor): readonly EditorTag[] {
-+  return getTagsFromMarkdown(editor.source);
-+}
-+
-+export function getHighlights(editor: Editor): readonly EditorHighlight[] {
-+  return getHighlightsFromMarkdown(editor.source);
++export function getEmojiShortcodes(editor: Editor): readonly EditorEmojiShortcode[] {
++  return getEmojiShortcodesFromMarkdown(editor.source);
 +}
 +
  export function setWikiLinkAlias(editor: Editor, index: number, alias?: string): Editor {
    return loadSource(editor, setWikiLinkAliasInMarkdown(editor.source, index, alias));
  }
 diff --git a/packages/editor/src/index.ts b/packages/editor/src/index.ts
-index 9fd85a6..2f4a68f 100644
+index 2f4a68f..99e331e 100644
 --- a/packages/editor/src/index.ts
 +++ b/packages/editor/src/index.ts
-@@ -3,7 +3,9 @@ export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
+@@ -3,6 +3,7 @@ export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
  export {
    createEditor,
    getDocumentBlockSummary,
-+  getHighlights,
++  getEmojiShortcodes,
+   getHighlights,
    getSource,
-+  getTags,
-   getTaskStates,
-   getWikiLinks,
-   insertMarkdownBlock,
-@@ -13,6 +15,16 @@ export {
+   getTags,
+@@ -15,6 +16,11 @@ export {
    setWikiLinkAlias,
    toggleTaskState,
  } from "./editor.js";
 +export {
-+  getHighlightNodeViews,
-+  getHighlightsFromMarkdown,
-+  NABLA_HIGHLIGHT_NODE_VIEW,
-+} from "./nodes/highlight.js";
-+export {
-+  getTagNodeViews,
-+  getTagsFromMarkdown,
-+  NABLA_TAG_NODE_VIEW,
-+} from "./nodes/tag.js";
++  getEmojiNodeViews,
++  getEmojiShortcodesFromMarkdown,
++  NABLA_EMOJI_NODE_VIEW,
++} from "./nodes/emoji.js";
  export {
-   cycleTaskState,
-   getTaskStateNodeViews,
-@@ -43,6 +55,8 @@ export {
+   getHighlightNodeViews,
+   getHighlightsFromMarkdown,
+@@ -55,6 +61,7 @@ export {
  export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
  
  export type { Editor, EditorBlockSummary } from "./editor.js";
-+export type { EditorHighlight } from "./nodes/highlight.js";
-+export type { EditorTag } from "./nodes/tag.js";
++export type { EditorEmojiShortcode } from "./nodes/emoji.js";
+ export type { EditorHighlight } from "./nodes/highlight.js";
+ export type { EditorTag } from "./nodes/tag.js";
  export type { EditorTaskState } from "./nodes/task-state.js";
- export type { EditorWikiLink } from "./nodes/wiki-link.js";
- export type { EditorPosition, SourcePosition } from "./position.js";
-diff --git a/packages/editor/src/nodes/highlight.ts b/packages/editor/src/nodes/highlight.ts
+diff --git a/packages/editor/src/nodes/emoji.ts b/packages/editor/src/nodes/emoji.ts
 new file mode 100644
-index 0000000..1d37bcb
+index 0000000..1f61bb4
 --- /dev/null
-+++ b/packages/editor/src/nodes/highlight.ts
-@@ -0,0 +1,68 @@
-+import { findProtectedRegions, isOffsetProtected } from "@nabla/markup";
++++ b/packages/editor/src/nodes/emoji.ts
+@@ -0,0 +1,51 @@
++import { DEFAULT_EMOJI_REGISTRY, findProtectedRegions, isOffsetProtected } from "@nabla/markup";
 +
-+export const NABLA_HIGHLIGHT_NODE_VIEW = "node-safe-adapter";
++export const NABLA_EMOJI_NODE_VIEW = "node-safe-adapter";
 +
-+export interface EditorHighlight {
++export interface EditorEmojiShortcode {
 +  readonly index: number;
++  readonly name: string;
 +  readonly raw: string;
-+  readonly text: string;
-+  readonly color?: string;
-+  readonly kind: "highlight" | "colorHighlight";
-+}
-+
-+const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
-+
-+export function getHighlightsFromMarkdown(markdown: string): readonly EditorHighlight[] {
-+  const protectedRegions = findProtectedRegions(markdown);
-+  const highlights: EditorHighlight[] = [];
-+
-+  for (let index = 0; index < markdown.length; index += 1) {
-+    if (markdown[index] !== "=" || markdown[index + 1] !== "=") {
-+      continue;
-+    }
-+
-+    if (isOffsetProtected(protectedRegions, index)) {
-+      continue;
-+    }
-+
-+    if (markdown[index + 2] === "{" && markdown[index + 3] === "#") {
-+      const closeBrace = markdown.indexOf("}", index + 4);
-+      if (closeBrace !== -1) {
-+        const color = markdown.slice(index + 3, closeBrace);
-+        const closeHighlight = markdown.indexOf("==", closeBrace + 1);
-+        if (closeHighlight !== -1 && HEX_COLOR.test(color)) {
-+          const raw = markdown.slice(index, closeHighlight + 2);
-+          highlights.push({
-+            index: highlights.length,
-+            raw,
-+            text: markdown.slice(closeBrace + 1, closeHighlight),
-+            color,
-+            kind: "colorHighlight",
-+          });
-+          index = closeHighlight + 1;
-+          continue;
-+        }
-+      }
-+    }
-+
-+    const closeHighlight = markdown.indexOf("==", index + 2);
-+    if (closeHighlight !== -1) {
-+      const raw = markdown.slice(index, closeHighlight + 2);
-+      highlights.push({
-+        index: highlights.length,
-+        raw,
-+        text: markdown.slice(index + 2, closeHighlight),
-+        kind: "highlight",
-+      });
-+      index = closeHighlight + 1;
-+    }
-+  }
-+
-+  return highlights;
-+}
-+
-+export function getHighlightNodeViews() {
-+  return Object.freeze({
-+    highlight: NABLA_HIGHLIGHT_NODE_VIEW,
-+  });
-+}
-diff --git a/packages/editor/src/nodes/tag.ts b/packages/editor/src/nodes/tag.ts
-new file mode 100644
-index 0000000..c24fc23
---- /dev/null
-+++ b/packages/editor/src/nodes/tag.ts
-@@ -0,0 +1,103 @@
-+import { findProtectedRegions, isOffsetProtected } from "@nabla/markup";
-+
-+export const NABLA_TAG_NODE_VIEW = "node-safe-adapter";
-+
-+export interface EditorTag {
-+  readonly index: number;
 +  readonly value: string;
-+  readonly segments: readonly string[];
-+  readonly raw: string;
 +}
 +
-+const TAG_PATTERN = /#([A-Za-z0-9_][A-Za-z0-9_/-]*)/g;
++const EMOJI_PATTERN = /:([a-z0-9_+\-]+):/g;
 +
-+type Range = {
-+  readonly start: number;
-+  readonly end: number;
-+};
-+
-+function isHeadingMarker(markdown: string, offset: number): boolean {
-+  const lineStart = markdown.lastIndexOf("\n", offset - 1) + 1;
-+  return offset === lineStart && markdown[offset + 1] === " ";
-+}
-+
-+function getHighlightRanges(markdown: string, protectedRegions: ReturnType<typeof findProtectedRegions>): readonly Range[] {
-+  const ranges: Range[] = [];
-+
-+  for (let index = 0; index < markdown.length; index += 1) {
-+    if (markdown[index] !== "=" || markdown[index + 1] !== "=") {
-+      continue;
-+    }
-+
-+    if (isOffsetProtected(protectedRegions, index)) {
-+      continue;
-+    }
-+
-+    if (markdown[index + 2] === "{" && markdown[index + 3] === "#") {
-+      const closeBrace = markdown.indexOf("}", index + 4);
-+      if (closeBrace !== -1) {
-+        const closeHighlight = markdown.indexOf("==", closeBrace + 1);
-+        if (closeHighlight !== -1) {
-+          ranges.push({ start: index, end: closeHighlight + 2 });
-+          index = closeHighlight + 1;
-+          continue;
-+        }
-+      }
-+    }
-+
-+    const closeHighlight = markdown.indexOf("==", index + 2);
-+    if (closeHighlight !== -1) {
-+      ranges.push({ start: index, end: closeHighlight + 2 });
-+      index = closeHighlight + 1;
-+    }
-+  }
-+
-+  return ranges;
-+}
-+
-+function isInRanges(offset: number, ranges: readonly Range[]): boolean {
-+  return ranges.some((range) => offset >= range.start && offset < range.end);
-+}
-+
-+export function getTagsFromMarkdown(markdown: string): readonly EditorTag[] {
++export function getEmojiShortcodesFromMarkdown(markdown: string): readonly EditorEmojiShortcode[] {
 +  const protectedRegions = findProtectedRegions(markdown);
-+  const highlightRanges = getHighlightRanges(markdown, protectedRegions);
-+  const tags: EditorTag[] = [];
++  const emojis: EditorEmojiShortcode[] = [];
 +
-+  for (const match of markdown.matchAll(TAG_PATTERN)) {
++  for (const match of markdown.matchAll(EMOJI_PATTERN)) {
 +    const raw = match[0];
-+    const value = match[1];
++    const name = match[1];
 +    const offset = match.index ?? -1;
 +
 +    if (offset < 0) {
-+      continue;
-+    }
-+
-+    if (isHeadingMarker(markdown, offset)) {
 +      continue;
 +    }
 +
@@ -265,92 +124,53 @@ index 0000000..c24fc23
 +      continue;
 +    }
 +
-+    if (isInRanges(offset, highlightRanges)) {
++    const value = DEFAULT_EMOJI_REGISTRY.get(name);
++    if (value === undefined) {
 +      continue;
 +    }
 +
-+    tags.push({
-+      index: tags.length,
-+      value,
-+      segments: value.split("/"),
++    emojis.push({
++      index: emojis.length,
++      name,
 +      raw,
++      value,
 +    });
 +  }
 +
-+  return tags;
++  return emojis;
 +}
 +
-+export function getTagNodeViews() {
++export function getEmojiNodeViews() {
 +  return Object.freeze({
-+    tag: NABLA_TAG_NODE_VIEW,
++    emoji: NABLA_EMOJI_NODE_VIEW,
 +  });
 +}
 diff --git a/packages/editor/tests/editor.test.mjs b/packages/editor/tests/editor.test.mjs
-index 3807183..016ecac 100644
+index 016ecac..e9a82b5 100644
 --- a/packages/editor/tests/editor.test.mjs
 +++ b/packages/editor/tests/editor.test.mjs
-@@ -16,7 +16,9 @@ test("public editor exports exist", async () => {
+@@ -16,6 +16,7 @@ test("public editor exports exist", async () => {
    assert.equal(typeof mod.replaceSource, "function");
    assert.equal(typeof mod.insertMarkdownBlock, "function");
    assert.equal(typeof mod.getDocumentBlockSummary, "function");
-+  assert.equal(typeof mod.getHighlights, "function");
++  assert.equal(typeof mod.getEmojiShortcodes, "function");
+   assert.equal(typeof mod.getHighlights, "function");
    assert.equal(typeof mod.getTaskStates, "function");
-+  assert.equal(typeof mod.getTags, "function");
-   assert.equal(typeof mod.getWikiLinks, "function");
-   assert.equal(typeof mod.setTaskState, "function");
-   assert.equal(typeof mod.setWikiLinkAlias, "function");
-@@ -113,11 +115,13 @@ test("block summary identifies standard markdown block node types", async () =>
-   ]);
- });
- 
--test("only task-state and wiki-link node view adapters are registered", async () => {
-+test("only accepted node view adapters are registered", async () => {
-   const mod = await load();
+   assert.equal(typeof mod.getTags, "function");
+@@ -120,6 +121,7 @@ test("only accepted node view adapters are registered", async () => {
    const editor = mod.createEditor();
  
    assert.deepEqual(editor.nodeViews, {
-+    highlight: "node-safe-adapter",
-+    tag: "node-safe-adapter",
++    emoji: "node-safe-adapter",
+     highlight: "node-safe-adapter",
+     tag: "node-safe-adapter",
      taskState: "node-safe-adapter",
-     wikiLink: "node-safe-adapter",
-   });
-diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
-index d654edd..568dde7 100644
---- a/packages/editor/tests/public-api.test.mjs
-+++ b/packages/editor/tests/public-api.test.mjs
-@@ -34,6 +34,8 @@ test("editor runtime exports are wired", async () => {
-   assert.equal(typeof mod.replaceSource, "function");
-   assert.equal(typeof mod.insertMarkdownBlock, "function");
-   assert.equal(typeof mod.getDocumentBlockSummary, "function");
-+  assert.equal(typeof mod.getHighlights, "function");
-+  assert.equal(typeof mod.getTags, "function");
-   assert.equal(typeof mod.getTaskStates, "function");
-   assert.equal(typeof mod.getWikiLinks, "function");
-   assert.equal(typeof mod.setTaskState, "function");
-@@ -63,6 +65,17 @@ test("wiki link runtime exports are wired", async () => {
-   assert.equal(typeof mod.setWikiLinkAliasInMarkdown, "function");
- });
- 
-+test("tag and highlight runtime exports are wired", async () => {
-+  const mod = await load();
-+
-+  assert.equal(mod.NABLA_TAG_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(mod.NABLA_HIGHLIGHT_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(typeof mod.getTagNodeViews, "function");
-+  assert.equal(typeof mod.getTagsFromMarkdown, "function");
-+  assert.equal(typeof mod.getHighlightNodeViews, "function");
-+  assert.equal(typeof mod.getHighlightsFromMarkdown, "function");
-+});
-+
- test("position runtime exports are wired", async () => {
-   const mod = await load();
- 
-diff --git a/packages/editor/tests/tag-highlight.test.mjs b/packages/editor/tests/tag-highlight.test.mjs
+diff --git a/packages/editor/tests/emoji.test.mjs b/packages/editor/tests/emoji.test.mjs
 new file mode 100644
-index 0000000..2b079e2
+index 0000000..5cfe632
 --- /dev/null
-+++ b/packages/editor/tests/tag-highlight.test.mjs
-@@ -0,0 +1,100 @@
++++ b/packages/editor/tests/emoji.test.mjs
+@@ -0,0 +1,54 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
@@ -358,139 +178,132 @@ index 0000000..2b079e2
 +  return import(new URL("../dist/editor.js", import.meta.url));
 +}
 +
-+async function loadTag() {
-+  return import(new URL("../dist/nodes/tag.js", import.meta.url));
++async function loadEmoji() {
++  return import(new URL("../dist/nodes/emoji.js", import.meta.url));
 +}
 +
-+async function loadHighlight() {
-+  return import(new URL("../dist/nodes/highlight.js", import.meta.url));
-+}
++test("detects known shortcode :check:", async () => {
++  const mod = await loadEmoji();
 +
-+test("detects simple tag #tag", async () => {
-+  const mod = await loadTag();
-+
-+  assert.deepEqual(mod.getTagsFromMarkdown("#tag\n"), [
-+    { index: 0, value: "tag", segments: ["tag"], raw: "#tag" },
++  assert.deepEqual(mod.getEmojiShortcodesFromMarkdown(":check:\n"), [
++    { index: 0, name: "check", raw: ":check:", value: "✅" },
 +  ]);
 +});
 +
-+test("detects nested tag #nested/tag", async () => {
-+  const mod = await loadTag();
++test("unknown shortcode is ignored and remains literal source text", async () => {
++  const mod = await loadEmoji();
 +
-+  assert.deepEqual(mod.getTagsFromMarkdown("#nested/tag\n"), [
-+    { index: 0, value: "nested/tag", segments: ["nested", "tag"], raw: "#nested/tag" },
-+  ]);
++  assert.deepEqual(mod.getEmojiShortcodesFromMarkdown(":unknown:\n"), []);
 +});
 +
-+test("ignores markdown heading # Title", async () => {
-+  const mod = await loadTag();
++test("ignores protected regions", async () => {
++  const mod = await loadEmoji();
 +
-+  assert.deepEqual(mod.getTagsFromMarkdown("# Title\n"), []);
++  assert.deepEqual(mod.getEmojiShortcodesFromMarkdown("`:check:`\n"), []);
 +});
 +
-+test("detects simple highlight ==text==", async () => {
-+  const mod = await loadHighlight();
-+
-+  assert.deepEqual(mod.getHighlightsFromMarkdown("==text==\n"), [
-+    { index: 0, raw: "==text==", text: "text", kind: "highlight" },
-+  ]);
-+});
-+
-+test("detects color highlight =={#ff0}text==", async () => {
-+  const mod = await loadHighlight();
-+
-+  assert.deepEqual(mod.getHighlightsFromMarkdown("=={#ff0}text==\n"), [
-+    {
-+      index: 0,
-+      raw: "=={#ff0}text==",
-+      text: "text",
-+      color: "#ff0",
-+      kind: "colorHighlight",
-+    },
-+  ]);
-+});
-+
-+test("load detect export preserves tag and highlight syntax", async () => {
-+  const mod = await loadEditor();
-+  const editor = mod.createEditor();
-+  const source = "#tag ==text== =={#ff0}color==\n";
-+
-+  mod.loadSource(editor, source);
-+
-+  assert.deepEqual(mod.getTags(editor), [
-+    { index: 0, value: "tag", segments: ["tag"], raw: "#tag" },
-+  ]);
-+  assert.deepEqual(mod.getHighlights(editor), [
-+    { index: 0, raw: "==text==", text: "text", kind: "highlight" },
-+    {
-+      index: 1,
-+      raw: "=={#ff0}color==",
-+      text: "color",
-+      color: "#ff0",
-+      kind: "colorHighlight",
-+    },
-+  ]);
-+  assert.equal(mod.getSource(editor), "#tag ==text== =={#ff0}color==");
-+});
-+
-+test("ignores tags and highlights inside protected regions", async () => {
-+  const tagMod = await loadTag();
-+  const highlightMod = await loadHighlight();
-+
-+  assert.deepEqual(tagMod.getTagsFromMarkdown("`#tag`\n"), []);
-+  assert.deepEqual(highlightMod.getHighlightsFromMarkdown("`==text==`\n"), []);
-+});
-+
-+test("no node views other than accepted task-state, wiki-link, tag, and highlight are registered", async () => {
++test("load detect export preserves emoji shortcode syntax", async () => {
 +  const mod = await loadEditor();
 +  const editor = mod.createEditor();
 +
-+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["highlight", "tag", "taskState", "wikiLink"]);
++  mod.loadSource(editor, "Status :check:\n");
++
++  assert.deepEqual(mod.getEmojiShortcodes(editor), [
++    { index: 0, name: "check", raw: ":check:", value: "✅" },
++  ]);
++  assert.equal(mod.getSource(editor), "Status :check:");
++});
++
++test("no node views other than accepted task-state, wiki-link, tag, highlight, emoji are registered", async () => {
++  const mod = await loadEditor();
++  const editor = mod.createEditor();
++
++  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["emoji", "highlight", "tag", "taskState", "wikiLink"]);
++  assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
 +  assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
 +  assert.equal(editor.nodeViews.tag, "node-safe-adapter");
 +  assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
 +  assert.equal(editor.nodeViews.wikiLink, "node-safe-adapter");
 +});
+diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
+index 568dde7..e9211cb 100644
+--- a/packages/editor/tests/public-api.test.mjs
++++ b/packages/editor/tests/public-api.test.mjs
+@@ -34,6 +34,7 @@ test("editor runtime exports are wired", async () => {
+   assert.equal(typeof mod.replaceSource, "function");
+   assert.equal(typeof mod.insertMarkdownBlock, "function");
+   assert.equal(typeof mod.getDocumentBlockSummary, "function");
++  assert.equal(typeof mod.getEmojiShortcodes, "function");
+   assert.equal(typeof mod.getHighlights, "function");
+   assert.equal(typeof mod.getTags, "function");
+   assert.equal(typeof mod.getTaskStates, "function");
+@@ -76,6 +77,14 @@ test("tag and highlight runtime exports are wired", async () => {
+   assert.equal(typeof mod.getHighlightsFromMarkdown, "function");
+ });
+ 
++test("emoji runtime exports are wired", async () => {
++  const mod = await load();
++
++  assert.equal(mod.NABLA_EMOJI_NODE_VIEW, "node-safe-adapter");
++  assert.equal(typeof mod.getEmojiNodeViews, "function");
++  assert.equal(typeof mod.getEmojiShortcodesFromMarkdown, "function");
++});
++
+ test("position runtime exports are wired", async () => {
+   const mod = await load();
+ 
+diff --git a/packages/editor/tests/tag-highlight.test.mjs b/packages/editor/tests/tag-highlight.test.mjs
+index 2b079e2..3c28546 100644
+--- a/packages/editor/tests/tag-highlight.test.mjs
++++ b/packages/editor/tests/tag-highlight.test.mjs
+@@ -92,7 +92,8 @@ test("no node views other than accepted task-state, wiki-link, tag, and highligh
+   const mod = await loadEditor();
+   const editor = mod.createEditor();
+ 
+-  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["highlight", "tag", "taskState", "wikiLink"]);
++  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["emoji", "highlight", "tag", "taskState", "wikiLink"]);
++  assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
+   assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
+   assert.equal(editor.nodeViews.tag, "node-safe-adapter");
+   assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
 diff --git a/packages/editor/tests/task-state.test.mjs b/packages/editor/tests/task-state.test.mjs
-index 5f088dd..fbab2b8 100644
+index fbab2b8..a033a23 100644
 --- a/packages/editor/tests/task-state.test.mjs
 +++ b/packages/editor/tests/task-state.test.mjs
-@@ -75,7 +75,9 @@ test("no other Nabla node views are registered", async () => {
+@@ -75,7 +75,8 @@ test("no other Nabla node views are registered", async () => {
    const mod = await loadEditor();
    const editor = mod.createEditor();
  
--  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["taskState", "wikiLink"]);
-+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["highlight", "tag", "taskState", "wikiLink"]);
-+  assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.tag, "node-safe-adapter");
+-  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["highlight", "tag", "taskState", "wikiLink"]);
++  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["emoji", "highlight", "tag", "taskState", "wikiLink"]);
++  assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
+   assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
+   assert.equal(editor.nodeViews.tag, "node-safe-adapter");
    assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
-   assert.equal(editor.nodeViews.wikiLink, "node-safe-adapter");
- });
 diff --git a/packages/editor/tests/wiki-link.test.mjs b/packages/editor/tests/wiki-link.test.mjs
-index c1efa55..d03154e 100644
+index d03154e..34b3a49 100644
 --- a/packages/editor/tests/wiki-link.test.mjs
 +++ b/packages/editor/tests/wiki-link.test.mjs
-@@ -134,7 +134,9 @@ test("no node views other than task-state and wiki-link are registered", async (
+@@ -134,7 +134,8 @@ test("no node views other than task-state and wiki-link are registered", async (
    const mod = await loadEditor();
    const editor = mod.createEditor();
  
--  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["taskState", "wikiLink"]);
-+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["highlight", "tag", "taskState", "wikiLink"]);
-+  assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.tag, "node-safe-adapter");
+-  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["highlight", "tag", "taskState", "wikiLink"]);
++  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["emoji", "highlight", "tag", "taskState", "wikiLink"]);
++  assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
+   assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
+   assert.equal(editor.nodeViews.tag, "node-safe-adapter");
    assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
-   assert.equal(editor.nodeViews.wikiLink, "node-safe-adapter");
- });
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 2368629..f73d915 100644
+index f73d915..ea3b960 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
  
  ## Last Task
  
--`P3-008` — Wiki Link Node View
-+`P3-009` — Tags and Highlights Node Views
+-`P3-009` — Tags and Highlights Node Views
++`P3-010` — Emoji Shortcode Node View
  
  ## Branch
  
@@ -498,34 +311,35 @@ index 2368629..f73d915 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, and wiki-link helpers created.
-+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, and tag/highlight helpers created.
+-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, and tag/highlight helpers created.
++Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, and emoji shortcode helpers created.
  
  ### Repairs Applied
  
-@@ -90,6 +90,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
+@@ -98,6 +98,15 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
  - No other Nabla node views added.
  - No dependencies added.
  
-+### P3-009 Notes
++### P3-010 Notes
 +
-+- Added tag and highlight support only in `packages/editor/src/nodes/tag.ts` and `packages/editor/src/nodes/highlight.ts` plus editor integration helpers.
-+- Supported tag syntax: `#tag` and nested tags like `#nested/tag`.
-+- Supported highlight syntax: `==text==` and color highlights in the existing markup form `=={#ff0}text==`.
++- Added emoji shortcode support only in `packages/editor/src/nodes/emoji.ts` plus editor integration helpers.
++- Known shortcodes follow the existing public markup registry.
++- Unknown shortcodes remain literal source text and are ignored by the adapter metadata.
++- No emoji picker UI was added.
 +- No other Nabla node views added.
 +- No dependencies added.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -108,4 +116,4 @@ None.
+@@ -116,4 +125,4 @@ None.
  
  ## Next Recommended Task
  
--P3-009 (tags/highlights) — extend editor-specific behavior to the next accepted Nabla syntax surface without adding unrelated node views.
-+P3-010 (emoji shortcodes) — extend editor-specific behavior to emoji shortcode handling without broadening into unrelated Nabla nodes.
+-P3-010 (emoji shortcodes) — extend editor-specific behavior to emoji shortcode handling without broadening into unrelated Nabla nodes.
++P3-011 (footnotes/comments) — extend editor-specific behavior to the next accepted Nabla syntax surface without broadening into unrelated node views.

@@ -1,1 +1,1 @@
-7baee52 feat(editor): add tag and highlight helpers
+d617c33 feat(editor): add emoji shortcode helpers
