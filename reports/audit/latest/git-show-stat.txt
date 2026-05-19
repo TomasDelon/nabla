@@ -1,2 +1,5 @@
- scripts/create-audit-bundle.mjs | 24 +++++++++++++-----------
- 1 file changed, 13 insertions(+), 11 deletions(-)
+ packages/markup/src/extensions/block-ids.ts | 196 ++++++++++++++++++++++++++++
+ packages/markup/src/parser.ts               | 103 ++++++++++-----
+ packages/markup/src/serializer.ts           |  60 +++++++--
+ packages/markup/tests/wiki-links.test.mjs   |  29 ++++
+ 4 files changed, 341 insertions(+), 47 deletions(-)

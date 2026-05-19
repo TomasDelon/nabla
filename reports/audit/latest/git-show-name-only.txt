@@ -1,1 +1,4 @@
-scripts/create-audit-bundle.mjs
+packages/markup/src/extensions/block-ids.ts
+packages/markup/src/parser.ts
+packages/markup/src/serializer.ts
+packages/markup/tests/wiki-links.test.mjs
