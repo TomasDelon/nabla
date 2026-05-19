@@ -34,8 +34,22 @@ test("editor runtime exports are wired", async () => {
   assert.equal(typeof mod.replaceSource, "function");
   assert.equal(typeof mod.insertMarkdownBlock, "function");
   assert.equal(typeof mod.getDocumentBlockSummary, "function");
+  assert.equal(typeof mod.getTaskStates, "function");
+  assert.equal(typeof mod.setTaskState, "function");
+  assert.equal(typeof mod.toggleTaskState, "function");
   assert.equal(typeof mod.loadSource, "function");
   assert.equal(typeof mod.getSource, "function");
+});
+
+test("task state runtime exports are wired", async () => {
+  const mod = await load();
+
+  assert.equal(mod.NABLA_TASK_STATE_NODE_VIEW, "node-safe-adapter");
+  assert.equal(typeof mod.getTaskStateNodeViews, "function");
+  assert.equal(typeof mod.getTaskStatesFromMarkdown, "function");
+  assert.equal(typeof mod.setTaskStateInMarkdown, "function");
+  assert.equal(typeof mod.toggleTaskStateInMarkdown, "function");
+  assert.equal(typeof mod.cycleTaskState, "function");
 });
 
 test("position runtime exports are wired", async () => {

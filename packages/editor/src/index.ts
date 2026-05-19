@@ -4,10 +4,21 @@ export {
   createEditor,
   getDocumentBlockSummary,
   getSource,
+  getTaskStates,
   insertMarkdownBlock,
   loadSource,
   replaceSource,
+  setTaskState,
+  toggleTaskState,
 } from "./editor.js";
+export {
+  cycleTaskState,
+  getTaskStateNodeViews,
+  getTaskStatesFromMarkdown,
+  NABLA_TASK_STATE_NODE_VIEW,
+  setTaskStateInMarkdown,
+  toggleTaskStateInMarkdown,
+} from "./nodes/task-state.js";
 export {
   clampOffset,
   createEditorPosition,
@@ -24,6 +35,7 @@ export {
 export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
 
 export type { Editor, EditorBlockSummary } from "./editor.js";
+export type { EditorTaskState } from "./nodes/task-state.js";
 export type { EditorPosition, SourcePosition } from "./position.js";
 export type {
   EditorAdapter,

@@ -1,9 +1,22 @@
 import { defaultMarkdownParser, defaultMarkdownSerializer } from "prosemirror-markdown";
 import { EditorState as ProseMirrorEditorState } from "prosemirror-state";
 
+import {
+  getTaskStateNodeViews,
+  getTaskStatesFromMarkdown,
+  setTaskStateInMarkdown,
+  toggleTaskStateInMarkdown,
+} from "./nodes/task-state.js";
+
+import type { TaskState } from "@nabla/markup";
+import type { EditorTaskState } from "./nodes/task-state.js";
+
 export interface Editor {
   state: ProseMirrorEditorState;
-  readonly nodeViews: Readonly<Record<string, never>>;
+  source: string;
+  readonly nodeViews: Readonly<{
+    readonly taskState: string;
+  }>;
 }
 
 export interface EditorBlockSummary {
@@ -35,15 +48,21 @@ function createState(markdown: string) {
   });
 }
 
+function normalizeExportedMarkdown(markdown: string): string {
+  return markdown.replace(/\n$/, "");
+}
+
 export function createEditor(): Editor {
   return {
     state: createState(""),
-    nodeViews: Object.freeze({}),
+    source: "",
+    nodeViews: getTaskStateNodeViews(),
   };
 }
 
 export function loadSource(editor: Editor, markdown: string): Editor {
   editor.state = createState(markdown);
+  editor.source = markdown;
   return editor;
 }
 
@@ -58,7 +77,23 @@ export function insertMarkdownBlock(editor: Editor, markdown: string): Editor {
 }
 
 export function getSource(editor: Editor): string {
+  if (getTaskStatesFromMarkdown(editor.source).length > 0) {
+    return normalizeExportedMarkdown(editor.source);
+  }
+
   return defaultMarkdownSerializer.serialize(editor.state.doc);
+}
+
+export function getTaskStates(editor: Editor): readonly EditorTaskState[] {
+  return getTaskStatesFromMarkdown(editor.source);
+}
+
+export function setTaskState(editor: Editor, index: number, state: TaskState): Editor {
+  return loadSource(editor, setTaskStateInMarkdown(editor.source, index, state));
+}
+
+export function toggleTaskState(editor: Editor, index: number): Editor {
+  return loadSource(editor, toggleTaskStateInMarkdown(editor.source, index));
 }
 
 function appendBlockSummaries(node: SummaryNode, summary: EditorBlockSummary[]): void {

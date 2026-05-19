@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-006` — Editor Block Navigation Basics
+`P3-007` — Task State Node View
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, and basic Markdown block helpers created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, and task-state helpers created.
 
 ### Repairs Applied
 
@@ -73,6 +73,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No dependencies added.
 - No Nabla-specific node views added.
 
+### P3-007 Notes
+
+- Added task-state support only in `packages/editor/src/nodes/task-state.ts` and editor integration helpers.
+- Supported task markers: `[ ]`, `[x]`, `[-]`, `[!]`.
+- Runtime strategy remains a Node-safe adapter boundary; no browser DOM node view rendering was added.
+- No other Nabla node views added.
+- No dependencies added.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -91,4 +99,4 @@ None.
 
 ## Next Recommended Task
 
-P3-007 (task states) — begin Nabla-specific editor rendering with task-state support.
+P3-008 (wiki links) — extend editor-specific behavior to wiki-link handling without broadening into other Nabla nodes.

@@ -16,6 +16,9 @@ test("public editor exports exist", async () => {
   assert.equal(typeof mod.replaceSource, "function");
   assert.equal(typeof mod.insertMarkdownBlock, "function");
   assert.equal(typeof mod.getDocumentBlockSummary, "function");
+  assert.equal(typeof mod.getTaskStates, "function");
+  assert.equal(typeof mod.setTaskState, "function");
+  assert.equal(typeof mod.toggleTaskState, "function");
   assert.equal(typeof mod.loadSource, "function");
   assert.equal(typeof mod.getSource, "function");
 });
@@ -108,9 +111,9 @@ test("block summary identifies standard markdown block node types", async () => 
   ]);
 });
 
-test("no Nabla-specific node views are registered", async () => {
+test("only task-state Nabla node view adapter is registered", async () => {
   const mod = await load();
   const editor = mod.createEditor();
 
-  assert.deepEqual(editor.nodeViews, {});
+  assert.deepEqual(editor.nodeViews, { taskState: "node-safe-adapter" });
 });
