@@ -1,504 +1,223 @@
+diff --git a/packages/editor/src/commands/fold.ts b/packages/editor/src/commands/fold.ts
+new file mode 100644
+index 0000000..75b7c8c
+--- /dev/null
++++ b/packages/editor/src/commands/fold.ts
+@@ -0,0 +1,79 @@
++import { loadSource } from "../editor.js";
++
++import type { Editor } from "../editor.js";
++
++type FoldMatch = {
++  readonly lineIndex: number;
++};
++
++const CALLOUT_RE = /^(\[![A-Za-z][A-Za-z0-9_-]*])(>|v)([ \t]*.*)$/;
++const TOGGLE_RE = /^(])(>|v)([ \t]*.*)$/;
++const FOLDED_HEADING_RE = /^(#{1,6})(>|v)( .+)$/;
++
++function toggleMarker(marker: string): ">" | "v" {
++  return marker === ">" ? "v" : ">";
++}
++
++function toggleMatchedLine(
++  markdown: string,
++  matches: readonly FoldMatch[],
++  index: number,
++  rewriter: (line: string) => string,
++): string {
++  const match = matches[index];
++  if (!match) {
++    throw new RangeError(`Fold index out of range: ${index}`);
++  }
++
++  const lines = markdown.split("\n");
++  lines[match.lineIndex] = rewriter(lines[match.lineIndex]);
++  return lines.join("\n");
++}
++
++function getCalloutFoldMatches(markdown: string): readonly FoldMatch[] {
++  return markdown
++    .split("\n")
++    .flatMap((line, lineIndex) => (CALLOUT_RE.test(line) ? [{ lineIndex }] : []));
++}
++
++function getToggleFoldMatches(markdown: string): readonly FoldMatch[] {
++  return markdown
++    .split("\n")
++    .flatMap((line, lineIndex) => (TOGGLE_RE.test(line) ? [{ lineIndex }] : []));
++}
++
++function getFoldedHeadingMatches(markdown: string): readonly FoldMatch[] {
++  return markdown
++    .split("\n")
++    .flatMap((line, lineIndex) => (FOLDED_HEADING_RE.test(line) ? [{ lineIndex }] : []));
++}
++
++export function toggleCalloutFoldInMarkdown(markdown: string, index: number): string {
++  return toggleMatchedLine(markdown, getCalloutFoldMatches(markdown), index, (line) =>
++    line.replace(CALLOUT_RE, (_, prefix: string, marker: string, suffix: string) => `${prefix}${toggleMarker(marker)}${suffix}`),
++  );
++}
++
++export function toggleToggleFoldInMarkdown(markdown: string, index: number): string {
++  return toggleMatchedLine(markdown, getToggleFoldMatches(markdown), index, (line) =>
++    line.replace(TOGGLE_RE, (_, prefix: string, marker: string, suffix: string) => `${prefix}${toggleMarker(marker)}${suffix}`),
++  );
++}
++
++export function toggleFoldedHeadingFoldInMarkdown(markdown: string, index: number): string {
++  return toggleMatchedLine(markdown, getFoldedHeadingMatches(markdown), index, (line) =>
++    line.replace(FOLDED_HEADING_RE, (_, hashes: string, marker: string, suffix: string) => `${hashes}${toggleMarker(marker)}${suffix}`),
++  );
++}
++
++export function toggleCalloutFold(editor: Editor, index: number): Editor {
++  return loadSource(editor, toggleCalloutFoldInMarkdown(editor.source, index));
++}
++
++export function toggleToggleFold(editor: Editor, index: number): Editor {
++  return loadSource(editor, toggleToggleFoldInMarkdown(editor.source, index));
++}
++
++export function toggleFoldedHeadingFold(editor: Editor, index: number): Editor {
++  return loadSource(editor, toggleFoldedHeadingFoldInMarkdown(editor.source, index));
++}
 diff --git a/packages/editor/src/editor.ts b/packages/editor/src/editor.ts
-index 39cc403..da06217 100644
+index da06217..b56deca 100644
 --- a/packages/editor/src/editor.ts
 +++ b/packages/editor/src/editor.ts
-@@ -1,10 +1,18 @@
- import { defaultMarkdownParser, defaultMarkdownSerializer } from "prosemirror-markdown";
- import { EditorState as ProseMirrorEditorState } from "prosemirror-state";
+@@ -72,6 +72,8 @@ type SummaryNode = {
+   forEach(callback: (child: SummaryNode) => void): void;
+ };
  
-+import {
-+  getCommentNodeViews,
-+  getCommentsFromMarkdown,
-+} from "./nodes/comment.js";
- import {
-   getEmojiNodeViews,
-   getEmojiShortcodesFromMarkdown,
- } from "./nodes/emoji.js";
-+import {
-+  getFootnoteNodeViews,
-+  getFootnotesFromMarkdown,
-+} from "./nodes/footnote.js";
- import {
-   getTaskStateNodeViews,
-   getTaskStatesFromMarkdown,
-@@ -19,8 +27,10 @@ import {
-   setWikiLinkAliasInMarkdown,
- } from "./nodes/wiki-link.js";
- 
-+import type { EditorComment } from "./nodes/comment.js";
- import type { TaskState } from "@nabla/markup";
- import type { EditorEmojiShortcode } from "./nodes/emoji.js";
-+import type { EditorFootnote } from "./nodes/footnote.js";
- import type { EditorHighlight } from "./nodes/highlight.js";
- import type { EditorTag } from "./nodes/tag.js";
- import type { EditorTaskState } from "./nodes/task-state.js";
-@@ -30,7 +40,9 @@ export interface Editor {
-   state: ProseMirrorEditorState;
-   source: string;
-   readonly nodeViews: Readonly<{
-+    readonly comment: string;
-     readonly emoji: string;
-+    readonly footnote: string;
-     readonly highlight: string;
-     readonly tag: string;
-     readonly taskState: string;
-@@ -73,7 +85,9 @@ function normalizeExportedMarkdown(markdown: string): string {
++const SOURCE_FOLD_MARKER_RE = /^(#{1,6}(?:>|v) |\[![A-Za-z][A-Za-z0-9_-]*](?:>|v)|](?:>|v))/m;
++
+ function createState(markdown: string) {
+   return ProseMirrorEditorState.create({
+     schema: defaultMarkdownParser.schema,
+@@ -85,6 +87,7 @@ function normalizeExportedMarkdown(markdown: string): string {
  
  function shouldPreserveSource(editor: Editor): boolean {
    return (
-+    getCommentsFromMarkdown(editor.source).length > 0 ||
++    SOURCE_FOLD_MARKER_RE.test(editor.source) ||
+     getCommentsFromMarkdown(editor.source).length > 0 ||
      getEmojiShortcodesFromMarkdown(editor.source).length > 0 ||
-+    getFootnotesFromMarkdown(editor.source).length > 0 ||
-     getHighlightsFromMarkdown(editor.source).length > 0 ||
-     getTagsFromMarkdown(editor.source).length > 0 ||
-     getTaskStatesFromMarkdown(editor.source).length > 0 ||
-@@ -86,7 +100,9 @@ export function createEditor(): Editor {
-     state: createState(""),
-     source: "",
-     nodeViews: Object.freeze({
-+      ...getCommentNodeViews(),
-       ...getEmojiNodeViews(),
-+      ...getFootnoteNodeViews(),
-       ...getHighlightNodeViews(),
-       ...getTagNodeViews(),
-       ...getTaskStateNodeViews(),
-@@ -147,6 +163,14 @@ export function getEmojiShortcodes(editor: Editor): readonly EditorEmojiShortcod
-   return getEmojiShortcodesFromMarkdown(editor.source);
- }
- 
-+export function getFootnotes(editor: Editor): readonly EditorFootnote[] {
-+  return getFootnotesFromMarkdown(editor.source);
-+}
-+
-+export function getComments(editor: Editor): readonly EditorComment[] {
-+  return getCommentsFromMarkdown(editor.source);
-+}
-+
- export function setWikiLinkAlias(editor: Editor, index: number, alias?: string): Editor {
-   return loadSource(editor, setWikiLinkAliasInMarkdown(editor.source, index, alias));
- }
+     getFootnotesFromMarkdown(editor.source).length > 0 ||
 diff --git a/packages/editor/src/index.ts b/packages/editor/src/index.ts
-index 99e331e..d9e13c3 100644
+index d9e13c3..996420b 100644
 --- a/packages/editor/src/index.ts
 +++ b/packages/editor/src/index.ts
-@@ -1,9 +1,11 @@
- export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
- 
- export {
-+  getComments,
-   createEditor,
-   getDocumentBlockSummary,
-   getEmojiShortcodes,
-+  getFootnotes,
-   getHighlights,
-   getSource,
-   getTags,
-@@ -16,11 +18,21 @@ export {
+@@ -18,6 +18,14 @@ export {
    setWikiLinkAlias,
    toggleTaskState,
  } from "./editor.js";
 +export {
-+  getCommentNodeViews,
-+  getCommentsFromMarkdown,
-+  NABLA_COMMENT_NODE_VIEW,
-+} from "./nodes/comment.js";
++  toggleCalloutFold,
++  toggleCalloutFoldInMarkdown,
++  toggleFoldedHeadingFold,
++  toggleFoldedHeadingFoldInMarkdown,
++  toggleToggleFold,
++  toggleToggleFoldInMarkdown,
++} from "./commands/fold.js";
  export {
-   getEmojiNodeViews,
-   getEmojiShortcodesFromMarkdown,
-   NABLA_EMOJI_NODE_VIEW,
- } from "./nodes/emoji.js";
-+export {
-+  getFootnoteNodeViews,
-+  getFootnotesFromMarkdown,
-+  NABLA_FOOTNOTE_NODE_VIEW,
-+} from "./nodes/footnote.js";
- export {
-   getHighlightNodeViews,
-   getHighlightsFromMarkdown,
-@@ -61,7 +73,9 @@ export {
- export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
- 
- export type { Editor, EditorBlockSummary } from "./editor.js";
-+export type { EditorComment } from "./nodes/comment.js";
- export type { EditorEmojiShortcode } from "./nodes/emoji.js";
-+export type { EditorFootnote } from "./nodes/footnote.js";
- export type { EditorHighlight } from "./nodes/highlight.js";
- export type { EditorTag } from "./nodes/tag.js";
- export type { EditorTaskState } from "./nodes/task-state.js";
-diff --git a/packages/editor/src/nodes/comment.ts b/packages/editor/src/nodes/comment.ts
+   getCommentNodeViews,
+   getCommentsFromMarkdown,
+diff --git a/packages/editor/tests/fold.test.mjs b/packages/editor/tests/fold.test.mjs
 new file mode 100644
-index 0000000..46059af
+index 0000000..2e44f21
 --- /dev/null
-+++ b/packages/editor/src/nodes/comment.ts
-@@ -0,0 +1,59 @@
-+import { findProtectedRegions, isOffsetProtected } from "@nabla/markup";
-+
-+export const NABLA_COMMENT_NODE_VIEW = "node-safe-adapter";
-+
-+export interface EditorComment {
-+  readonly index: number;
-+  readonly raw: string;
-+  readonly text: string;
-+  readonly multiline: boolean;
-+}
-+
-+export function getCommentsFromMarkdown(markdown: string): readonly EditorComment[] {
-+  const protectedRegions = findProtectedRegions(markdown);
-+  const comments: EditorComment[] = [];
-+  const lines = markdown.split("\n");
-+
-+  for (let startIndex = 0; startIndex < lines.length; startIndex += 1) {
-+    const startOffset = lines.slice(0, startIndex).join("\n").length + (startIndex > 0 ? 1 : 0);
-+    if (isOffsetProtected(protectedRegions, startOffset)) {
-+      continue;
-+    }
-+
-+    const firstLine = lines[startIndex];
-+    if (!firstLine.startsWith("%%")) {
-+      continue;
-+    }
-+
-+    for (let endIndex = startIndex; endIndex < lines.length; endIndex += 1) {
-+      const line = lines[endIndex];
-+      const closeIndex = line.lastIndexOf("%%");
-+      if (closeIndex <= 0) {
-+        continue;
-+      }
-+
-+      const afterClose = line.slice(closeIndex + 2);
-+      if (afterClose.trim() !== "") {
-+        continue;
-+      }
-+
-+      const raw = lines.slice(startIndex, endIndex + 1).join("\n");
-+      comments.push({
-+        index: comments.length,
-+        raw,
-+        text: raw.slice(2, -2).trim(),
-+        multiline: endIndex > startIndex,
-+      });
-+      startIndex = endIndex;
-+      break;
-+    }
-+  }
-+
-+  return comments;
-+}
-+
-+export function getCommentNodeViews() {
-+  return Object.freeze({
-+    comment: NABLA_COMMENT_NODE_VIEW,
-+  });
-+}
-diff --git a/packages/editor/src/nodes/footnote.ts b/packages/editor/src/nodes/footnote.ts
-new file mode 100644
-index 0000000..6f6641e
---- /dev/null
-+++ b/packages/editor/src/nodes/footnote.ts
-@@ -0,0 +1,67 @@
-+import { findProtectedRegions, isOffsetProtected } from "@nabla/markup";
-+
-+export const NABLA_FOOTNOTE_NODE_VIEW = "node-safe-adapter";
-+
-+export interface EditorFootnote {
-+  readonly index: number;
-+  readonly kind: "reference" | "definition";
-+  readonly id: string;
-+  readonly raw: string;
-+  readonly text?: string;
-+}
-+
-+const FOOTNOTE_REFERENCE_PATTERN = /\[\^([^\s\]]+)\]/g;
-+const FOOTNOTE_DEFINITION_PATTERN = /^\[\^([^\s\]]+)\]:\s*(.*)$/;
-+
-+export function getFootnotesFromMarkdown(markdown: string): readonly EditorFootnote[] {
-+  const protectedRegions = findProtectedRegions(markdown);
-+  const footnotes: EditorFootnote[] = [];
-+  const lines = markdown.split("\n");
-+  let offset = 0;
-+
-+  for (const line of lines) {
-+    const definitionMatch = line.match(FOOTNOTE_DEFINITION_PATTERN);
-+    if (definitionMatch && !isOffsetProtected(protectedRegions, offset)) {
-+      footnotes.push({
-+        index: footnotes.length,
-+        kind: "definition",
-+        id: definitionMatch[1],
-+        raw: line,
-+        text: definitionMatch[2],
-+      });
-+    }
-+
-+    offset += line.length + 1;
-+  }
-+
-+  for (const match of markdown.matchAll(FOOTNOTE_REFERENCE_PATTERN)) {
-+    const raw = match[0];
-+    const id = match[1];
-+    const start = match.index ?? -1;
-+    if (start < 0 || isOffsetProtected(protectedRegions, start)) {
-+      continue;
-+    }
-+
-+    const lineStart = markdown.lastIndexOf("\n", start - 1) + 1;
-+    const lineEnd = markdown.indexOf("\n", start);
-+    const line = markdown.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
-+    if (FOOTNOTE_DEFINITION_PATTERN.test(line) && line.startsWith(raw)) {
-+      continue;
-+    }
-+
-+    footnotes.push({
-+      index: footnotes.length,
-+      kind: "reference",
-+      id,
-+      raw,
-+    });
-+  }
-+
-+  return footnotes;
-+}
-+
-+export function getFootnoteNodeViews() {
-+  return Object.freeze({
-+    footnote: NABLA_FOOTNOTE_NODE_VIEW,
-+  });
-+}
-diff --git a/packages/editor/tests/editor.test.mjs b/packages/editor/tests/editor.test.mjs
-index e9a82b5..9b20d2a 100644
---- a/packages/editor/tests/editor.test.mjs
-+++ b/packages/editor/tests/editor.test.mjs
-@@ -13,10 +13,12 @@ test("public editor exports exist", async () => {
-   const mod = await load();
- 
-   assert.equal(typeof mod.createEditor, "function");
-+  assert.equal(typeof mod.getComments, "function");
-   assert.equal(typeof mod.replaceSource, "function");
-   assert.equal(typeof mod.insertMarkdownBlock, "function");
-   assert.equal(typeof mod.getDocumentBlockSummary, "function");
-   assert.equal(typeof mod.getEmojiShortcodes, "function");
-+  assert.equal(typeof mod.getFootnotes, "function");
-   assert.equal(typeof mod.getHighlights, "function");
-   assert.equal(typeof mod.getTaskStates, "function");
-   assert.equal(typeof mod.getTags, "function");
-@@ -121,7 +123,9 @@ test("only accepted node view adapters are registered", async () => {
-   const editor = mod.createEditor();
- 
-   assert.deepEqual(editor.nodeViews, {
-+    comment: "node-safe-adapter",
-     emoji: "node-safe-adapter",
-+    footnote: "node-safe-adapter",
-     highlight: "node-safe-adapter",
-     tag: "node-safe-adapter",
-     taskState: "node-safe-adapter",
-diff --git a/packages/editor/tests/emoji.test.mjs b/packages/editor/tests/emoji.test.mjs
-index 5cfe632..feb41bc 100644
---- a/packages/editor/tests/emoji.test.mjs
-+++ b/packages/editor/tests/emoji.test.mjs
-@@ -45,8 +45,10 @@ test("no node views other than accepted task-state, wiki-link, tag, highlight, e
-   const mod = await loadEditor();
-   const editor = mod.createEditor();
- 
--  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["emoji", "highlight", "tag", "taskState", "wikiLink"]);
-+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["comment", "emoji", "footnote", "highlight", "tag", "taskState", "wikiLink"]);
-+  assert.equal(editor.nodeViews.comment, "node-safe-adapter");
-   assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.footnote, "node-safe-adapter");
-   assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
-   assert.equal(editor.nodeViews.tag, "node-safe-adapter");
-   assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
-diff --git a/packages/editor/tests/footnote-comment.test.mjs b/packages/editor/tests/footnote-comment.test.mjs
-new file mode 100644
-index 0000000..3ddbba3
---- /dev/null
-+++ b/packages/editor/tests/footnote-comment.test.mjs
-@@ -0,0 +1,94 @@
++++ b/packages/editor/tests/fold.test.mjs
+@@ -0,0 +1,52 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
-+async function loadEditor() {
-+  return import(new URL("../dist/editor.js", import.meta.url));
++async function load() {
++  return import(new URL("../dist/index.js", import.meta.url));
 +}
 +
-+async function loadFootnote() {
-+  return import(new URL("../dist/nodes/footnote.js", import.meta.url));
-+}
-+
-+async function loadComment() {
-+  return import(new URL("../dist/nodes/comment.js", import.meta.url));
-+}
-+
-+test("detects footnote reference [^id]", async () => {
-+  const mod = await loadFootnote();
-+
-+  assert.deepEqual(mod.getFootnotesFromMarkdown("Use it[^id]\n"), [
-+    { index: 0, kind: "reference", id: "id", raw: "[^id]" },
-+  ]);
-+});
-+
-+test("detects footnote definition [^id]: text", async () => {
-+  const mod = await loadFootnote();
-+
-+  assert.deepEqual(mod.getFootnotesFromMarkdown("[^id]: text\n"), [
-+    { index: 0, kind: "definition", id: "id", raw: "[^id]: text", text: "text" },
-+  ]);
-+});
-+
-+test("detects both footnote reference and definition in same document", async () => {
-+  const mod = await loadFootnote();
-+
-+  assert.deepEqual(mod.getFootnotesFromMarkdown("Use it[^id]\n\n[^id]: text\n"), [
-+    { index: 0, kind: "definition", id: "id", raw: "[^id]: text", text: "text" },
-+    { index: 1, kind: "reference", id: "id", raw: "[^id]" },
-+  ]);
-+});
-+
-+test("detects comment %%text%%", async () => {
-+  const mod = await loadComment();
-+
-+  assert.deepEqual(mod.getCommentsFromMarkdown("%%text%%\n"), [
-+    { index: 0, raw: "%%text%%", text: "text", multiline: false },
-+  ]);
-+});
-+
-+test("detects multiline comment when supported by current syntax", async () => {
-+  const mod = await loadComment();
-+
-+  assert.deepEqual(mod.getCommentsFromMarkdown("%%line 1\nline 2%%\n"), [
-+    { index: 0, raw: "%%line 1\nline 2%%", text: "line 1\nline 2", multiline: true },
-+  ]);
-+});
-+
-+test("ignores protected regions", async () => {
-+  const footnoteMod = await loadFootnote();
-+  const commentMod = await loadComment();
-+
-+  assert.deepEqual(footnoteMod.getFootnotesFromMarkdown("`[^id]`\n"), []);
-+  assert.deepEqual(commentMod.getCommentsFromMarkdown("`%%text%%`\n"), []);
-+});
-+
-+test("load detect export preserves footnote and comment syntax", async () => {
-+  const mod = await loadEditor();
-+  const editor = mod.createEditor();
-+  const source = "Use it[^id]\n\n[^id]: text\n\n%%note%%\n";
-+
-+  mod.loadSource(editor, source);
-+
-+  assert.deepEqual(mod.getFootnotes(editor), [
-+    { index: 0, kind: "definition", id: "id", raw: "[^id]: text", text: "text" },
-+    { index: 1, kind: "reference", id: "id", raw: "[^id]" },
-+  ]);
-+  assert.deepEqual(mod.getComments(editor), [
-+    { index: 0, raw: "%%note%%", text: "note", multiline: false },
-+  ]);
-+  assert.equal(mod.getSource(editor), "Use it[^id]\n\n[^id]: text\n\n%%note%%");
-+});
-+
-+test("no node views other than accepted task-state, wiki-link, tag, highlight, emoji, footnote, comment are registered", async () => {
-+  const mod = await loadEditor();
-+  const editor = mod.createEditor();
-+
-+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["comment", "emoji", "footnote", "highlight", "tag", "taskState", "wikiLink"]);
-+  assert.equal(editor.nodeViews.comment, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.footnote, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.tag, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.wikiLink, "node-safe-adapter");
-+});
-diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
-index e9211cb..279e84a 100644
---- a/packages/editor/tests/public-api.test.mjs
-+++ b/packages/editor/tests/public-api.test.mjs
-@@ -31,10 +31,12 @@ test("editor runtime exports are wired", async () => {
-   const mod = await load();
- 
-   assert.equal(typeof mod.createEditor, "function");
-+  assert.equal(typeof mod.getComments, "function");
-   assert.equal(typeof mod.replaceSource, "function");
-   assert.equal(typeof mod.insertMarkdownBlock, "function");
-   assert.equal(typeof mod.getDocumentBlockSummary, "function");
-   assert.equal(typeof mod.getEmojiShortcodes, "function");
-+  assert.equal(typeof mod.getFootnotes, "function");
-   assert.equal(typeof mod.getHighlights, "function");
-   assert.equal(typeof mod.getTags, "function");
-   assert.equal(typeof mod.getTaskStates, "function");
-@@ -85,6 +87,17 @@ test("emoji runtime exports are wired", async () => {
-   assert.equal(typeof mod.getEmojiShortcodesFromMarkdown, "function");
- });
- 
-+test("footnote and comment runtime exports are wired", async () => {
++test("toggles a callout fold marker", async () => {
 +  const mod = await load();
 +
-+  assert.equal(mod.NABLA_FOOTNOTE_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(mod.NABLA_COMMENT_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(typeof mod.getFootnoteNodeViews, "function");
-+  assert.equal(typeof mod.getFootnotesFromMarkdown, "function");
-+  assert.equal(typeof mod.getCommentNodeViews, "function");
-+  assert.equal(typeof mod.getCommentsFromMarkdown, "function");
++  assert.equal(mod.toggleCalloutFoldInMarkdown("[!note]> Title\n", 0), "[!note]v Title\n");
 +});
 +
- test("position runtime exports are wired", async () => {
++test("toggles a toggle open closed marker", async () => {
++  const mod = await load();
++
++  assert.equal(mod.toggleToggleFoldInMarkdown("]> Title\n", 0), "]v Title\n");
++});
++
++test("toggles a folded heading marker", async () => {
++  const mod = await load();
++
++  assert.equal(mod.toggleFoldedHeadingFoldInMarkdown("##> Title\n", 0), "##v Title\n");
++  assert.equal(mod.toggleFoldedHeadingFoldInMarkdown("##v Title\n", 0), "##> Title\n");
++});
++
++test("load toggle fold export produces updated markdown", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  mod.loadSource(editor, "[!note]> Title\n");
++  mod.toggleCalloutFold(editor, 0);
++
++  assert.equal(mod.getSource(editor), "[!note]v Title");
++});
++
++test("out of range index throws deterministic RangeError", async () => {
++  const mod = await load();
++
++  assert.throws(() => mod.toggleCalloutFoldInMarkdown("[!note]> Title\n", 1), RangeError);
++  assert.throws(() => mod.toggleToggleFoldInMarkdown("]> Title\n", 1), RangeError);
++  assert.throws(() => mod.toggleFoldedHeadingFoldInMarkdown("#> Title\n", 1), RangeError);
++});
++
++test("no visual callout toggle folded heading node views are registered", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  assert.equal("callout" in editor.nodeViews, false);
++  assert.equal("toggle" in editor.nodeViews, false);
++  assert.equal("foldedHeading" in editor.nodeViews, false);
++});
+diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
+index 279e84a..201d45b 100644
+--- a/packages/editor/tests/public-api.test.mjs
++++ b/packages/editor/tests/public-api.test.mjs
+@@ -43,11 +43,22 @@ test("editor runtime exports are wired", async () => {
+   assert.equal(typeof mod.getWikiLinks, "function");
+   assert.equal(typeof mod.setTaskState, "function");
+   assert.equal(typeof mod.setWikiLinkAlias, "function");
++  assert.equal(typeof mod.toggleCalloutFold, "function");
++  assert.equal(typeof mod.toggleToggleFold, "function");
++  assert.equal(typeof mod.toggleFoldedHeadingFold, "function");
+   assert.equal(typeof mod.toggleTaskState, "function");
+   assert.equal(typeof mod.loadSource, "function");
+   assert.equal(typeof mod.getSource, "function");
+ });
+ 
++test("fold command runtime exports are wired", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.toggleCalloutFoldInMarkdown, "function");
++  assert.equal(typeof mod.toggleToggleFoldInMarkdown, "function");
++  assert.equal(typeof mod.toggleFoldedHeadingFoldInMarkdown, "function");
++});
++
+ test("task state runtime exports are wired", async () => {
    const mod = await load();
  
-diff --git a/packages/editor/tests/tag-highlight.test.mjs b/packages/editor/tests/tag-highlight.test.mjs
-index 3c28546..ae9c934 100644
---- a/packages/editor/tests/tag-highlight.test.mjs
-+++ b/packages/editor/tests/tag-highlight.test.mjs
-@@ -92,8 +92,10 @@ test("no node views other than accepted task-state, wiki-link, tag, and highligh
-   const mod = await loadEditor();
-   const editor = mod.createEditor();
- 
--  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["emoji", "highlight", "tag", "taskState", "wikiLink"]);
-+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["comment", "emoji", "footnote", "highlight", "tag", "taskState", "wikiLink"]);
-+  assert.equal(editor.nodeViews.comment, "node-safe-adapter");
-   assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.footnote, "node-safe-adapter");
-   assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
-   assert.equal(editor.nodeViews.tag, "node-safe-adapter");
-   assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
-diff --git a/packages/editor/tests/task-state.test.mjs b/packages/editor/tests/task-state.test.mjs
-index a033a23..cbabbbe 100644
---- a/packages/editor/tests/task-state.test.mjs
-+++ b/packages/editor/tests/task-state.test.mjs
-@@ -75,8 +75,10 @@ test("no other Nabla node views are registered", async () => {
-   const mod = await loadEditor();
-   const editor = mod.createEditor();
- 
--  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["emoji", "highlight", "tag", "taskState", "wikiLink"]);
-+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["comment", "emoji", "footnote", "highlight", "tag", "taskState", "wikiLink"]);
-+  assert.equal(editor.nodeViews.comment, "node-safe-adapter");
-   assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.footnote, "node-safe-adapter");
-   assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
-   assert.equal(editor.nodeViews.tag, "node-safe-adapter");
-   assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
-diff --git a/packages/editor/tests/wiki-link.test.mjs b/packages/editor/tests/wiki-link.test.mjs
-index 34b3a49..dba13fd 100644
---- a/packages/editor/tests/wiki-link.test.mjs
-+++ b/packages/editor/tests/wiki-link.test.mjs
-@@ -134,8 +134,10 @@ test("no node views other than task-state and wiki-link are registered", async (
-   const mod = await loadEditor();
-   const editor = mod.createEditor();
- 
--  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["emoji", "highlight", "tag", "taskState", "wikiLink"]);
-+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["comment", "emoji", "footnote", "highlight", "tag", "taskState", "wikiLink"]);
-+  assert.equal(editor.nodeViews.comment, "node-safe-adapter");
-   assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
-+  assert.equal(editor.nodeViews.footnote, "node-safe-adapter");
-   assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
-   assert.equal(editor.nodeViews.tag, "node-safe-adapter");
-   assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index ea3b960..05c0bc8 100644
+index 05c0bc8..d7602fd 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
  
  ## Last Task
  
--`P3-010` — Emoji Shortcode Node View
-+`P3-011` — Footnotes and Comments Node Views
+-`P3-011` — Footnotes and Comments Node Views
++`P3-012` — Fold State Commands
  
  ## Branch
  
@@ -506,35 +225,33 @@ index ea3b960..05c0bc8 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, and emoji shortcode helpers created.
-+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, and footnote/comment helpers created.
+-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, and footnote/comment helpers created.
++Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, and fold state commands created.
  
  ### Repairs Applied
  
-@@ -107,6 +107,15 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
+@@ -116,6 +116,13 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
  - No other Nabla node views added.
  - No dependencies added.
  
-+### P3-011 Notes
++### P3-012 Notes
 +
-+- Added footnote and comment support only in `packages/editor/src/nodes/footnote.ts` and `packages/editor/src/nodes/comment.ts` plus editor integration helpers.
-+- Footnote metadata distinguishes references and definitions.
-+- Comment metadata supports multiline block comments when the current markup syntax supports them.
-+- No footnote panel UI or comment mode UI was added.
-+- No other Nabla node views added.
++- Added fold state commands only in `packages/editor/src/commands/fold.ts`.
++- Supported source markers: callouts `[!Type]>`/`[!Type]v`, toggles `]>`/`]v`, and folded headings `#>`/`#v`.
++- No visual rendering for callouts, toggles, or folded headings was added.
 +- No dependencies added.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -125,4 +134,4 @@ None.
+@@ -134,4 +141,4 @@ None.
  
  ## Next Recommended Task
  
--P3-011 (footnotes/comments) — extend editor-specific behavior to the next accepted Nabla syntax surface without broadening into unrelated node views.
-+P3-012 (fold state commands) — add the next accepted editor-side behavior without broadening into unrelated node views.
+-P3-012 (fold state commands) — add the next accepted editor-side behavior without broadening into unrelated node views.
++P3-013 (block id editing) — add the next accepted editor-side source manipulation behavior without broadening into unrelated node views.

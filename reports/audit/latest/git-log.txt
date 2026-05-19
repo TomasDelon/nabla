@@ -1,1 +1,1 @@
-2637e46 feat(editor): add footnote and comment helpers
+d91fbf7 feat(editor): add fold state commands

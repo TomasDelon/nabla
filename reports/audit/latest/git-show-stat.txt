@@ -1,13 +1,7 @@
- packages/editor/src/editor.ts                   | 24 +++++++
- packages/editor/src/index.ts                    | 14 ++++
- packages/editor/src/nodes/comment.ts            | 59 ++++++++++++++++
- packages/editor/src/nodes/footnote.ts           | 67 ++++++++++++++++++
- packages/editor/tests/editor.test.mjs           |  4 ++
- packages/editor/tests/emoji.test.mjs            |  4 +-
- packages/editor/tests/footnote-comment.test.mjs | 94 +++++++++++++++++++++++++
- packages/editor/tests/public-api.test.mjs       | 13 ++++
- packages/editor/tests/tag-highlight.test.mjs    |  4 +-
- packages/editor/tests/task-state.test.mjs       |  4 +-
- packages/editor/tests/wiki-link.test.mjs        |  4 +-
- reports/IMPLEMENTATION_PROGRESS.md              | 17 +++--
- 12 files changed, 300 insertions(+), 8 deletions(-)
+ packages/editor/src/commands/fold.ts      | 79 +++++++++++++++++++++++++++++++
+ packages/editor/src/editor.ts             |  3 ++
+ packages/editor/src/index.ts              |  8 ++++
+ packages/editor/tests/fold.test.mjs       | 52 ++++++++++++++++++++
+ packages/editor/tests/public-api.test.mjs | 11 +++++
+ reports/IMPLEMENTATION_PROGRESS.md        | 15 ++++--
+ 6 files changed, 164 insertions(+), 4 deletions(-)

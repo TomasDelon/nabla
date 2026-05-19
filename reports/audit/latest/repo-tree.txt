@@ -4,6 +4,7 @@ nabla_complete_project_documentation_pack_v1_final.zip
 nabla_complete_project_documentation_pack_v1_final.zip.sha256
 package.json
 packages/editor/package.json
+packages/editor/src/commands/fold.ts
 packages/editor/src/editor.ts
 packages/editor/src/index.ts
 packages/editor/src/model.ts
@@ -18,6 +19,7 @@ packages/editor/src/position.ts
 packages/editor/src/save-pipeline.ts
 packages/editor/tests/editor.test.mjs
 packages/editor/tests/emoji.test.mjs
+packages/editor/tests/fold.test.mjs
 packages/editor/tests/footnote-comment.test.mjs
 packages/editor/tests/position.test.mjs
 packages/editor/tests/public-api.test.mjs
