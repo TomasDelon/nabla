@@ -498,7 +498,7 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - Updated `packages/app/src/main.tsx` with a "Visual Components Preview" section showing all accepted component kinds: task state (4 states), wiki link (resolved, unresolved), tag (simple, nested), highlight (default, color), emoji (known, unknown), footnote (reference, definition), comment (editing, reading), callout (open, closed), toggle (open, closed), folded heading (open, closed).
 - Component CSS imported via `@import` in `app.css` from `@nabla/components/src/*.css` paths (Vite-resolved).
 - App source-of-truth invariant preserved: original source textarea, canonical source textarea, and render pipeline summary remain untouched.
-- Created `packages/app/tests/component-rendering.test.mjs` with 22 tests: non-empty descriptor list, all 10 expected kinds present, no hidden JSON/HTML keys in props, render summary fields, and transclusion/tooltip exclusion.
+- Created `packages/app/tests/component-rendering.test.mjs` with 20 tests: non-empty descriptor list, all 10 expected kinds present, no hidden JSON/HTML keys in props, render summary fields, and transclusion/tooltip exclusion.
 - No editor integration, no workspace integration, no component source changes.
 - No dependencies added to `packages/app/package.json`.
 - `@nabla/components` symlinked in `packages/app/node_modules/` for workspace resolution.
