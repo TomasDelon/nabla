@@ -34,6 +34,7 @@ test("editor runtime exports are wired", async () => {
   assert.equal(typeof mod.replaceSource, "function");
   assert.equal(typeof mod.insertMarkdownBlock, "function");
   assert.equal(typeof mod.getDocumentBlockSummary, "function");
+  assert.equal(typeof mod.getEmojiShortcodes, "function");
   assert.equal(typeof mod.getHighlights, "function");
   assert.equal(typeof mod.getTags, "function");
   assert.equal(typeof mod.getTaskStates, "function");
@@ -74,6 +75,14 @@ test("tag and highlight runtime exports are wired", async () => {
   assert.equal(typeof mod.getTagsFromMarkdown, "function");
   assert.equal(typeof mod.getHighlightNodeViews, "function");
   assert.equal(typeof mod.getHighlightsFromMarkdown, "function");
+});
+
+test("emoji runtime exports are wired", async () => {
+  const mod = await load();
+
+  assert.equal(mod.NABLA_EMOJI_NODE_VIEW, "node-safe-adapter");
+  assert.equal(typeof mod.getEmojiNodeViews, "function");
+  assert.equal(typeof mod.getEmojiShortcodesFromMarkdown, "function");
 });
 
 test("position runtime exports are wired", async () => {

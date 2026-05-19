@@ -3,6 +3,7 @@ export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
 export {
   createEditor,
   getDocumentBlockSummary,
+  getEmojiShortcodes,
   getHighlights,
   getSource,
   getTags,
@@ -15,6 +16,11 @@ export {
   setWikiLinkAlias,
   toggleTaskState,
 } from "./editor.js";
+export {
+  getEmojiNodeViews,
+  getEmojiShortcodesFromMarkdown,
+  NABLA_EMOJI_NODE_VIEW,
+} from "./nodes/emoji.js";
 export {
   getHighlightNodeViews,
   getHighlightsFromMarkdown,
@@ -55,6 +61,7 @@ export {
 export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
 
 export type { Editor, EditorBlockSummary } from "./editor.js";
+export type { EditorEmojiShortcode } from "./nodes/emoji.js";
 export type { EditorHighlight } from "./nodes/highlight.js";
 export type { EditorTag } from "./nodes/tag.js";
 export type { EditorTaskState } from "./nodes/task-state.js";
