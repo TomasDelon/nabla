@@ -1,451 +1,134 @@
+diff --git a/package.json b/package.json
+index 7f0eb58..c6d10be 100644
+--- a/package.json
++++ b/package.json
+@@ -4,14 +4,14 @@
+   "private": true,
+   "packageManager": "pnpm@11.1.3",
+   "scripts": {
+-    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json",
++    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json",
+     "audit:bundle": "node scripts/create-audit-bundle.mjs",
+     "check:boundaries": "node scripts/check-boundaries.mjs",
+     "lint": "node scripts/report-unavailable.mjs lint --silent \"Lint tooling is not bootstrapped in P1-001\"",
+     "test": "node --test packages/markup/tests/**/*.test.mjs",
+     "test:markup": "node --test packages/markup/tests/**/*.test.mjs",
+     "test:workspace": "node -e \"const fs=require('fs');const p=require('path');const d=p.join(process.cwd(),'packages/workspace/tests');if(fs.existsSync(d)){require('child_process').execSync('node --test '+d+'/**/*.test.mjs',{cwd:process.cwd(),stdio:'inherit',shell:true})}else{console.log('test:workspace: no tests yet');process.exit(0)}\"",
+-    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json",
++    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json",
+     "validate:fixtures": "node scripts/validate-fixtures.mjs",
+     "validate:spec-version": "node scripts/validate-spec-version.mjs"
+   },
+diff --git a/packages/components/package.json b/packages/components/package.json
+new file mode 100644
+index 0000000..a57b714
+--- /dev/null
++++ b/packages/components/package.json
+@@ -0,0 +1,24 @@
++{
++  "name": "@nabla/components",
++  "version": "0.0.0",
++  "private": true,
++  "type": "module",
++  "main": "./dist/index.js",
++  "types": "./dist/index.d.ts",
++  "exports": {
++    ".": {
++      "types": "./dist/index.d.ts",
++      "default": "./dist/index.js"
++    }
++  },
++  "files": [
++    "dist"
++  ],
++  "scripts": {
++    "build": "tsc -p tsconfig.json",
++    "typecheck": "tsc -p tsconfig.json --noEmit"
++  },
++  "dependencies": {
++    "@nabla/markup": "workspace:*"
++  }
++}
+diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
+new file mode 100644
+index 0000000..c541f56
+--- /dev/null
++++ b/packages/components/src/index.ts
+@@ -0,0 +1 @@
++export const NABLA_COMPONENTS_PACKAGE = "@nabla/components";
+diff --git a/packages/components/tsconfig.json b/packages/components/tsconfig.json
+new file mode 100644
+index 0000000..cf9e1b1
+--- /dev/null
++++ b/packages/components/tsconfig.json
+@@ -0,0 +1,10 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "compilerOptions": {
++    "rootDir": "src",
++    "outDir": "dist"
++  },
++  "include": [
++    "src/**/*.ts"
++  ]
++}
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index c9c0c96..f88e7e7 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -12,6 +12,12 @@ importers:
+         specifier: ^5.6.3
+         version: 5.9.3
+ 
++  packages/components:
++    dependencies:
++      '@nabla/markup':
++        specifier: workspace:*
++        version: link:../markup
++
+   packages/editor:
+     dependencies:
+       '@nabla/markup':
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index fc6ce88..e9f42ff 100644
+index e9f42ff..44f22ee 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
-@@ -2,23 +2,24 @@
- 
- ## Phase
- 
--Phase 3 — `@nabla/editor`
-+Phase 4 — `@nabla/components`
- 
- ## Last Task
- 
--`P3-015` — Phase 3 Validation Report
-+`P4-000` — Phase 4 Kickoff and Components Backlog Extraction
- 
- ## Branch
- 
--`phase-3-editor-core`
-+`phase-4-components-core`
+@@ -14,12 +14,12 @@ Phase 4 — `@nabla/components`
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, API consistency validation, editor fixture/regression tests, and Phase 3 validation report.
-+Phase 3 (`@nabla/editor`) — ACCEPTED.
-+Phase 4 (`@nabla/components`) — kickoff report and backlog extracted.
+ Phase 3 (`@nabla/editor`) — ACCEPTED.
+-Phase 4 (`@nabla/components`) — kickoff report and backlog extracted.
++Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created.
  
  ### Repairs Applied
  
-@@ -161,6 +162,20 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
- - No source files changed.
- - No dependencies added.
+@@ -176,6 +176,17 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted.
+ - No workspace changes.
+ - No editor source changes.
  
-+### P4-000 Notes
++### P4-001 Notes
 +
-+- Created Phase 4 kickoff report in `reports/PHASE_4_KICKOFF.md`.
-+- Created Phase 4 task backlog in `reports/PHASE_4_TASK_BACKLOG.md`.
-+- New branch created: `phase-4-components-core`.
-+- Package target: `@nabla/components`.
-+- Backlog contains 15 tasks (P4-001 through P4-015): package skeleton, rendering contract, design tokens, individual visual components for all accepted Nabla syntax surfaces, editor-to-components bridge, API consistency, fixture/regression plan, and validation report.
-+- Deferred scope documented: tooltip rendering (blocked), transclusion embedded rendering (deferred), app integration (Phase 5).
-+- No source files changed.
-+- No dependencies added.
-+- No parser/serializer changes.
-+- No workspace changes.
-+- No editor source changes.
++- Created `packages/components/` with `package.json`, `tsconfig.json`, and `src/index.ts`.
++- Package exports `NABLA_COMPONENTS_PACKAGE` constant.
++- Updated root `package.json` build/typecheck scripts to include `packages/components/tsconfig.json`.
++- No React dependencies added.
++- No visual components implemented.
++- No editor source modified.
++- No parser/serializer or workspace changes.
++- Only dependency: `@nabla/markup` (workspace).
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -179,4 +194,4 @@ None.
+@@ -194,4 +205,4 @@ None.
  
  ## Next Recommended Task
  
--External audit/approval for Phase 3 closure. Do not start Phase 4 until external audit accepts P3-015.
-+P4-001 — Components Package Skeleton — create `packages/components/` with package.json, tsconfig.json, minimal entry, and verify it builds in the monorepo.
-diff --git a/reports/PHASE_4_KICKOFF.md b/reports/PHASE_4_KICKOFF.md
-new file mode 100644
-index 0000000..1d7f3d3
---- /dev/null
-+++ b/reports/PHASE_4_KICKOFF.md
-@@ -0,0 +1,140 @@
-+# Phase 4 Kickoff — `@nabla/components`
-+
-+## Phase 4 Objective
-+
-+Implement reusable DOM-renderable visual components for all Nabla Markdown+ inline and block features. These components will be consumed by `@nabla/editor` (Phase 3) to render browser DOM node views, replacing the Node-safe adapter stubs (`node-safe-adapter` constants) with actual visual rendering.
-+
-+Components are the rendering/view layer only. They must not define grammar, modify parser/serializer behavior, or store persistent state.
-+
-+## Package Target
-+
-+`@nabla/components` — a new package under `packages/components/`.
-+
-+Dependency direction:
-+
-+- `@nabla/components` MAY depend on `@nabla/markup` for type/marker constants.
-+- `@nabla/components` MAY depend on React and DOM APIs for visual rendering.
-+- `@nabla/components` MUST NOT depend on `@nabla/editor`, `@nabla/workspace`, or `@nabla/app`.
-+- `@nabla/components` MUST NOT define grammar that belongs in `@nabla/markup`.
-+
-+## Dependency Assumptions from Phase 1, Phase 2, and Phase 3
-+
-+- `@nabla/markup` (Phase 1) is stable and accepted. The parser produces `NablaDocument` AST, the serializer emits canonical Markdown source, and diagnostic codes are defined.
-+- `@nabla/workspace` (Phase 2) is stable and accepted. Workspace indexing, wiki link resolution, transclusion resolution, backlinks, and workspace diagnostics are available.
-+- `@nabla/editor` (Phase 3) is stable and accepted. The editor provides `createEditor()`, `loadSource()`, `getSource()`, source preservation, fold commands, and Node-safe adapter stubs for all node view types. The editor currently uses `"node-safe-adapter"` constants instead of real DOM node views.
-+- The save pipeline (`editor export → @nabla/markup parser → @nabla/markup serializer → saved source`) is the canonical write path. Components must not bypass this pipeline.
-+- The `07_EDITOR_BEHAVIOR.md` spec defines visual rendering expectations for all features, but does not specify pixel-level UI. Phase 4 implements spec-compliant visual behavior with reasonable default styling.
-+
-+## Source-of-Truth Rule
-+
-+**Plain text Markdown/Nabla Markdown+ is the only persistent document truth.**
-+
-+- Components are the rendering/view layer only.
-+- No hidden JSON embedded in saved files.
-+- No stored HTML as document format.
-+- No serialized component state as persistent source of truth.
-+- Component state (e.g., open/closed toggle, expanded fold) is ephemeral and not persisted; fold states persist through source markers (`[!type]>` / `[!type]v`, `]>` / `]v`, `#>` / `#v`) managed by the editor, not by components.
-+
-+All derived layers (AST, editor document, rendered UI, workspace indexes) are ephemeral and MUST NOT be stored as the canonical document format.
-+
-+## What Phase 4 May Implement
-+
-+- Browser DOM visual node views as React components.
-+- Reusable NablaMark+ component primitives (inline and block).
-+- Visual callouts with fold state rendering.
-+- Visual toggles with fold state rendering.
-+- Visual folded headings with fold state rendering.
-+- Visual task state checkboxes (unchecked, checked, cancelled, important).
-+- Visual wiki link rendering (internal links, missing state, aliases).
-+- Visual tag pills.
-+- Visual highlight rendering (simple and color).
-+- Visual emoji shortcode rendering (known shortcodes as emoji glyphs).
-+- Visual footnote reference markers and definition rendering.
-+- Visual comment rendering (muted in edit mode, hidden in reading mode).
-+- Minimal styling/token system for consistent visual appearance.
-+- Editor-to-components bridge that maps editor adapter node view types to component implementations.
-+
-+## What Phase 4 Must Not Implement
-+
-+- Parser/serializer changes (`packages/markup/src/` MUST NOT be modified).
-+- Workspace resolver changes (`packages/workspace/src/` MUST NOT be modified).
-+- Editor source changes unless an explicit bridge task allows it.
-+- App shell, routing, or full UI layout.
-+- Persistence layer or storage.
-+- Full `@nabla/app` integration (Phase 5).
-+- Tooltip rendering if `packages/markup/src/extensions/tooltips.ts` is still absent (blocked).
-+- Inline transclusion rendering (parser-blocked, always emits `NABLA_TRANSCLUSION_INLINE_UNSUPPORTED`).
-+- Block ID editing or clipboard copy-reference action.
-+- Color picker, emoji picker, tag suggestion UI.
-+- Footnote panel UI (deferred to future Phase).
-+
-+## Deferred/Blocked Scope from Phase 3
-+
-+The following areas remain deferred from Phase 3 and are candidates for Phase 4:
-+
-+| Area | Status for Phase 4 |
-+|---|---|
-+| Visual callout rendering | IMPLEMENT in Phase 4 (fold state commands exist from P3-012) |
-+| Visual toggle rendering | IMPLEMENT in Phase 4 (fold state commands exist from P3-012) |
-+| Visual folded-heading rendering | IMPLEMENT in Phase 4 (fold state commands exist from P3-012) |
-+| Visual task state rendering | IMPLEMENT in Phase 4 (task state helpers exist from P3-007) |
-+| Visual wiki link rendering | IMPLEMENT in Phase 4 (wiki link helpers exist from P3-008) |
-+| Visual tag/highlight rendering | IMPLEMENT in Phase 4 (helpers exist from P3-009) |
-+| Visual emoji rendering | IMPLEMENT in Phase 4 (helpers exist from P3-010) |
-+| Visual footnote/comment rendering | IMPLEMENT in Phase 4 (helpers exist from P3-011) |
-+| Transclusion embedded rendering | BLOCKED — requires stable editor-to-components bridge and workspace resolver integration |
-+| Tooltip rendering | BLOCKED — tooltip markup extension (`packages/markup/src/extensions/tooltips.ts`) not implemented |
-+| `@nabla/app` integration | Phase 5 — not started |
-+| Browser DOM visual node views | IMPLEMENT in Phase 4 |
-+| Block ID copy-reference action | DEFERRED — low priority, requires clipboard API |
-+
-+## Phase Gate Rules
-+
-+1. P4-000 (this task) must be committed and audit-bundled before P4-001 can start.
-+2. Each task must produce an implementation commit and a separate audit-bundle commit.
-+3. Tasks MUST be executed in backlog order unless a task is explicitly marked as blocked/deferred.
-+4. A task may not modify files that another active task owns (single-writer rule per Phase 3 kickoff `29_PARALLELISM_POLICY.md`).
-+5. Phase 4 is done when all accepted tasks pass their gates and a final validation report (P4-015) is accepted.
-+6. Phase 4 exit criteria:
-+   - Components package exists and builds.
-+   - Visual components exist for all accepted Nabla syntax surfaces.
-+   - Editor can consume components via bridge.
-+   - All existing Phase 1/2/3 tests remain passing.
-+   - No parser/serializer modifications.
-+   - No workspace modifications.
-+   - Final review approved.
-+   - Git tree clean.
-+
-+## Validation Expectations
-+
-+- `pnpm test` — all existing Phase 1 and Phase 2 tests must remain passing.
-+- `pnpm test:markup` — Phase 1 tests must remain passing.
-+- `pnpm test:workspace` — Phase 2 tests must remain passing.
-+- `node --test packages/editor/tests/**/*.test.mjs` — all Phase 3 editor tests must remain passing.
-+- `pnpm typecheck` — no type errors across all packages.
-+- `pnpm build` — all packages (markup, workspace, editor, components) must build.
-+- `pnpm validate:fixtures` — fixture validation must pass.
-+- `pnpm validate:spec-version` — spec version validation must pass.
-+- `pnpm check:boundaries` — no boundary violations.
-+- `pnpm lint` — no lint errors (once linter is available).
-+- Git tree clean.
-+
-+## Risk List
-+
-+| ID | Risk | Impact | Mitigation |
-+|---|---|---|---|
-+| R4.1 | **Component-editor bridge complexity** — mapping editor node view types to components may require TypeScript gymnastics | Medium | Define a clear `ComponentAdapter` interface; stub before implementing full features |
-+| R4.2 | **Visual style ambiguity** — `07_EDITOR_BEHAVIOR.md` describes intent but not pixel-level UI | Low | Implement spec-compliant behavior with reasonable defaults; defer design polish |
-+| R4.3 | **React version conflicts** — editor may use a different React version than components | Medium | Lock React version in monorepo root or peer dependency |
-+| R4.4 | **Scope creep into editor/workspace** — implementing components may reveal gaps that tempt editor/workspace changes | Medium | Strict allowed/forbidden file lists per task; any gap must be filed as a separate task |
-+| R4.5 | **Tooltip dependency** — Phase 4 cannot implement tooltip rendering without the markup extension | Low | Document as blocked; proceed with other features |
-+| R4.6 | **Transclusion rendering dependency** — requires both workspace resolver and editor integration | Low | Document as deferred; implement after core component set |
-+| R4.7 | **Browser-only runtime** — components require DOM; testing requires jsdom or browser environment | Medium | Adopt a test strategy (e.g., Vitest with jsdom) that supports DOM rendering tests |
-+
-+## Recommendation
-+
-+**Phase 4 can start after P4-000.**
-+
-+The spec pack and implementation control pack provide sufficient guidance for component architecture. The deferred scope from Phase 3 is well-documented and actionable for Phase 4. All risks are manageable with clear task boundaries and strict gate enforcement.
-+
-+Proceed to P4-001 (components package skeleton) after this kickoff and backlog are committed and audit-bundled.
-diff --git a/reports/PHASE_4_TASK_BACKLOG.md b/reports/PHASE_4_TASK_BACKLOG.md
-new file mode 100644
-index 0000000..52b6ba9
---- /dev/null
-+++ b/reports/PHASE_4_TASK_BACKLOG.md
-@@ -0,0 +1,238 @@
-+# Phase 4 Task Backlog — `@nabla/components`
-+
-+## Ordered Tasks
-+
-+### P4-001 — Components Package Skeleton
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Components package skeleton |
-+| **Goal** | Create `packages/components/` with `package.json`, `tsconfig.json`, minimal `src/index.ts` entry, and verify it builds in the monorepo. Do not implement any visual components yet. |
-+| **Allowed files** | `packages/components/`, `pnpm-workspace.yaml`, `root tsconfig.json` or `package.json` if workspace config is needed |
-+| **Forbidden files** | `packages/markup/src/**`, `packages/workspace/src/**`, `packages/editor/src/**`, `specs/**`, `reports/PHASE_4_KICKOFF.md`, `reports/PHASE_4_TASK_BACKLOG.md`, `packages/app/` |
-+| **Acceptance criteria** | `pnpm build` includes `packages/components`; `packages/components/package.json` declares `@nabla/markup` as dependency; `pnpm typecheck` passes with components tsconfig included |
-+| **Gates** | `pnpm build`, `pnpm typecheck`, `pnpm test`, `pnpm test:markup`, `pnpm test:workspace`, `pnpm validate:fixtures`, `pnpm check:boundaries` |
-+| **Hard stops** | Do not implement React node views in this task. Do not modify Phase 1, 2, or 3 source. |
-+
-+---
-+
-+### P4-002 — Component Rendering Contract and Types
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Component rendering contract and types |
-+| **Goal** | Define TypeScript interfaces for the rendering contract: how each Nabla Markdown+ node type maps to a component. Create `packages/components/src/types.ts` with component prop types, rendering context, and adapter interface. No runtime rendering. |
-+| **Allowed files** | `packages/components/src/types.ts`, `packages/components/src/index.ts` |
-+| **Forbidden files** | `packages/markup/src/**`, `packages/workspace/src/**`, `packages/editor/src/**` |
-+| **Acceptance criteria** | `types.ts` defines `NablaComponentProps` (or equivalent), node type enums/constants, and component registry interface that editor can use to resolve node views |
-+| **Gates** | `pnpm typecheck`, `pnpm check:boundaries` |
-+| **Hard stops** | No runtime rendering. No React/JSX files. Type-only task. |
-+
-+---
-+
-+### P4-003 — Visual Design Tokens and Minimal Styling Boundary
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Visual design tokens and minimal styling boundary |
-+| **Goal** | Define a minimal set of CSS custom properties or theme tokens (colors, spacing, font sizes) for consistent component styling. Create `packages/components/src/theme.ts` or `packages/components/src/tokens.css` with default values. |
-+| **Allowed files** | `packages/components/src/theme.ts`, `packages/components/src/tokens.css`, `packages/components/src/index.ts` |
-+| **Forbidden files** | `packages/markup/src/**`, `packages/workspace/src/**`, `packages/editor/src/**`, `specs/**` |
-+| **Acceptance criteria** | Token definitions exist; default values are reasonable for Nabla Markdown+ visual rendering; no application-specific theming |
-+| **Gates** | `pnpm typecheck`, `pnpm build`, `pnpm check:boundaries` |
-+| **Hard stops** | Do not implement `@nabla/theme` as a separate package. Keep tokens inline in `@nabla/components`. |
-+
-+---
-+
-+### P4-004 — Task State Visual Component
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Task state visual component |
-+| **Goal** | Implement a React component for task state list items. Render four distinct checkbox states (unchecked, checked, cancelled, important) per `07_EDITOR_BEHAVIOR.md`. Accept task state, label text, and onChange callback as props. |
-+| **Allowed files** | `packages/components/src/task-state.tsx`, `packages/components/src/task-state.css`, `packages/components/src/index.ts` |
-+| **Forbidden files** | All other Nabla visual components; `packages/editor/src/**` |
-+| **Acceptance criteria** | `TaskStateCheckbox` component renders each state correctly; clicking calls `onChange` with new state; minimal CSS styling is applied |
-+| **Gates** | `pnpm build`, `pnpm typecheck` |
-+| **Hard stops** | Do not implement task state editing logic (toggle/cycle). Component is a controlled checkbox only. |
-+
-+---
-+
-+### P4-005 — Wiki Link Visual Component
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Wiki link visual component |
-+| **Goal** | Implement a React component for wiki links. Render as internal links per `07_EDITOR_BEHAVIOR.md`. Support distinct visual states for resolved and missing targets. Display alias text when provided. |
-+| **Allowed files** | `packages/components/src/wiki-link.tsx`, `packages/components/src/wiki-link.css`, `packages/components/src/index.ts` |
-+| **Forbidden files** | All other Nabla visual components; `packages/editor/src/**`; `packages/workspace/src/**` |
-+| **Acceptance criteria** | `WikiLink` component renders target/alias text; missing-target state has distinct visual; component does not perform workspace resolution |
-+| **Gates** | `pnpm build`, `pnpm typecheck` |
-+| **Hard stops** | Do not implement workspace resolver wiring. Component receives resolved/missing state as a prop. |
-+
-+---
-+
-+### P4-006 — Tag and Highlight Visual Components
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Tag and highlight visual components |
-+| **Goal** | Implement React components for tags (`#tag`, `#nested/tag`) and highlights (`==text==`, `=={#ff0}text==`). Tags render as pills per `07_EDITOR_BEHAVIOR.md`. Simple highlights use default style; color highlights use the specified hex color. |
-+| **Allowed files** | `packages/components/src/tag.tsx`, `packages/components/src/tag.css`, `packages/components/src/highlight.tsx`, `packages/components/src/highlight.css`, `packages/components/src/index.ts` |
-+| **Forbidden files** | All other Nabla visual components; `packages/editor/src/**` |
-+| **Acceptance criteria** | `Tag` component renders as a styled pill with tag text; `Highlight` component renders with appropriate color for both simple and color highlights |
-+| **Gates** | `pnpm build`, `pnpm typecheck` |
-+| **Hard stops** | Do not implement color picker or tag suggestion UI. Static rendering only. |
-+
-+---
-+
-+### P4-007 — Emoji Visual Component
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Emoji visual component |
-+| **Goal** | Implement a React component for emoji shortcodes per `07_EDITOR_BEHAVIOR.md`. Known shortcodes render as emoji glyphs; unknown shortcodes render as literal source text. |
-+| **Allowed files** | `packages/components/src/emoji.tsx`, `packages/components/src/emoji.css`, `packages/components/src/index.ts` |
-+| **Forbidden files** | All other Nabla visual components; `packages/editor/src/**` |
-+| **Acceptance criteria** | `Emoji` component renders known shortcodes as emoji glyphs; unknown shortcodes display as literal text |
-+| **Gates** | `pnpm build`, `pnpm typecheck` |
-+| **Hard stops** | Do not implement emoji picker UI. |
-+
-+---
-+
-+### P4-008 — Footnote and Comment Visual Components
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Footnote and comment visual components |
-+| **Goal** | Implement React components for footnotes and comments per `07_EDITOR_BEHAVIOR.md`. Footnote references render as clickable markers; footnote definitions render inline. Comments render muted in edit mode and hidden in reading mode. |
-+| **Allowed files** | `packages/components/src/footnote.tsx`, `packages/components/src/footnote.css`, `packages/components/src/comment.tsx`, `packages/components/src/comment.css`, `packages/components/src/index.ts` |
-+| **Forbidden files** | All other Nabla visual components; `packages/editor/src/**` |
-+| **Acceptance criteria** | `FootnoteReference` renders as marker; `FootnoteDefinition` renders inline; `Comment` renders muted/hidden per mode prop |
-+| **Gates** | `pnpm build`, `pnpm typecheck` |
-+| **Hard stops** | Do not implement footnote panel. Comments are rendered inline only. |
-+
-+---
-+
-+### P4-009 — Callout Visual Component
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Callout visual component |
-+| **Goal** | Implement a React component for callout blocks per `07_EDITOR_BEHAVIOR.md`. Render as a visual callout block with type-specific styling. Unknown callout types use a generic style. Support fold state indicators using source markers (`[!type]>` open / `[!type]v` closed). |
-+| **Allowed files** | `packages/components/src/callout.tsx`, `packages/components/src/callout.css`, `packages/components/src/index.ts` |
-+| **Forbidden files** | Toggle visual component; folded heading visual component; `packages/editor/src/**` |
-+| **Acceptance criteria** | `Callout` component renders with type-specific header/icon; fold state indicator is shown; component accepts fold state and onToggleFold as props |
-+| **Gates** | `pnpm build`, `pnpm typecheck` |
-+| **Hard stops** | Do not implement fold state editing logic. Component receives fold state as a prop. |
-+
-+---
-+
-+### P4-010 — Toggle Visual Component
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Toggle visual component |
-+| **Goal** | Implement a React component for toggle blocks per `07_EDITOR_BEHAVIOR.md`. Closed toggles hide children; open toggles show children. Support fold state indicators using source markers (`]>` open / `]v` closed). |
-+| **Allowed files** | `packages/components/src/toggle.tsx`, `packages/components/src/toggle.css`, `packages/components/src/index.ts` |
-+| **Forbidden files** | Callout visual component; folded heading visual component; `packages/editor/src/**` |
-+| **Acceptance criteria** | `Toggle` component shows/hides children based on fold state; fold indicator is displayed; component accepts fold state and onToggleFold as props |
-+| **Gates** | `pnpm build`, `pnpm typecheck` |
-+| **Hard stops** | Do not implement fold state editing logic. Component receives fold state as a prop. |
-+
-+---
-+
-+### P4-011 — Folded Heading Visual Component
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Folded heading visual component |
-+| **Goal** | Implement a React component for folded headings per `07_EDITOR_BEHAVIOR.md`. Closed folded headings hide section content until the next heading of same or higher depth. Open folded headings show content. If a parent is closed, all nested children are hidden. Support fold state indicators using source markers (`#>` open / `#v` closed). |
-+| **Allowed files** | `packages/components/src/folded-heading.tsx`, `packages/components/src/folded-heading.css`, `packages/components/src/index.ts` |
-+| **Forbidden files** | Callout visual component; toggle visual component; `packages/editor/src/**` |
-+| **Acceptance criteria** | `FoldedHeading` component shows/hides content based on fold state; parent closure hides nested children; component accepts fold state and onToggleFold as props |
-+| **Gates** | `pnpm build`, `pnpm typecheck` |
-+| **Hard stops** | Do not implement fold state editing logic. Component receives fold state as a prop. |
-+
-+---
-+
-+### P4-012 — Editor-to-Components Bridge
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Editor-to-components bridge |
-+| **Goal** | Create an adapter that maps `@nabla/editor` node view types (taskState, wikiLink, tag, highlight, emoji, footnote, comment, callout, toggle, foldedHeading) to their corresponding `@nabla/components` React component implementations. This bridge replaces the `"node-safe-adapter"` stubs used in Phase 3. |
-+| **Allowed files** | `packages/components/src/bridge.ts`, `packages/components/src/bridge.tsx`, `packages/components/src/index.ts`, `packages/editor/src/nodes/*.ts` (if needed to update adapter references) |
-+| **Forbidden files** | `packages/markup/src/**`, `packages/workspace/src/**` |
-+| **Acceptance criteria** | Bridge provides a registry mapping each node view type to its component; editor can import and use the bridge to resolve node views; all existing editor tests still pass |
-+| **Gates** | `pnpm build`, `pnpm typecheck`, `node --test packages/editor/tests/**/*.test.mjs`, `pnpm validate:fixtures` |
-+| **Hard stops** | Do not modify parser/serializer. Do not modify workspace behavior. |
-+
-+---
-+
-+### P4-013 — Components API Consistency
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Components API consistency |
-+| **Goal** | Audit the public API surface of `@nabla/components`. Ensure exports are consistent, match the component contract from P4-002, and no forbidden exports leak through. |
-+| **Allowed files** | `packages/components/src/index.ts`, `packages/components/tests/api-consistency.test.ts` |
-+| **Forbidden files** | `packages/markup/src/**`, `packages/workspace/src/**`, `packages/editor/src/**` |
-+| **Acceptance criteria** | Public API is clean and minimal; all intended component exports exist; no forbidden exports exist; all existing tests still pass |
-+| **Gates** | `pnpm build`, `pnpm typecheck`, `pnpm test`, `pnpm test:markup`, `pnpm test:workspace`, `pnpm check:boundaries` |
-+| **Hard stops** | Do not add new visual features. Validation and cleanup only. |
-+
-+---
-+
-+### P4-014 — Components Fixture/Regression Plan
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Components fixture/regression plan |
-+| **Goal** | Create component-level rendering tests for all visual components. Each test renders a component with known props and verifies the rendered output (e.g., snapshot or DOM assertion). |
-+| **Allowed files** | `packages/components/tests/`, `packages/components/fixtures/` |
-+| **Forbidden files** | `packages/components/src/**` (read-only unless fixing a regression); `specs/**` |
-+| **Acceptance criteria** | Component rendering tests pass covering: task state, wiki link, tag, highlight, emoji, footnote, comment, callout, toggle, and folded heading visual output |
-+| **Gates** | `pnpm test`, `pnpm typecheck`, `pnpm validate:fixtures` |
-+| **Hard stops** | Do not add tests for blocked/deferred features (transclusion, tooltip). Do not modify spec fixtures. |
-+
-+---
-+
-+### P4-015 — Phase 4 Validation Report
-+
-+| Field | Value |
-+|---|---|
-+| **Title** | Phase 4 validation report |
-+| **Goal** | Write `reports/PHASE_4_VALIDATION.md` documenting the completion status of all Phase 4 tasks, quality gate results, deferred scope, and a phase verdict. |
-+| **Allowed files** | `reports/PHASE_4_VALIDATION.md`, `reports/IMPLEMENTATION_PROGRESS.md` |
-+| **Forbidden files** | All source files; all spec files |
-+| **Acceptance criteria** | Report exists, all gates pass, deferred scope is documented, verdict is stated |
-+| **Gates** | Full gate suite (`pnpm test`, `pnpm test:markup`, `pnpm test:workspace`, `pnpm typecheck`, `pnpm build`, `pnpm validate:fixtures`, `pnpm validate:spec-version`, `pnpm check:boundaries`, `pnpm lint`, `git status --short`) |
-+| **Hard stops** | Do not modify any source or spec files. Documentation only. |
-+
-+---
-+
-+## Blocked/Deferred Tasks
-+
-+The following areas are identified as blocked or deferred from Phase 4 scope:
-+
-+| Area | Reason | Would-be task |
-+|---|---|---|
-+| Tooltip rendering | Tooltip extension (`packages/markup/src/extensions/tooltips.ts`) not implemented | Post-P4-014 or Phase 5 |
-+| Transclusion embedded rendering | Requires stable editor-to-components bridge and workspace resolver integration; the editor currently uses `"node-safe-adapter"` stubs for transclusion | Post-P4-012 |
-+| `@nabla/app` integration | Phase 5; not available yet | Phase 5 |
-+| Full UI layout / app shell | Phase 5 | Phase 5 |
-+| Persistence layer | Phase 5 | Phase 5 |
-+| `@nabla/theme` as separate package | Not required for Phase 4; tokens live in `@nabla/components` | Post-Phase 5 |
-+| Block ID copy-reference action | Requires clipboard API; low priority | Low priority |
-+
-+## Non-Negotiable Rules
-+
-+1. Components are the rendering/view layer only. They are not the source of truth.
-+2. No hidden JSON, no stored HTML, no component state serialization.
-+3. No parser/serializer modifications unless explicitly scoped.
-+4. No workspace modifications unless explicitly scoped.
-+5. No Phase 5 (`@nabla/app`) work in Phase 4.
-+6. If behavior is missing or contradictory, stop and write a missing-spec report.
-+7. Each task must produce an implementation commit and a separate audit-bundle commit.
-+8. Fold state is persisted through source markers managed by the editor — components must not persist fold state independently.
+-P4-001 — Components Package Skeleton — create `packages/components/` with package.json, tsconfig.json, minimal entry, and verify it builds in the monorepo.
++P4-002 — Component Rendering Contract and Types — define TypeScript interfaces for the component rendering contract.

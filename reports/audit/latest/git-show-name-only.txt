@@ -1,3 +1,6 @@
+package.json
+packages/components/package.json
+packages/components/src/index.ts
+packages/components/tsconfig.json
+pnpm-lock.yaml
 reports/IMPLEMENTATION_PROGRESS.md
-reports/PHASE_4_KICKOFF.md
-reports/PHASE_4_TASK_BACKLOG.md
