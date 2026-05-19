@@ -58,12 +58,14 @@ test("parser returns a minimal paragraph document when no wiki link grammar appl
     ],
     diagnostics: []
   });
-  assert.deepEqual(parse("![[note]]", { mode: "tolerant" }), {
+  assert.deepEqual(parse("![[note]]"), {
     type: "document",
     children: [
       {
-        type: "paragraph",
-        children: [{ type: "text", value: "![[note]]" }]
+        type: "transclusion",
+        target: "note",
+        syntax: "canonical",
+        raw: "![[note]]"
       }
     ],
     diagnostics: []

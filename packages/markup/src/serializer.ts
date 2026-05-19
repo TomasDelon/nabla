@@ -1,4 +1,4 @@
-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode, TransclusionNode } from "./ast.js";
 import { serializeWikiLink } from "./extensions/wiki-links.js";
 import { serializeTag } from "./extensions/tags.js";
 import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
@@ -6,6 +6,7 @@ import { taskStateToMarker } from "./extensions/task-states.js";
 import { serializeFrontmatter } from "./extensions/frontmatter.js";
 import { serializeFootnoteReference, serializeFootnoteDefinition } from "./extensions/footnotes.js";
 import { serializeCallout, serializeToggle } from "./extensions/callouts.js";
+import { serializeTransclusion } from "./extensions/transclusions.js";
 
 export type SerializeOptions = {
   lineEnding?: "lf" | "crlf";
@@ -147,6 +148,13 @@ function serializeBlockNode(node: MarkdownNode) {
     const blockId = getBlockId(node);
     if (!blockId) return result;
     return appendBlockIdToHeader(result, blockId);
+  }
+
+  if (node.type === "transclusion") {
+    const result = serializeTransclusion(node as TransclusionNode);
+    const blockId = getBlockId(node);
+    if (!blockId) return `\n${result}`;
+    return `\n${result} ^${blockId}`;
   }
 
   return "";

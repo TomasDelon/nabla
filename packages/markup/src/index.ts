@@ -56,6 +56,10 @@ export type {
   DiagnosticCode
 } from "./diagnostics.js";
 export type { ParseOptions } from "./parser.js";
+export {
+  parseTransclusionLine,
+  serializeTransclusion
+} from "./extensions/transclusions.js";
 export type {
   ProtectedRegion,
   ProtectedRegionKind

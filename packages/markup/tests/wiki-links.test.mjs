@@ -65,7 +65,16 @@ const blockIdFixtureIds = [
   "block-ids/list-item",
   "block-ids/duplicate",
   "block-ids/invalid",
-  "block-ids/invalid-grammar"
+  "block-ids/invalid-grammar",
+  "block-ids/callout-toggle-transclusion-attachment"
+];
+
+const transclusionFixtureIds = [
+  "transclusions/note",
+  "transclusions/heading",
+  "transclusions/block-canonical",
+  "transclusions/block-compatible",
+  "transclusions/inline-unsupported"
 ];
 
 let parserModulePromise;
@@ -399,6 +408,26 @@ test("block ID fixtures parse and serialize according to the checked-in contract
   }
 });
 
+test("transclusion fixtures parse and serialize according to the checked-in contracts", async () => {
+  const { parse } = await loadParserModule();
+  const { serialize } = await loadSerializerModule();
+  const {
+    compareFixtureAst,
+    compareFixtureDiagnostics,
+    compareFixtureOutput,
+    loadParserFixture
+  } = await loadFixturesModule();
+
+  for (const fixtureId of transclusionFixtureIds) {
+    const fixture = await loadParserFixture(fixtureId);
+    const parsed = parse(fixture.input);
+
+    compareFixtureAst(parsed, fixture.ast);
+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
+    compareFixtureOutput(serialize(parsed), fixture.output);
+  }
+});
+
 test("folded heading fixtures parse and serialize according to the checked-in contracts", async () => {
   const { parse } = await loadParserModule();
   const { serialize } = await loadSerializerModule();
@@ -471,7 +500,13 @@ test("wiki link parser handles heading-only links and leaves transclusion syntax
         children: [{ type: "text", value: "See ![[Analyse]]." }]
       }
     ],
-    diagnostics: []
+    diagnostics: [
+      {
+        severity: "warning",
+        code: "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
+        message: "Inline transclusions are not supported in Nabla v0."
+      }
+    ]
   });
 });
 

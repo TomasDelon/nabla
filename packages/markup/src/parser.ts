@@ -11,7 +11,9 @@ import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefin
 import { parseCalloutMarker, collectTabIndentedChildren, collectCompatibleChildren } from "./extensions/callouts.js";
 import { parseToggleMarker } from "./extensions/toggles.js";
 import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
+import { parseTransclusionLine } from "./extensions/transclusions.js";
 import { processBlockIds } from "./extensions/block-ids.js";
+import { DIAGNOSTIC_CODES } from "./diagnostics.js";
 
 export type ParseOptions = {
   mode?: ParseMode;
@@ -85,6 +87,7 @@ type BlockSpec = (
   | { kind: "footnoteDefinition"; id: string; content: string; raw: string }
   | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string; nablaBlockId?: string }
   | { kind: "toggle"; foldState: FoldState; title: string; rawMarker: string; childContent: string; nablaBlockId?: string }
+  | { kind: "transclusion"; text: string; nablaBlockId?: string }
 );
 
 function parseBlocks(source: string): BlockSpec[] {
@@ -276,6 +279,12 @@ function parseBlocks(source: string): BlockSpec[] {
       continue;
     }
 
+    if (line.startsWith("![[") && line.indexOf("]]") !== -1) {
+      flushParagraph();
+      blocks.push({ kind: "transclusion", text: line });
+      continue;
+    }
+
     paragraphLines.push(line);
   }
 
@@ -344,6 +353,14 @@ function parseParagraphChildren(source: string) {
 
     if (source[index] === "[" && source[index + 1] === "[") {
       if (index > 0 && source[index - 1] === "!") {
+        const closingIndex = findClosingDelimiter(source, index);
+        if (closingIndex !== -1) {
+          diagnostics.push({
+            severity: "warning",
+            code: DIAGNOSTIC_CODES.TRANSCLUSION_INLINE_UNSUPPORTED,
+            message: "Inline transclusions are not supported in Nabla v0."
+          });
+        }
         index += 2;
         continue;
       }
@@ -595,6 +612,14 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
         children: childDoc ? (childDoc.children as Array<MarkdownNode | NablaBlockNode>) : [],
         rawMarker: block.rawMarker
       } as ToggleNode);
+    } else if (block.kind === "transclusion") {
+      const transclusionNode = parseTransclusionLine(block.text);
+      const blockData: Record<string, unknown> = {};
+      if (block.nablaBlockId) blockData.nablaBlockId = block.nablaBlockId;
+      if (Object.keys(blockData).length > 0) {
+        transclusionNode.data = blockData as import("./ast.js").BlockNodeData;
+      }
+      docChildren.push(transclusionNode as unknown as NablaBlockNode);
     }
   }
 

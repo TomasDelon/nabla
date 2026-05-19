@@ -13,8 +13,8 @@ export const OWN_LINE_ONLY = /^\^([A-Za-z][A-Za-z0-9_-]*)\s*$/;
 
 function stripInlineBrackets(text: string): string {
   return text
-    .replace(/\[\[[^\]]*\]\]/g, (m) => " ".repeat(m.length))
-    .replace(/\[\^[^\]\s]+\]/g, (m) => " ".repeat(m.length));
+    .replace(/\[\[[^\]]*\]\]/g, (m) => "\0".repeat(m.length))
+    .replace(/\[\^[^\]\s]+\]/g, (m) => "\0".repeat(m.length));
 }
 
 export type BlockIdResult = {
@@ -92,11 +92,11 @@ export function extractBlockId(text: string): BlockIdResult {
 
 const ATTACHABLE_KINDS = new Set([
   "paragraph", "heading", "foldableHeading", "listItem",
-  "callout", "toggle"
+  "callout", "toggle", "transclusion"
 ]);
 
 export function getBlockText(block: { kind: string; text?: string; content?: string; title?: string }): string | null {
-  if (block.kind === "paragraph" || block.kind === "listItem") {
+  if (block.kind === "paragraph" || block.kind === "listItem" || block.kind === "transclusion") {
     return block.text ?? null;
   }
   if (block.kind === "heading") {
@@ -109,7 +109,7 @@ export function getBlockText(block: { kind: string; text?: string; content?: str
 }
 
 export function setBlockText(block: { kind: string; text?: string; content?: string; title?: string }, value: string): void {
-  if (block.kind === "paragraph" || block.kind === "listItem") {
+  if (block.kind === "paragraph" || block.kind === "listItem" || block.kind === "transclusion") {
     block.text = value;
   } else if (block.kind === "heading") {
     block.content = value;
