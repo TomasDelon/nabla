@@ -1,0 +1,4 @@
+{
+  "operation": "getFootnoteDisplay",
+  "args": [{ "footnoteKind": "reference", "id": "ref1" }]
+}

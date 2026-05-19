@@ -1,0 +1,4 @@
+{
+  "operation": "getFootnoteDisplay",
+  "args": [{ "footnoteKind": "definition", "id": "def1", "text": "Note text." }]
+}

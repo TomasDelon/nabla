@@ -1,0 +1,9 @@
+{
+  "kind": "foldedHeading",
+  "props": {
+    "kind": "foldedHeading",
+    "level": 2,
+    "text": "Section Title",
+    "foldState": "open"
+  }
+}

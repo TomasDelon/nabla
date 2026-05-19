@@ -1,0 +1,5 @@
+{
+  "operation": "toComponentProps",
+  "args": [{ "kind": "taskState", "state": "checked", "text": "buy milk" }],
+  "functionKeys": ["onChange"]
+}

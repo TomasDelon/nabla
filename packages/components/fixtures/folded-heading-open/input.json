@@ -1,0 +1,4 @@
+{
+  "operation": "getFoldedHeadingDisplay",
+  "args": [{ "level": 2, "text": "Section", "foldState": "open" }]
+}

@@ -1,0 +1,4 @@
+{
+  "operation": "getToggleDisplay",
+  "args": [{ "foldState": "closed" }]
+}

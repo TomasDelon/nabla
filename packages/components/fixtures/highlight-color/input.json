@@ -1,0 +1,4 @@
+{
+  "operation": "getHighlightStyle",
+  "args": [{ "text": "colored", "color": "#ff0" }]
+}

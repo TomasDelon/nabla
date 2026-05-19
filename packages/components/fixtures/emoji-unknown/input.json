@@ -1,0 +1,4 @@
+{
+  "operation": "getEmojiDisplay",
+  "args": [{ "name": "unknown", "value": ":unknown:", "raw": ":unknown:" }]
+}

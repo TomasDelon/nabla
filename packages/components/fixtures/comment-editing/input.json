@@ -1,0 +1,4 @@
+{
+  "operation": "getCommentDisplay",
+  "args": [{ "text": "note", "multiline": false, "raw": "%%note%%", "mode": "editing" }]
+}

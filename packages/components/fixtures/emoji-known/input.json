@@ -1,0 +1,4 @@
+{
+  "operation": "getEmojiDisplay",
+  "args": [{ "name": "check", "value": "✅", "raw": ":check:" }]
+}

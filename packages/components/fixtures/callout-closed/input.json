@@ -1,0 +1,4 @@
+{
+  "operation": "getCalloutDisplay",
+  "args": [{ "calloutType": "warning", "foldState": "closed" }]
+}

@@ -1,0 +1,4 @@
+{
+  "operation": "getWikiLinkDisplay",
+  "args": [{ "target": "ResolvedPage", "alias": "Resolved Link" }]
+}
