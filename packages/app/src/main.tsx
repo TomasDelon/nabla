@@ -7,7 +7,6 @@ import {
   getComponentRenderingSummary,
 } from "./component-rendering.js";
 import {
-  createSourceEditor,
   getEditableSource,
   exportCanonicalSource,
   getEditorIntegrationSummary,
@@ -29,10 +28,12 @@ import {
 import "./app.css";
 
 function App() {
-  const [editedSource, setEditedSource] = useState(SAMPLE_DOCUMENT_SOURCE);
+  const [editedSource, setEditedSource] = useState(
+    getEditableSource(SAMPLE_DOCUMENT_SOURCE),
+  );
 
   const pipelineSummary = getRenderPipelineSummary(SAMPLE_DOCUMENT_SOURCE);
-  const editedSummary = getRenderPipelineSummary(editedSource);
+  const canonicalExport = exportCanonicalSource(editedSource);
   const editorSummary = getEditorIntegrationSummary(editedSource);
 
   const componentSummary = getComponentRenderingSummary();
@@ -123,7 +124,7 @@ function App() {
           <textarea
             className="source-view"
             readOnly
-            value={editedSummary.canonicalSource}
+            value={canonicalExport}
             rows={10}
           />
         </div>

@@ -18,6 +18,19 @@ test("editor integration can load sample source", async () => {
   assert.ok(editor.source.length > 0);
 });
 
+test("getEditableSource returns sample document source content", async () => {
+  const mod = await load();
+  const { SAMPLE_DOCUMENT_SOURCE } = await import(
+    new URL("../dist/sample-document.js", import.meta.url)
+  );
+
+  const editable = mod.getEditableSource(SAMPLE_DOCUMENT_SOURCE);
+
+  assert.equal(typeof editable, "string");
+  assert.ok(editable.length > 0);
+  assert.ok(editable.includes("Nabla Sample Document"));
+});
+
 test("editable source can be retrieved", async () => {
   const mod = await load();
   const source = "# Hello\n\nWorld.\n";
@@ -132,6 +145,18 @@ test("summary contains no serializedState key", async () => {
   const summary = mod.getEditorIntegrationSummary(source);
 
   assert.equal("serializedState" in summary, false);
+});
+
+test("editor integration does not use workspace", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.createSourceEditor, "function");
+  assert.equal(typeof mod.getEditableSource, "function");
+  assert.equal(typeof mod.exportCanonicalSource, "function");
+  assert.equal(typeof mod.getEditorIntegrationSummary, "function");
+
+  assert.ok(!("createWorkspace" in mod));
+  assert.ok(!("resolveWikiLinks" in mod));
 });
 
 test("exported canonical export contains no hidden state keys", async () => {

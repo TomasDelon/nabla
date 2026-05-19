@@ -16,6 +16,13 @@ export function getEditableSource(source: string): string {
   return getSource(editor);
 }
 
+/**
+ * Export canonical Markdown from the edited source.
+ *
+ * Delegates to the existing app save/export pipeline
+ * (canonicalizeSampleSource) which centralizes @nabla/markup
+ * parse/serialize. No editor-specific canonicalization is applied.
+ */
 export function exportCanonicalSource(source: string): string {
   return canonicalizeSampleSource(source);
 }
