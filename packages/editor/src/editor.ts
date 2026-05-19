@@ -7,15 +7,22 @@ import {
   setTaskStateInMarkdown,
   toggleTaskStateInMarkdown,
 } from "./nodes/task-state.js";
+import {
+  getWikiLinkNodeViews,
+  getWikiLinksFromMarkdown,
+  setWikiLinkAliasInMarkdown,
+} from "./nodes/wiki-link.js";
 
 import type { TaskState } from "@nabla/markup";
 import type { EditorTaskState } from "./nodes/task-state.js";
+import type { EditorWikiLink } from "./nodes/wiki-link.js";
 
 export interface Editor {
   state: ProseMirrorEditorState;
   source: string;
   readonly nodeViews: Readonly<{
     readonly taskState: string;
+    readonly wikiLink: string;
   }>;
 }
 
@@ -52,11 +59,21 @@ function normalizeExportedMarkdown(markdown: string): string {
   return markdown.replace(/\n$/, "");
 }
 
+function shouldPreserveSource(editor: Editor): boolean {
+  return (
+    getTaskStatesFromMarkdown(editor.source).length > 0 ||
+    getWikiLinksFromMarkdown(editor.source).length > 0
+  );
+}
+
 export function createEditor(): Editor {
   return {
     state: createState(""),
     source: "",
-    nodeViews: getTaskStateNodeViews(),
+    nodeViews: Object.freeze({
+      ...getTaskStateNodeViews(),
+      ...getWikiLinkNodeViews(),
+    }),
   };
 }
 
@@ -77,7 +94,7 @@ export function insertMarkdownBlock(editor: Editor, markdown: string): Editor {
 }
 
 export function getSource(editor: Editor): string {
-  if (getTaskStatesFromMarkdown(editor.source).length > 0) {
+  if (shouldPreserveSource(editor)) {
     return normalizeExportedMarkdown(editor.source);
   }
 
@@ -94,6 +111,14 @@ export function setTaskState(editor: Editor, index: number, state: TaskState): E
 
 export function toggleTaskState(editor: Editor, index: number): Editor {
   return loadSource(editor, toggleTaskStateInMarkdown(editor.source, index));
+}
+
+export function getWikiLinks(editor: Editor): readonly EditorWikiLink[] {
+  return getWikiLinksFromMarkdown(editor.source);
+}
+
+export function setWikiLinkAlias(editor: Editor, index: number, alias?: string): Editor {
+  return loadSource(editor, setWikiLinkAliasInMarkdown(editor.source, index, alias));
 }
 
 function appendBlockSummaries(node: SummaryNode, summary: EditorBlockSummary[]): void {

@@ -75,6 +75,7 @@ test("no other Nabla node views are registered", async () => {
   const mod = await loadEditor();
   const editor = mod.createEditor();
 
-  assert.deepEqual(Object.keys(editor.nodeViews), ["taskState"]);
+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["taskState", "wikiLink"]);
   assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
+  assert.equal(editor.nodeViews.wikiLink, "node-safe-adapter");
 });

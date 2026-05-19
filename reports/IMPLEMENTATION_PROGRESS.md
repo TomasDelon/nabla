@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-007` — Task State Node View
+`P3-008` — Wiki Link Node View
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, and task-state helpers created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, and wiki-link helpers created.
 
 ### Repairs Applied
 
@@ -81,6 +81,15 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No other Nabla node views added.
 - No dependencies added.
 
+### P3-008 Notes
+
+- Added wiki-link support only in `packages/editor/src/nodes/wiki-link.ts` and editor integration helpers.
+- Supported syntax: `[[Target]]`, `[[Target|Alias]]`, `[[Target#Heading]]`, `[[Target^block]]`, `[[Target#Heading|Alias]]`, and compatible `[[Target#^block|Alias]]`.
+- No workspace resolver integration was added; unresolved state remains adapter metadata only.
+- Runtime strategy remains a Node-safe adapter boundary; no browser DOM node view rendering was added.
+- No other Nabla node views added.
+- No dependencies added.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -99,4 +108,4 @@ None.
 
 ## Next Recommended Task
 
-P3-008 (wiki links) — extend editor-specific behavior to wiki-link handling without broadening into other Nabla nodes.
+P3-009 (tags/highlights) — extend editor-specific behavior to the next accepted Nabla syntax surface without adding unrelated node views.

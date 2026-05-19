@@ -35,7 +35,9 @@ test("editor runtime exports are wired", async () => {
   assert.equal(typeof mod.insertMarkdownBlock, "function");
   assert.equal(typeof mod.getDocumentBlockSummary, "function");
   assert.equal(typeof mod.getTaskStates, "function");
+  assert.equal(typeof mod.getWikiLinks, "function");
   assert.equal(typeof mod.setTaskState, "function");
+  assert.equal(typeof mod.setWikiLinkAlias, "function");
   assert.equal(typeof mod.toggleTaskState, "function");
   assert.equal(typeof mod.loadSource, "function");
   assert.equal(typeof mod.getSource, "function");
@@ -50,6 +52,15 @@ test("task state runtime exports are wired", async () => {
   assert.equal(typeof mod.setTaskStateInMarkdown, "function");
   assert.equal(typeof mod.toggleTaskStateInMarkdown, "function");
   assert.equal(typeof mod.cycleTaskState, "function");
+});
+
+test("wiki link runtime exports are wired", async () => {
+  const mod = await load();
+
+  assert.equal(mod.NABLA_WIKI_LINK_NODE_VIEW, "node-safe-adapter");
+  assert.equal(typeof mod.getWikiLinkNodeViews, "function");
+  assert.equal(typeof mod.getWikiLinksFromMarkdown, "function");
+  assert.equal(typeof mod.setWikiLinkAliasInMarkdown, "function");
 });
 
 test("position runtime exports are wired", async () => {

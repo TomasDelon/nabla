@@ -5,10 +5,12 @@ export {
   getDocumentBlockSummary,
   getSource,
   getTaskStates,
+  getWikiLinks,
   insertMarkdownBlock,
   loadSource,
   replaceSource,
   setTaskState,
+  setWikiLinkAlias,
   toggleTaskState,
 } from "./editor.js";
 export {
@@ -19,6 +21,12 @@ export {
   setTaskStateInMarkdown,
   toggleTaskStateInMarkdown,
 } from "./nodes/task-state.js";
+export {
+  getWikiLinkNodeViews,
+  getWikiLinksFromMarkdown,
+  NABLA_WIKI_LINK_NODE_VIEW,
+  setWikiLinkAliasInMarkdown,
+} from "./nodes/wiki-link.js";
 export {
   clampOffset,
   createEditorPosition,
@@ -36,6 +44,7 @@ export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
 
 export type { Editor, EditorBlockSummary } from "./editor.js";
 export type { EditorTaskState } from "./nodes/task-state.js";
+export type { EditorWikiLink } from "./nodes/wiki-link.js";
 export type { EditorPosition, SourcePosition } from "./position.js";
 export type {
   EditorAdapter,
