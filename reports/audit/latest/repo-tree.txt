@@ -253,6 +253,7 @@ packages/workspace/tsconfig.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
 reports/IMPLEMENTATION_PROGRESS.md
+reports/P5_MVP_VISUAL_AUDIT.md
 reports/PHASE_1_VALIDATION.md
 reports/PHASE_2_VALIDATION.md
 reports/PHASE_3_KICKOFF.md
