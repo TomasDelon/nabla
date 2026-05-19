@@ -84,6 +84,8 @@ export function resolveTransclusions(
     }
   }
 
+  detectTransclusionCycles(resolutions, diagnostics);
+
   return { resolutions, diagnostics };
 }
 
@@ -252,6 +254,66 @@ function resolveBlockTransclusion(
         blockId: node.blockId,
         resolved: false,
       });
+    }
+  }
+}
+
+function detectTransclusionCycles(
+  resolutions: TransclusionResolution[],
+  diagnostics: Diagnostic[],
+): void {
+  const graph = new Map<string, string[]>();
+
+  for (const res of resolutions) {
+    if (!res.resolved || !res.resolvedFilePath) continue;
+
+    const sourceId = normalizeWorkspacePath(res.filePath);
+
+    let targetId: string;
+    if (res.heading) {
+      targetId = `${normalizeWorkspacePath(res.resolvedFilePath)}#${createSlug(res.heading)}`;
+    } else if (res.blockId) {
+      targetId = `${normalizeWorkspacePath(res.resolvedFilePath)}^${res.blockId}`;
+    } else {
+      targetId = normalizeWorkspacePath(res.resolvedFilePath);
+    }
+
+    if (!graph.has(sourceId)) {
+      graph.set(sourceId, []);
+    }
+    graph.get(sourceId)!.push(targetId);
+  }
+
+  const visited = new Set<string>();
+  const recursionStack = new Set<string>();
+
+  const dfs = (node: string): void => {
+    if (recursionStack.has(node)) {
+      diagnostics.push({
+        severity: "error",
+        code: DIAGNOSTIC_CODES.TRANSCLUSION_CYCLE,
+        message: "Transclusion cycle detected.",
+      });
+      return;
+    }
+    if (visited.has(node)) return;
+
+    visited.add(node);
+    recursionStack.add(node);
+
+    const neighbors = graph.get(node);
+    if (neighbors) {
+      for (const neighbor of neighbors) {
+        dfs(neighbor);
+      }
+    }
+
+    recursionStack.delete(node);
+  };
+
+  for (const node of graph.keys()) {
+    if (!visited.has(node)) {
+      dfs(node);
     }
   }
 }
