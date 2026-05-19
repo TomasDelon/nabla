@@ -1,282 +1,508 @@
-diff --git a/packages/components/playground/src/main.tsx b/packages/components/playground/src/main.tsx
-index 03a03a2..18df84a 100644
---- a/packages/components/playground/src/main.tsx
-+++ b/packages/components/playground/src/main.tsx
-@@ -9,6 +9,7 @@ import { FootnoteReference, FootnoteDefinition } from "../../src/footnote.tsx";
- import { Comment } from "../../src/comment.tsx";
- import { Callout } from "../../src/callout.tsx";
- import { Toggle } from "../../src/toggle.tsx";
-+import { FoldedHeading } from "../../src/folded-heading.tsx";
- 
- import "../../src/tokens.css";
- import "../../src/task-state.css";
-@@ -20,6 +21,7 @@ import "../../src/footnote.css";
- import "../../src/comment.css";
- import "../../src/callout.css";
- import "../../src/toggle.css";
-+import "../../src/folded-heading.css";
- import "./playground.css";
- 
- type TaskState = "unchecked" | "checked" | "cancelled" | "important";
-@@ -78,6 +80,18 @@ function App() {
-     }));
-   }
- 
-+  const [headingFoldStates, setHeadingFoldStates] = useState<Record<string, "open" | "closed">>({
-+    h2: "open",
-+    h3: "closed",
-+  });
+diff --git a/packages/components/src/bridge.ts b/packages/components/src/bridge.ts
+new file mode 100644
+index 0000000..bd97c73
+--- /dev/null
++++ b/packages/components/src/bridge.ts
+@@ -0,0 +1,191 @@
++import type {
++  NablaComponentKind,
++  NablaComponentProps,
++  TaskStateValue,
++} from "./types.js";
 +
-+  function toggleHeading(key: string) {
-+    setHeadingFoldStates((prev) => ({
-+      ...prev,
-+      [key]: prev[key] === "open" ? "closed" : "open",
-+    }));
++export interface BridgeTaskStateMeta {
++  readonly kind: "taskState";
++  readonly state: TaskStateValue;
++  readonly text: string;
++}
++
++export interface BridgeWikiLinkMeta {
++  readonly kind: "wikiLink";
++  readonly target: string;
++  readonly alias?: string;
++  readonly heading?: string;
++  readonly blockId?: string;
++  readonly unresolved: boolean;
++  readonly raw: string;
++}
++
++export interface BridgeTagMeta {
++  readonly kind: "tag";
++  readonly value: string;
++  readonly segments: readonly string[];
++  readonly raw: string;
++}
++
++export interface BridgeHighlightMeta {
++  readonly kind: "highlight";
++  readonly text: string;
++  readonly color?: string;
++  readonly raw: string;
++}
++
++export interface BridgeEmojiMeta {
++  readonly kind: "emoji";
++  readonly name: string;
++  readonly value: string;
++  readonly raw: string;
++}
++
++export interface BridgeFootnoteMeta {
++  readonly kind: "footnote";
++  readonly footnoteKind: "reference" | "definition";
++  readonly id: string;
++  readonly text?: string;
++  readonly raw: string;
++}
++
++export interface BridgeCommentMeta {
++  readonly kind: "comment";
++  readonly text: string;
++  readonly multiline: boolean;
++  readonly raw: string;
++}
++
++export interface BridgeCalloutMeta {
++  readonly kind: "callout";
++  readonly calloutType: string;
++  readonly foldState: "open" | "closed";
++}
++
++export interface BridgeToggleMeta {
++  readonly kind: "toggle";
++  readonly foldState: "open" | "closed";
++}
++
++export interface BridgeFoldedHeadingMeta {
++  readonly kind: "foldedHeading";
++  readonly level: number;
++  readonly text: string;
++  readonly foldState: "open" | "closed";
++}
++
++export type BridgeComponentMetadata =
++  | BridgeTaskStateMeta
++  | BridgeWikiLinkMeta
++  | BridgeTagMeta
++  | BridgeHighlightMeta
++  | BridgeEmojiMeta
++  | BridgeFootnoteMeta
++  | BridgeCommentMeta
++  | BridgeCalloutMeta
++  | BridgeToggleMeta
++  | BridgeFoldedHeadingMeta;
++
++export function toComponentKind(metadata: BridgeComponentMetadata): NablaComponentKind {
++  return metadata.kind;
++}
++
++export function toComponentProps(metadata: BridgeComponentMetadata): NablaComponentProps {
++  switch (metadata.kind) {
++    case "taskState":
++      return {
++        kind: "taskState",
++        state: metadata.state,
++        text: metadata.text,
++        onChange: () => {},
++      };
++    case "wikiLink":
++      return {
++        kind: "wikiLink",
++        target: metadata.target,
++        alias: metadata.alias,
++        heading: metadata.heading,
++        blockId: metadata.blockId,
++        unresolved: metadata.unresolved,
++        raw: metadata.raw,
++      };
++    case "tag":
++      return {
++        kind: "tag",
++        value: metadata.value,
++        segments: metadata.segments,
++        raw: metadata.raw,
++      };
++    case "highlight":
++      return {
++        kind: "highlight",
++        text: metadata.text,
++        color: metadata.color,
++        raw: metadata.raw,
++      };
++    case "emoji":
++      return {
++        kind: "emoji",
++        name: metadata.name,
++        value: metadata.value,
++        raw: metadata.raw,
++      };
++    case "footnote":
++      return {
++        kind: "footnote",
++        footnoteKind: metadata.footnoteKind,
++        id: metadata.id,
++        text: metadata.text,
++        raw: metadata.raw,
++      };
++    case "comment":
++      return {
++        kind: "comment",
++        text: metadata.text,
++        multiline: metadata.multiline,
++        raw: metadata.raw,
++      };
++    case "callout":
++      return {
++        kind: "callout",
++        calloutType: metadata.calloutType,
++        foldState: metadata.foldState,
++        onToggleFold: () => {},
++      };
++    case "toggle":
++      return {
++        kind: "toggle",
++        foldState: metadata.foldState,
++        onToggleFold: () => {},
++      };
++    case "foldedHeading":
++      return {
++        kind: "foldedHeading",
++        level: metadata.level,
++        foldState: metadata.foldState,
++        onToggleFold: () => {},
++      };
 +  }
-+
-   return (
-     <div className="playground">
-       <h1 className="playground__heading">@nabla/components</h1>
-@@ -183,6 +197,19 @@ function App() {
-           </Toggle>
-         </ExampleRow>
-       </Section>
-+
-+      <Section title="Folded Heading">
-+        <ExampleRow label="Level-2 heading (open)">
-+          <FoldedHeading level={2} text="Section Title" foldState={headingFoldStates.h2} onToggleFold={() => toggleHeading("h2")}>
-+            <p style={{ margin: 0 }}>Content under a level-2 folded heading.</p>
-+          </FoldedHeading>
-+        </ExampleRow>
-+        <ExampleRow label="Level-3 heading (closed)">
-+          <FoldedHeading level={3} text="Sub Section" foldState={headingFoldStates.h3} onToggleFold={() => toggleHeading("h3")}>
-+            <p style={{ margin: 0 }}>Content under a level-3 folded heading, hidden when closed.</p>
-+          </FoldedHeading>
-+        </ExampleRow>
-+      </Section>
-     </div>
-   );
- }
-diff --git a/packages/components/src/folded-heading.css b/packages/components/src/folded-heading.css
-new file mode 100644
-index 0000000..1fc5ae3
---- /dev/null
-+++ b/packages/components/src/folded-heading.css
-@@ -0,0 +1,50 @@
-+.nabla-folded-heading {
-+  border: 1px solid var(--nabla-color-border);
-+  border-radius: var(--nabla-radius-md);
-+  font-family: var(--nabla-font-family);
-+  line-height: var(--nabla-line-height);
 +}
 +
-+.nabla-folded-heading__header {
-+  display: flex;
-+  align-items: center;
-+  gap: 0.5rem;
-+  width: 100%;
-+  padding: 0.5rem 0.75rem;
-+  background: none;
-+  border: none;
-+  cursor: pointer;
-+  font-family: inherit;
-+  font-weight: 600;
-+  color: var(--nabla-color-text);
-+  text-align: left;
-+  border-radius: var(--nabla-radius-md);
++export interface NablaComponentDescriptor {
++  readonly kind: NablaComponentKind;
++  readonly props: NablaComponentProps;
 +}
 +
-+.nabla-folded-heading__header:hover {
-+  background: var(--nabla-color-surface);
-+}
-+
-+.nabla-folded-heading__header:focus-visible {
-+  outline: 2px solid var(--nabla-color-primary);
-+  outline-offset: -2px;
-+}
-+
-+.nabla-folded-heading__indicator {
-+  font-size: 0.75rem;
-+  color: var(--nabla-color-text-muted);
-+  user-select: none;
-+  flex-shrink: 0;
-+}
-+
-+.nabla-folded-heading__title {
-+  white-space: nowrap;
-+  overflow: hidden;
-+  text-overflow: ellipsis;
-+}
-+
-+.nabla-folded-heading__body {
-+  padding: 0.75rem;
-+  padding-left: 2rem;
-+  border-top: 1px solid var(--nabla-color-border);
-+}
-diff --git a/packages/components/src/folded-heading.tsx b/packages/components/src/folded-heading.tsx
-new file mode 100644
-index 0000000..7f41778
---- /dev/null
-+++ b/packages/components/src/folded-heading.tsx
-@@ -0,0 +1,59 @@
-+import { type ReactNode } from "react";
-+
-+export interface FoldedHeadingDisplay {
-+  readonly level: number;
-+  readonly foldState: "open" | "closed";
-+  readonly text: string;
-+}
-+
-+export function getFoldedHeadingDisplay(props: {
-+  readonly level: number;
-+  readonly foldState: "open" | "closed";
-+  readonly text: string;
-+}): FoldedHeadingDisplay {
++export function createComponentDescriptor(metadata: BridgeComponentMetadata): NablaComponentDescriptor {
 +  return {
-+    level: props.level,
-+    foldState: props.foldState,
-+    text: props.text,
++    kind: toComponentKind(metadata),
++    props: toComponentProps(metadata),
 +  };
 +}
 +
-+export interface FoldedHeadingProps {
-+  readonly level: number;
-+  readonly text: string;
-+  readonly foldState: "open" | "closed";
-+  readonly onToggleFold: () => void;
-+  readonly children?: ReactNode;
-+}
++export const BRIDGE_DEFERRED_KINDS: readonly string[] = ["transclusion"];
 +
-+const HEADING_FONT_SIZE: Record<number, string> = {
-+  1: "1.5rem",
-+  2: "1.25rem",
-+  3: "1.125rem",
-+  4: "1rem",
-+  5: "0.875rem",
-+  6: "0.875rem",
-+};
++export const BRIDGE_BLOCKED_KINDS: readonly string[] = ["tooltip"];
 +
-+export function FoldedHeading({ level, text, foldState, onToggleFold, children }: FoldedHeadingProps) {
-+  const display = getFoldedHeadingDisplay({ level, foldState, text });
-+  const fontSize = HEADING_FONT_SIZE[level] ?? "1rem";
-+
++export function isBridgeKindSupported(kind: string): boolean {
 +  return (
-+    <div className="nabla-folded-heading" data-fold-state={foldState} data-level={level}>
-+      <button
-+        className="nabla-folded-heading__header"
-+        onClick={onToggleFold}
-+        type="button"
-+        aria-expanded={foldState === "open"}
-+        style={{ fontSize }}
-+      >
-+        <span className="nabla-folded-heading__indicator" aria-hidden="true">
-+          {foldState === "open" ? "▾" : "▸"}
-+        </span>
-+        <span className="nabla-folded-heading__title">{display.text}</span>
-+      </button>
-+      {foldState === "open" && <div className="nabla-folded-heading__body">{children}</div>}
-+    </div>
++    !BRIDGE_DEFERRED_KINDS.includes(kind) && !BRIDGE_BLOCKED_KINDS.includes(kind)
 +  );
 +}
 diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-index faab386..e5a62d6 100644
+index e5a62d6..70cf186 100644
 --- a/packages/components/src/index.ts
 +++ b/packages/components/src/index.ts
-@@ -32,6 +32,8 @@ export { Callout, getCalloutDisplay } from "./callout.js";
+@@ -32,6 +32,15 @@ export { Callout, getCalloutDisplay } from "./callout.js";
  
  export { Toggle, getToggleDisplay } from "./toggle.js";
  
-+export { FoldedHeading, getFoldedHeadingDisplay } from "./folded-heading.js";
++export {
++  toComponentKind,
++  toComponentProps,
++  createComponentDescriptor,
++  isBridgeKindSupported,
++  BRIDGE_DEFERRED_KINDS,
++  BRIDGE_BLOCKED_KINDS,
++} from "./bridge.js";
 +
- export type { NablaComponentTheme } from "./theme.js";
+ export { FoldedHeading, getFoldedHeadingDisplay } from "./folded-heading.js";
  
- export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
-@@ -48,3 +50,4 @@ export type { FootnoteDisplay } from "./footnote.js";
- export type { CommentDisplay } from "./comment.js";
+ export type { NablaComponentTheme } from "./theme.js";
+@@ -51,3 +60,4 @@ export type { CommentDisplay } from "./comment.js";
  export type { CalloutDisplay } from "./callout.js";
  export type { ToggleDisplay } from "./toggle.js";
-+export type { FoldedHeadingDisplay } from "./folded-heading.js";
-diff --git a/packages/components/tests/folded-heading.test.mjs b/packages/components/tests/folded-heading.test.mjs
+ export type { FoldedHeadingDisplay } from "./folded-heading.js";
++export type { BridgeComponentMetadata, NablaComponentDescriptor } from "./bridge.js";
+diff --git a/packages/components/tests/bridge.test.mjs b/packages/components/tests/bridge.test.mjs
 new file mode 100644
-index 0000000..dd4294f
+index 0000000..4b3e6cb
 --- /dev/null
-+++ b/packages/components/tests/folded-heading.test.mjs
-@@ -0,0 +1,40 @@
++++ b/packages/components/tests/bridge.test.mjs
+@@ -0,0 +1,245 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
 +async function load() {
-+  return import(new URL("../dist/folded-heading.js", import.meta.url));
++  return import(new URL("../dist/bridge.js", import.meta.url));
 +}
 +
-+test("getFoldedHeadingDisplay returns open state with level and text", async () => {
++test("toComponentKind returns taskState for task state metadata", async () => {
 +  const mod = await load();
 +
-+  const result = mod.getFoldedHeadingDisplay({ level: 2, foldState: "open", text: "Section Title" });
++  const result = mod.toComponentKind({ kind: "taskState", state: "checked", text: "task" });
 +
-+  assert.equal(result.level, 2);
-+  assert.equal(result.foldState, "open");
-+  assert.equal(result.text, "Section Title");
++  assert.equal(result, "taskState");
 +});
 +
-+test("getFoldedHeadingDisplay returns closed state with level and text", async () => {
++test("toComponentKind returns wikiLink for wiki link metadata", async () => {
 +  const mod = await load();
 +
-+  const result = mod.getFoldedHeadingDisplay({ level: 3, foldState: "closed", text: "Sub Section" });
++  const result = mod.toComponentKind({ kind: "wikiLink", target: "Page", raw: "[[Page]]", unresolved: false });
 +
-+  assert.equal(result.level, 3);
-+  assert.equal(result.foldState, "closed");
-+  assert.equal(result.text, "Sub Section");
++  assert.equal(result, "wikiLink");
 +});
 +
-+test("getFoldedHeadingDisplay preserves heading level 1", async () => {
++test("toComponentKind returns tag for tag metadata", async () => {
 +  const mod = await load();
 +
-+  const result = mod.getFoldedHeadingDisplay({ level: 1, foldState: "open", text: "Top" });
++  const result = mod.toComponentKind({ kind: "tag", value: "mytag", segments: ["mytag"], raw: "#mytag" });
 +
-+  assert.equal(result.level, 1);
++  assert.equal(result, "tag");
 +});
 +
-+test("FoldedHeading is a function", async () => {
++test("toComponentKind returns highlight for highlight metadata", async () => {
 +  const mod = await load();
 +
-+  assert.equal(typeof mod.FoldedHeading, "function");
++  const result = mod.toComponentKind({ kind: "highlight", text: "hi", raw: "==hi==" });
++
++  assert.equal(result, "highlight");
++});
++
++test("toComponentKind returns emoji for emoji metadata", async () => {
++  const mod = await load();
++
++  const result = mod.toComponentKind({ kind: "emoji", name: "check", value: "✅", raw: ":check:" });
++
++  assert.equal(result, "emoji");
++});
++
++test("toComponentKind returns footnote for footnote metadata", async () => {
++  const mod = await load();
++
++  const result = mod.toComponentKind({ kind: "footnote", footnoteKind: "reference", id: "n1", raw: "[^n1]" });
++
++  assert.equal(result, "footnote");
++});
++
++test("toComponentKind returns comment for comment metadata", async () => {
++  const mod = await load();
++
++  const result = mod.toComponentKind({ kind: "comment", text: "note", multiline: false, raw: "%%note%%" });
++
++  assert.equal(result, "comment");
++});
++
++test("toComponentKind returns callout for callout metadata", async () => {
++  const mod = await load();
++
++  const result = mod.toComponentKind({ kind: "callout", calloutType: "note", foldState: "open" });
++
++  assert.equal(result, "callout");
++});
++
++test("toComponentKind returns toggle for toggle metadata", async () => {
++  const mod = await load();
++
++  const result = mod.toComponentKind({ kind: "toggle", foldState: "closed" });
++
++  assert.equal(result, "toggle");
++});
++
++test("toComponentKind returns foldedHeading for folded heading metadata", async () => {
++  const mod = await load();
++
++  const result = mod.toComponentKind({ kind: "foldedHeading", level: 2, text: "Title", foldState: "open" });
++
++  assert.equal(result, "foldedHeading");
++});
++
++test("toComponentProps maps task state metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({ kind: "taskState", state: "unchecked", text: "buy milk" });
++
++  assert.equal(props.kind, "taskState");
++  assert.equal(props.state, "unchecked");
++  assert.equal(props.text, "buy milk");
++  assert.equal(typeof props.onChange, "function");
++});
++
++test("toComponentProps maps wiki link metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({
++    kind: "wikiLink", target: "Page", alias: "Alias", heading: "Section", unresolved: true, raw: "[[Page#Section|Alias]]",
++  });
++
++  assert.equal(props.kind, "wikiLink");
++  assert.equal(props.target, "Page");
++  assert.equal(props.alias, "Alias");
++  assert.equal(props.heading, "Section");
++  assert.equal(props.unresolved, true);
++  assert.equal(props.raw, "[[Page#Section|Alias]]");
++});
++
++test("toComponentProps maps tag metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({ kind: "tag", value: "nested/tag", segments: ["nested", "tag"], raw: "#nested/tag" });
++
++  assert.equal(props.kind, "tag");
++  assert.equal(props.value, "nested/tag");
++  assert.deepEqual(props.segments, ["nested", "tag"]);
++  assert.equal(props.raw, "#nested/tag");
++});
++
++test("toComponentProps maps highlight metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({ kind: "highlight", text: "yellow note", color: "#ff0", raw: "=={#ff0}yellow note==" });
++
++  assert.equal(props.kind, "highlight");
++  assert.equal(props.text, "yellow note");
++  assert.equal(props.color, "#ff0");
++});
++
++test("toComponentProps maps emoji metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({ kind: "emoji", name: "check", value: "✅", raw: ":check:" });
++
++  assert.equal(props.kind, "emoji");
++  assert.equal(props.name, "check");
++  assert.equal(props.value, "✅");
++});
++
++test("toComponentProps maps footnote metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({ kind: "footnote", footnoteKind: "definition", id: "def1", text: "Note text.", raw: "[^def1]: Note text." });
++
++  assert.equal(props.kind, "footnote");
++  assert.equal(props.footnoteKind, "definition");
++  assert.equal(props.id, "def1");
++  assert.equal(props.text, "Note text.");
++});
++
++test("toComponentProps maps comment metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({ kind: "comment", text: "private", multiline: false, raw: "%%private%%" });
++
++  assert.equal(props.kind, "comment");
++  assert.equal(props.text, "private");
++  assert.equal(props.multiline, false);
++});
++
++test("toComponentProps maps callout metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({ kind: "callout", calloutType: "warning", foldState: "closed" });
++
++  assert.equal(props.kind, "callout");
++  assert.equal(props.calloutType, "warning");
++  assert.equal(props.foldState, "closed");
++  assert.equal(typeof props.onToggleFold, "function");
++});
++
++test("toComponentProps maps toggle metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({ kind: "toggle", foldState: "open" });
++
++  assert.equal(props.kind, "toggle");
++  assert.equal(props.foldState, "open");
++  assert.equal(typeof props.onToggleFold, "function");
++});
++
++test("toComponentProps maps folded heading metadata to props", async () => {
++  const mod = await load();
++
++  const props = mod.toComponentProps({ kind: "foldedHeading", level: 3, text: "Sub", foldState: "closed" });
++
++  assert.equal(props.kind, "foldedHeading");
++  assert.equal(props.level, 3);
++  assert.equal(props.foldState, "closed");
++  assert.equal(typeof props.onToggleFold, "function");
++});
++
++test("createComponentDescriptor returns kind and props", async () => {
++  const mod = await load();
++
++  const descriptor = mod.createComponentDescriptor({ kind: "tag", value: "mytag", segments: ["mytag"], raw: "#mytag" });
++
++  assert.equal(descriptor.kind, "tag");
++  assert.equal(descriptor.props.kind, "tag");
++  assert.equal(descriptor.props.value, "mytag");
++});
++
++test("isBridgeKindSupported returns true for all implemented kinds", async () => {
++  const mod = await load();
++
++  assert.equal(mod.isBridgeKindSupported("taskState"), true);
++  assert.equal(mod.isBridgeKindSupported("wikiLink"), true);
++  assert.equal(mod.isBridgeKindSupported("tag"), true);
++  assert.equal(mod.isBridgeKindSupported("highlight"), true);
++  assert.equal(mod.isBridgeKindSupported("emoji"), true);
++  assert.equal(mod.isBridgeKindSupported("footnote"), true);
++  assert.equal(mod.isBridgeKindSupported("comment"), true);
++  assert.equal(mod.isBridgeKindSupported("callout"), true);
++  assert.equal(mod.isBridgeKindSupported("toggle"), true);
++  assert.equal(mod.isBridgeKindSupported("foldedHeading"), true);
++});
++
++test("isBridgeKindSupported returns false for deferred transclusion", async () => {
++  const mod = await load();
++
++  assert.equal(mod.isBridgeKindSupported("transclusion"), false);
++});
++
++test("isBridgeKindSupported returns false for blocked tooltip", async () => {
++  const mod = await load();
++
++  assert.equal(mod.isBridgeKindSupported("tooltip"), false);
++});
++
++test("BRIDGE_DEFERRED_KINDS includes transclusion", async () => {
++  const mod = await load();
++
++  assert.deepEqual([...mod.BRIDGE_DEFERRED_KINDS].sort(), ["transclusion"]);
++});
++
++test("BRIDGE_BLOCKED_KINDS includes tooltip", async () => {
++  const mod = await load();
++
++  assert.deepEqual([...mod.BRIDGE_BLOCKED_KINDS].sort(), ["tooltip"]);
 +});
 diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
-index f581119..26574bd 100644
+index 26574bd..2e979f7 100644
 --- a/packages/components/tests/public-api.test.mjs
 +++ b/packages/components/tests/public-api.test.mjs
-@@ -65,11 +65,19 @@ test("Toggle is exported from public API", async () => {
-   assert.equal(typeof mod.getToggleDisplay, "function");
+@@ -72,6 +72,17 @@ test("FoldedHeading is exported from public API", async () => {
+   assert.equal(typeof mod.getFoldedHeadingDisplay, "function");
  });
  
-+test("FoldedHeading is exported from public API", async () => {
++test("bridge functions are exported from public API", async () => {
 +  const mod = await load();
 +
-+  assert.equal(typeof mod.FoldedHeading, "function");
-+  assert.equal(typeof mod.getFoldedHeadingDisplay, "function");
++  assert.equal(typeof mod.toComponentKind, "function");
++  assert.equal(typeof mod.toComponentProps, "function");
++  assert.equal(typeof mod.createComponentDescriptor, "function");
++  assert.equal(typeof mod.isBridgeKindSupported, "function");
++  assert.ok(Array.isArray(mod.BRIDGE_DEFERRED_KINDS));
++  assert.ok(Array.isArray(mod.BRIDGE_BLOCKED_KINDS));
 +});
 +
  test("no forbidden visual components are exported", async () => {
    const mod = await load();
    const keys = Object.keys(mod);
- 
--  assert.equal(keys.includes("FoldedHeading"), false);
-+  assert.equal(keys.includes("TooltipRenderer"), false);
-+  assert.equal(keys.includes("TransclusionRenderer"), false);
- });
- 
- test("NABLA_COMPONENT_THEME is exported", async () => {
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 5e5595b..508b7f6 100644
+index 508b7f6..d54d7bd 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-010` — Toggle Visual Component
-+`P4-011` — Folded Heading Visual Component
+-`P4-011` — Folded Heading Visual Component
++`P4-012` — Editor-to-Components Bridge
  
  ## Branch
  
@@ -284,39 +510,42 @@ index 5e5595b..508b7f6 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -340,6 +340,24 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+@@ -358,6 +358,27 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
  - No parser/serializer changes.
  - DOM/React rendering tests deferred to component fixture/regression phase.
  
-+### P4-011 Notes
++### P4-012 Notes
 +
-+- Created `packages/components/src/folded-heading.tsx` with `FoldedHeading` component and `getFoldedHeadingDisplay` helper.
-+- Created `packages/components/src/folded-heading.css` with heading-like disclosure row, fold indicator, body indentation, and `--nabla-*` token styling.
-+- Folded heading renders a clickable header with fold indicator; heading level drives font size (h1=1.5rem down to h6=0.875rem); body hidden when `foldState` is `"closed"`.
-+- Exported `FoldedHeading`, `getFoldedHeadingDisplay`, and `FoldedHeadingDisplay` type from `packages/components/src/index.ts`.
-+- Updated playground with Folded Heading section showing open level-2 and closed level-3 examples with fold toggle interaction.
-+- Added `packages/components/tests/folded-heading.test.mjs` with 4 tests covering metadata (level, foldState, text) and component function export.
-+- Updated `packages/components/tests/public-api.test.mjs` with FoldedHeading export test; removed FoldedHeading from forbidden-exports test.
-+- Local `FoldedHeadingProps` type used (types.ts `FoldedHeadingProps` has `children?: never`); no `types.ts` modifications.
-+- No new visual components added beyond folded heading.
++- Created `packages/components/src/bridge.ts` with pure adapter boundary between editor metadata and component props.
++- Defines `BridgeComponentMetadata` discriminated union mirroring all 10 accepted editor node metadata shapes.
++- `toComponentKind(metadata)` returns `NablaComponentKind`.
++- `toComponentProps(metadata)` returns `NablaComponentProps` with no-op callback placeholders (editor runtime replaces these).
++- `createComponentDescriptor(metadata)` returns `{ kind, props }` descriptor.
++- `isBridgeKindSupported(kind)` checks against deferred/blocked lists.
++- `BRIDGE_DEFERRED_KINDS` includes `transclusion`; `BRIDGE_BLOCKED_KINDS` includes `tooltip`.
++- All 10 mappings supported: taskState, wikiLink, tag, highlight, emoji, footnote, comment, callout, toggle, foldedHeading.
++- Bridge does not import React, render DOM, mutate Markdown, resolve workspace links, or call parser/serializer.
++- Added `packages/components/tests/bridge.test.mjs` with 30 tests covering all kind mappings, prop shapes, descriptor creation, supported/unsupported kinds, and deferred/blocked constants.
++- Updated `packages/components/tests/public-api.test.mjs` with bridge export verification.
++- No editor source files modified.
 +- No component API contract rewrite.
 +- No dependencies added.
-+- No editor/markup/workspace source changes.
-+- No app/Phase 5 work started.
-+- No parser/serializer changes.
-+- DOM/React rendering tests deferred to component fixture/regression phase.
++- No DOM node views added.
++- No editor behavior changed.
++- No parser/serializer/workspace changes.
++- Transclusion and tooltip remain deferred/blocked.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -358,4 +376,4 @@ None.
+@@ -376,4 +397,4 @@ None.
  
  ## Next Recommended Task
  
--P4-010 — Toggle Visual Component — implement a React component for toggle blocks.
-+P4-012 — Editor-to-Components Bridge — wire component rendering into the editor.
+-P4-012 — Editor-to-Components Bridge — wire component rendering into the editor.
++P4-013 — API Consistency Audit — verify consistent public API surface across all Phase 4 packages.

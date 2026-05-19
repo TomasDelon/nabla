@@ -1,1 +1,1 @@
-d466c76 feat(components): add folded heading component
+151bb2f feat(components): add editor component bridge

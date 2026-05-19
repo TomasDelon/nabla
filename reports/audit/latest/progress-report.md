@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-011` — Folded Heading Visual Component
+`P4-012` — Editor-to-Components Bridge
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -358,6 +358,27 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No parser/serializer changes.
 - DOM/React rendering tests deferred to component fixture/regression phase.
 
+### P4-012 Notes
+
+- Created `packages/components/src/bridge.ts` with pure adapter boundary between editor metadata and component props.
+- Defines `BridgeComponentMetadata` discriminated union mirroring all 10 accepted editor node metadata shapes.
+- `toComponentKind(metadata)` returns `NablaComponentKind`.
+- `toComponentProps(metadata)` returns `NablaComponentProps` with no-op callback placeholders (editor runtime replaces these).
+- `createComponentDescriptor(metadata)` returns `{ kind, props }` descriptor.
+- `isBridgeKindSupported(kind)` checks against deferred/blocked lists.
+- `BRIDGE_DEFERRED_KINDS` includes `transclusion`; `BRIDGE_BLOCKED_KINDS` includes `tooltip`.
+- All 10 mappings supported: taskState, wikiLink, tag, highlight, emoji, footnote, comment, callout, toggle, foldedHeading.
+- Bridge does not import React, render DOM, mutate Markdown, resolve workspace links, or call parser/serializer.
+- Added `packages/components/tests/bridge.test.mjs` with 30 tests covering all kind mappings, prop shapes, descriptor creation, supported/unsupported kinds, and deferred/blocked constants.
+- Updated `packages/components/tests/public-api.test.mjs` with bridge export verification.
+- No editor source files modified.
+- No component API contract rewrite.
+- No dependencies added.
+- No DOM node views added.
+- No editor behavior changed.
+- No parser/serializer/workspace changes.
+- Transclusion and tooltip remain deferred/blocked.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -376,4 +397,4 @@ None.
 
 ## Next Recommended Task
 
-P4-012 — Editor-to-Components Bridge — wire component rendering into the editor.
+P4-013 — API Consistency Audit — verify consistent public API surface across all Phase 4 packages.

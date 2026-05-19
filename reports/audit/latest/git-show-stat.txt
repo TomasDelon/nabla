@@ -1,8 +1,6 @@
- packages/components/playground/src/main.tsx       | 27 +++++++++++
- packages/components/src/folded-heading.css        | 50 +++++++++++++++++++
- packages/components/src/folded-heading.tsx        | 59 +++++++++++++++++++++++
- packages/components/src/index.ts                  |  3 ++
- packages/components/tests/folded-heading.test.mjs | 40 +++++++++++++++
- packages/components/tests/public-api.test.mjs     | 10 +++-
- reports/IMPLEMENTATION_PROGRESS.md                | 24 +++++++--
- 7 files changed, 209 insertions(+), 4 deletions(-)
+ packages/components/src/bridge.ts             | 191 ++++++++++++++++++++
+ packages/components/src/index.ts              |  10 ++
+ packages/components/tests/bridge.test.mjs     | 245 ++++++++++++++++++++++++++
+ packages/components/tests/public-api.test.mjs |  11 ++
+ reports/IMPLEMENTATION_PROGRESS.md            |  27 ++-
+ 5 files changed, 481 insertions(+), 3 deletions(-)
