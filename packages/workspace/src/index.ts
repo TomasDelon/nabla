@@ -64,3 +64,5 @@ export type Workspace = {
   index: WorkspaceIndex;
   options: WorkspaceOptions;
 };
+
+export { normalizeWorkspacePath } from "./path-utils.js";
