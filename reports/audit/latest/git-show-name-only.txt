@@ -1,7 +1,7 @@
-packages/components/package.json
-packages/components/playground/index.html
 packages/components/playground/src/main.tsx
-packages/components/playground/vite.config.ts
-pnpm-lock.yaml
-pnpm-workspace.yaml
+packages/components/playground/src/playground.css
+packages/components/src/comment.css
+packages/components/src/footnote.css
+packages/components/src/highlight.css
+packages/components/src/tag.css
 reports/IMPLEMENTATION_PROGRESS.md

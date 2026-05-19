@@ -6,6 +6,7 @@ package.json
 packages/components/package.json
 packages/components/playground/index.html
 packages/components/playground/src/main.tsx
+packages/components/playground/src/playground.css
 packages/components/playground/vite.config.ts
 packages/components/src/comment.css
 packages/components/src/comment.tsx
