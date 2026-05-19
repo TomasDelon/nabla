@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-004` — Editor Command/Transaction Skeleton
+`P3-005` — Editor Selection/Cursor Model
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, and plain Markdown editor skeleton created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, and position model helpers created.
 
 ### Repairs Applied
 
@@ -57,6 +57,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - Plain Markdown only; no Nabla-specific node views, node specs, marks, or frontend integration.
 - Runtime strategy is Node-safe for basic load/export tests.
 
+### P3-005 Notes
+
+- Corrected wording drift: accepted backlog `P3-005` is `Editor Selection/Cursor Model`.
+- Added pure position helpers in `packages/editor/src/position.ts` for source/editor offset creation, validation, clamping, and roundtrip conversion.
+- No dependencies added.
+- No cursor UI or selection UI implemented.
+- No Nabla node views or DOM/browser runtime required for the position model helpers.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -75,4 +83,4 @@ None.
 
 ## Next Recommended Task
 
-P3-005 (editor schema boundary expansion) — extend the plain editor skeleton toward richer document support while keeping Nabla-specific behavior scoped.
+P3-006 (selection transaction integration) — connect the position model to editor transactions without adding cursor or selection UI.

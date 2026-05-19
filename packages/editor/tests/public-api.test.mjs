@@ -34,3 +34,14 @@ test("editor runtime exports are wired", async () => {
   assert.equal(typeof mod.loadSource, "function");
   assert.equal(typeof mod.getSource, "function");
 });
+
+test("position runtime exports are wired", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.createSourcePosition, "function");
+  assert.equal(typeof mod.createEditorPosition, "function");
+  assert.equal(typeof mod.isValidOffset, "function");
+  assert.equal(typeof mod.clampOffset, "function");
+  assert.equal(typeof mod.sourceToEditorPosition, "function");
+  assert.equal(typeof mod.editorToSourcePosition, "function");
+});
