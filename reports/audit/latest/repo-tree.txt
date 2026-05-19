@@ -3,6 +3,10 @@ README.md
 nabla_complete_project_documentation_pack_v1_final.zip
 nabla_complete_project_documentation_pack_v1_final.zip.sha256
 package.json
+packages/editor/package.json
+packages/editor/src/index.ts
+packages/editor/tests/public-api.test.mjs
+packages/editor/tsconfig.json
 packages/markup/package.json
 packages/markup/src/ast.ts
 packages/markup/src/diagnostics.ts

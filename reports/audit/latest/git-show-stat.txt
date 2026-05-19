@@ -1,4 +1,8 @@
- reports/IMPLEMENTATION_PROGRESS.md |  40 +++++-------
- reports/PHASE_3_KICKOFF.md         |   7 +-
- reports/PHASE_3_TASK_BACKLOG.md    | 127 +++++++++++++++++++++++++++++--------
- 3 files changed, 119 insertions(+), 55 deletions(-)
+ package.json                              |  4 ++--
+ packages/editor/package.json              | 24 ++++++++++++++++++++++++
+ packages/editor/src/index.ts              |  1 +
+ packages/editor/tests/public-api.test.mjs | 14 ++++++++++++++
+ packages/editor/tsconfig.json             | 10 ++++++++++
+ pnpm-lock.yaml                            |  6 ++++++
+ reports/IMPLEMENTATION_PROGRESS.md        | 16 +++++++++++-----
+ 7 files changed, 68 insertions(+), 7 deletions(-)

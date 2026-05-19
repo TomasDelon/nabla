@@ -1,3 +1,7 @@
+package.json
+packages/editor/package.json
+packages/editor/src/index.ts
+packages/editor/tests/public-api.test.mjs
+packages/editor/tsconfig.json
+pnpm-lock.yaml
 reports/IMPLEMENTATION_PROGRESS.md
-reports/PHASE_3_KICKOFF.md
-reports/PHASE_3_TASK_BACKLOG.md
