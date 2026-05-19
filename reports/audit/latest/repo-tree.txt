@@ -7,8 +7,10 @@ packages/editor/package.json
 packages/editor/src/editor.ts
 packages/editor/src/index.ts
 packages/editor/src/model.ts
+packages/editor/src/position.ts
 packages/editor/src/save-pipeline.ts
 packages/editor/tests/editor.test.mjs
+packages/editor/tests/position.test.mjs
 packages/editor/tests/public-api.test.mjs
 packages/editor/tests/save-pipeline.test.mjs
 packages/editor/tsconfig.json
