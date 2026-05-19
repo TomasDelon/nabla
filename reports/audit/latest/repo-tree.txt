@@ -42,6 +42,7 @@ packages/markup/tsconfig.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
 reports/IMPLEMENTATION_PROGRESS.md
+reports/PHASE_1_VALIDATION.md
 reports/WORKFLOW.md
 reports/audit/latest/AUDIT_INDEX.md
 reports/audit/latest/audit.json

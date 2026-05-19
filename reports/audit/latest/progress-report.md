@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-024 full fixture regression`
+`P1-025 Phase 1 validation`
 
 ## Branch
 
@@ -14,9 +14,9 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Full parser fixture regression coverage enforced for all Phase 1 implemented features.
+Phase 1 validation complete. See `reports/PHASE_1_VALIDATION.md` for full report.
 
-69 tests pass (68 from P1-023 + 1 new `conflicts/protected-regions` fixture).
+All 25 Phase 1 tasks are complete. 69 tests pass. All quality gates pass.
 
 ### Fixture Coverage Summary
 
@@ -37,11 +37,9 @@ Full parser fixture regression coverage enforced for all Phase 1 implemented fea
 | frontmatter | 3/3 | covered |
 | footnotes | 3/3 | covered |
 | conflicts:protected-regions | 1/1 | covered |
-| **tooltips** | **4/4** | **deferred** — tooltips not in Phase 1 backlog, no `tooltips.ts` extension |
-| **conflicts:inline-html** | **1/1** | **deferred** — requires HTML block-level parsing, not implemented in custom parser |
-| **conflicts:tooltip-vs-footnote** | **1/1** | **deferred** — requires tooltip implementation |
-
-No fixtures were modified. No specs were modified. No parser/serializer feature code was changed.
+| **tooltips** | **4/4** | **deferred** |
+| **conflicts:inline-html** | **1/1** | **deferred** |
+| **conflicts:tooltip-vs-footnote** | **1/1** | **deferred** |
 
 ## Scope Guardrails
 
@@ -50,11 +48,10 @@ No fixtures were modified. No specs were modified. No parser/serializer feature 
 - No actual embedded rendering
 - No fixture changes
 - No spec changes
-- No parser/serializer feature changes
 
-## Files Modified
+## Files Created
 
-- `packages/markup/tests/wiki-links.test.mjs` — added `conflictFixtureIds` array and fixture test for `conflicts/protected-regions`
+- `reports/PHASE_1_VALIDATION.md` — full validation report
 
 ## Verification Summary
 
@@ -69,6 +66,10 @@ No fixtures were modified. No specs were modified. No parser/serializer feature 
 
 None.
 
+## Phase 1 Verdict
+
+**PASS** — pending phase-final mega audit.
+
 ## Next Recommended Task
 
-P1-025 Phase 1 validation
+Phase 2 — `@nabla/workspace`
