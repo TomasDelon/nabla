@@ -1,0 +1,7 @@
+{
+  "firstNonEmpty": true,
+  "secondNonEmpty": true,
+  "different": true,
+  "firstIncludes": "Alpha",
+  "secondIncludes": "Beta"
+}

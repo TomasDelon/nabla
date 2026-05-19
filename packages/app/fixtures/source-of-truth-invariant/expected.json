@@ -1,0 +1,3 @@
+{
+  "forbiddenKeys": ["html", "innerHTML", "editorState", "jsonState", "serializedState"]
+}

@@ -1,0 +1,4 @@
+{
+  "kinds": ["taskState", "wikiLink", "tag", "highlight", "emoji", "footnote", "comment", "callout", "toggle", "foldedHeading"],
+  "excluded": ["transclusion", "tooltip"]
+}
