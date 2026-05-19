@@ -1,4 +1,2 @@
-packages/workspace/src/transclusion-resolver.ts
-packages/workspace/src/workspace.ts
-packages/workspace/tests/transclusion-depth.test.mjs
+packages/workspace/tests/workspace-fixtures.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

@@ -1,1 +1,1 @@
-ccd7610 feat(workspace): add transclusion depth limit
+cee7823 test(workspace): add workspace fixture regression coverage
