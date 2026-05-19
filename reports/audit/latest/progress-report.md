@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-013` — Editor Validation/API Consistency
+`P3-014` — Editor Fixture/Regression Plan
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, and API consistency validation.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, API consistency validation, and editor fixture/regression tests.
 
 ### Repairs Applied
 
@@ -136,6 +136,19 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No parser/serializer changes.
 - No workspace changes.
 
+### P3-014 Notes
+
+- Created editor-level regression fixtures in `packages/editor/fixtures/`.
+- Added 10 fixture cases: task-state-toggle, wiki-link-preserve, tag-highlight-preserve, emoji-preserve, footnote-comment-preserve, fold-callout-toggle, fold-toggle-toggle, fold-heading-toggle, protected-region-preserve, export-loss-controlled.
+- Each fixture has input.md, expected.md, and operation.json.
+- Created fixture test runner in `packages/editor/tests/editor-fixtures.test.mjs`.
+- Fixtures cover all features from P3-007 through P3-012: task state toggle, wiki link preservation, tag/highlight preservation, emoji preservation, footnote/comment preservation, callout fold toggle, toggle fold toggle, heading fold toggle, protected region preservation, and controlled export-loss detection.
+- No deferred visual features tested (callout visual, toggle visual, folded heading visual, transclusion, tooltip).
+- No source files changed.
+- No dependencies added.
+- No parser/serializer changes.
+- No workspace changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -154,4 +167,4 @@ None.
 
 ## Next Recommended Task
 
-P3-014 — Editor Fixture/Regression Plan — create editor-level regression fixtures and tests covering all features implemented in P3-007 through P3-012.
+P3-015 — Phase 3 Validation Report — document the completion status of all Phase 3 tasks, quality gate results, deferred scope, and a phase verdict.

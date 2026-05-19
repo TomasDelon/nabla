@@ -1,1 +1,1 @@
-c64c6d3 test(editor): add API consistency coverage
+f6ab0ee test(editor): add editor fixture regression coverage

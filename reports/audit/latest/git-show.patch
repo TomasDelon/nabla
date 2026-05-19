@@ -1,211 +1,346 @@
-diff --git a/packages/editor/tests/api-consistency.test.mjs b/packages/editor/tests/api-consistency.test.mjs
+diff --git a/packages/editor/fixtures/emoji-preserve/expected.md b/packages/editor/fixtures/emoji-preserve/expected.md
 new file mode 100644
-index 0000000..c252451
+index 0000000..c77f92f
 --- /dev/null
-+++ b/packages/editor/tests/api-consistency.test.mjs
-@@ -0,0 +1,192 @@
++++ b/packages/editor/fixtures/emoji-preserve/expected.md
+@@ -0,0 +1 @@
++Status :check: done
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/emoji-preserve/input.md b/packages/editor/fixtures/emoji-preserve/input.md
+new file mode 100644
+index 0000000..7d03b03
+--- /dev/null
++++ b/packages/editor/fixtures/emoji-preserve/input.md
+@@ -0,0 +1 @@
++Status :check: done
+diff --git a/packages/editor/fixtures/emoji-preserve/operation.json b/packages/editor/fixtures/emoji-preserve/operation.json
+new file mode 100644
+index 0000000..b55fd1a
+--- /dev/null
++++ b/packages/editor/fixtures/emoji-preserve/operation.json
+@@ -0,0 +1 @@
++{"type":"none"}
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/export-loss-controlled/expected.md b/packages/editor/fixtures/export-loss-controlled/expected.md
+new file mode 100644
+index 0000000..b822f17
+--- /dev/null
++++ b/packages/editor/fixtures/export-loss-controlled/expected.md
+@@ -0,0 +1 @@
++Some paragraph text.
+diff --git a/packages/editor/fixtures/export-loss-controlled/input.md b/packages/editor/fixtures/export-loss-controlled/input.md
+new file mode 100644
+index 0000000..b822f17
+--- /dev/null
++++ b/packages/editor/fixtures/export-loss-controlled/input.md
+@@ -0,0 +1 @@
++Some paragraph text.
+diff --git a/packages/editor/fixtures/export-loss-controlled/operation.json b/packages/editor/fixtures/export-loss-controlled/operation.json
+new file mode 100644
+index 0000000..b51a2f6
+--- /dev/null
++++ b/packages/editor/fixtures/export-loss-controlled/operation.json
+@@ -0,0 +1 @@
++{"type":"canonicalizeWithFailedPreservation"}
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/fold-callout-toggle/expected.md b/packages/editor/fixtures/fold-callout-toggle/expected.md
+new file mode 100644
+index 0000000..27d9202
+--- /dev/null
++++ b/packages/editor/fixtures/fold-callout-toggle/expected.md
+@@ -0,0 +1 @@
++[!note]v collapsible callout
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/fold-callout-toggle/input.md b/packages/editor/fixtures/fold-callout-toggle/input.md
+new file mode 100644
+index 0000000..1fabbdf
+--- /dev/null
++++ b/packages/editor/fixtures/fold-callout-toggle/input.md
+@@ -0,0 +1 @@
++[!note]> collapsible callout
+diff --git a/packages/editor/fixtures/fold-callout-toggle/operation.json b/packages/editor/fixtures/fold-callout-toggle/operation.json
+new file mode 100644
+index 0000000..87693ac
+--- /dev/null
++++ b/packages/editor/fixtures/fold-callout-toggle/operation.json
+@@ -0,0 +1 @@
++{"type":"toggleCalloutFold","line":0}
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/fold-heading-toggle/expected.md b/packages/editor/fixtures/fold-heading-toggle/expected.md
+new file mode 100644
+index 0000000..85aee77
+--- /dev/null
++++ b/packages/editor/fixtures/fold-heading-toggle/expected.md
+@@ -0,0 +1 @@
++##v folded heading text
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/fold-heading-toggle/input.md b/packages/editor/fixtures/fold-heading-toggle/input.md
+new file mode 100644
+index 0000000..5daacce
+--- /dev/null
++++ b/packages/editor/fixtures/fold-heading-toggle/input.md
+@@ -0,0 +1 @@
++##> folded heading text
+diff --git a/packages/editor/fixtures/fold-heading-toggle/operation.json b/packages/editor/fixtures/fold-heading-toggle/operation.json
+new file mode 100644
+index 0000000..d36128c
+--- /dev/null
++++ b/packages/editor/fixtures/fold-heading-toggle/operation.json
+@@ -0,0 +1 @@
++{"type":"toggleFoldedHeadingFold","line":0}
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/fold-toggle-toggle/expected.md b/packages/editor/fixtures/fold-toggle-toggle/expected.md
+new file mode 100644
+index 0000000..dca0808
+--- /dev/null
++++ b/packages/editor/fixtures/fold-toggle-toggle/expected.md
+@@ -0,0 +1 @@
++]v collapsible toggle
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/fold-toggle-toggle/input.md b/packages/editor/fixtures/fold-toggle-toggle/input.md
+new file mode 100644
+index 0000000..f8d7852
+--- /dev/null
++++ b/packages/editor/fixtures/fold-toggle-toggle/input.md
+@@ -0,0 +1 @@
++]> collapsible toggle
+diff --git a/packages/editor/fixtures/fold-toggle-toggle/operation.json b/packages/editor/fixtures/fold-toggle-toggle/operation.json
+new file mode 100644
+index 0000000..a5c7685
+--- /dev/null
++++ b/packages/editor/fixtures/fold-toggle-toggle/operation.json
+@@ -0,0 +1 @@
++{"type":"toggleToggleFold","line":0}
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/footnote-comment-preserve/expected.md b/packages/editor/fixtures/footnote-comment-preserve/expected.md
+new file mode 100644
+index 0000000..a3e45d2
+--- /dev/null
++++ b/packages/editor/fixtures/footnote-comment-preserve/expected.md
+@@ -0,0 +1,5 @@
++Text[^id]
++
++[^id]: details
++
++%%comment%%
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/footnote-comment-preserve/input.md b/packages/editor/fixtures/footnote-comment-preserve/input.md
+new file mode 100644
+index 0000000..4e8e60d
+--- /dev/null
++++ b/packages/editor/fixtures/footnote-comment-preserve/input.md
+@@ -0,0 +1,5 @@
++Text[^id]
++
++[^id]: details
++
++%%comment%%
+diff --git a/packages/editor/fixtures/footnote-comment-preserve/operation.json b/packages/editor/fixtures/footnote-comment-preserve/operation.json
+new file mode 100644
+index 0000000..b55fd1a
+--- /dev/null
++++ b/packages/editor/fixtures/footnote-comment-preserve/operation.json
+@@ -0,0 +1 @@
++{"type":"none"}
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/protected-region-preserve/expected.md b/packages/editor/fixtures/protected-region-preserve/expected.md
+new file mode 100644
+index 0000000..a3fcc92
+--- /dev/null
++++ b/packages/editor/fixtures/protected-region-preserve/expected.md
+@@ -0,0 +1 @@
++`#tag` `==text==` `%%comment%%` `[^id]` `:check:` [[Target]]
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/protected-region-preserve/input.md b/packages/editor/fixtures/protected-region-preserve/input.md
+new file mode 100644
+index 0000000..d7eeeeb
+--- /dev/null
++++ b/packages/editor/fixtures/protected-region-preserve/input.md
+@@ -0,0 +1 @@
++`#tag` `==text==` `%%comment%%` `[^id]` `:check:` [[Target]]
+diff --git a/packages/editor/fixtures/protected-region-preserve/operation.json b/packages/editor/fixtures/protected-region-preserve/operation.json
+new file mode 100644
+index 0000000..b55fd1a
+--- /dev/null
++++ b/packages/editor/fixtures/protected-region-preserve/operation.json
+@@ -0,0 +1 @@
++{"type":"none"}
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/tag-highlight-preserve/expected.md b/packages/editor/fixtures/tag-highlight-preserve/expected.md
+new file mode 100644
+index 0000000..88e94d4
+--- /dev/null
++++ b/packages/editor/fixtures/tag-highlight-preserve/expected.md
+@@ -0,0 +1 @@
++#tag ==highlight== =={#ff0}color==
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/tag-highlight-preserve/input.md b/packages/editor/fixtures/tag-highlight-preserve/input.md
+new file mode 100644
+index 0000000..019da11
+--- /dev/null
++++ b/packages/editor/fixtures/tag-highlight-preserve/input.md
+@@ -0,0 +1 @@
++#tag ==highlight== =={#ff0}color==
+diff --git a/packages/editor/fixtures/tag-highlight-preserve/operation.json b/packages/editor/fixtures/tag-highlight-preserve/operation.json
+new file mode 100644
+index 0000000..b55fd1a
+--- /dev/null
++++ b/packages/editor/fixtures/tag-highlight-preserve/operation.json
+@@ -0,0 +1 @@
++{"type":"none"}
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/task-state-toggle/expected.md b/packages/editor/fixtures/task-state-toggle/expected.md
+new file mode 100644
+index 0000000..e1cf8aa
+--- /dev/null
++++ b/packages/editor/fixtures/task-state-toggle/expected.md
+@@ -0,0 +1 @@
++- [x] unchecked task
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/task-state-toggle/input.md b/packages/editor/fixtures/task-state-toggle/input.md
+new file mode 100644
+index 0000000..5414b8c
+--- /dev/null
++++ b/packages/editor/fixtures/task-state-toggle/input.md
+@@ -0,0 +1 @@
++- [ ] unchecked task
+diff --git a/packages/editor/fixtures/task-state-toggle/operation.json b/packages/editor/fixtures/task-state-toggle/operation.json
+new file mode 100644
+index 0000000..fb47fa6
+--- /dev/null
++++ b/packages/editor/fixtures/task-state-toggle/operation.json
+@@ -0,0 +1 @@
++{"type":"toggleTaskState","line":0}
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/wiki-link-preserve/expected.md b/packages/editor/fixtures/wiki-link-preserve/expected.md
+new file mode 100644
+index 0000000..13b7df9
+--- /dev/null
++++ b/packages/editor/fixtures/wiki-link-preserve/expected.md
+@@ -0,0 +1 @@
++See [[Target]] and [[Target|Alias]].
+\ No newline at end of file
+diff --git a/packages/editor/fixtures/wiki-link-preserve/input.md b/packages/editor/fixtures/wiki-link-preserve/input.md
+new file mode 100644
+index 0000000..d26d101
+--- /dev/null
++++ b/packages/editor/fixtures/wiki-link-preserve/input.md
+@@ -0,0 +1 @@
++See [[Target]] and [[Target|Alias]].
+diff --git a/packages/editor/fixtures/wiki-link-preserve/operation.json b/packages/editor/fixtures/wiki-link-preserve/operation.json
+new file mode 100644
+index 0000000..b55fd1a
+--- /dev/null
++++ b/packages/editor/fixtures/wiki-link-preserve/operation.json
+@@ -0,0 +1 @@
++{"type":"none"}
+\ No newline at end of file
+diff --git a/packages/editor/tests/editor-fixtures.test.mjs b/packages/editor/tests/editor-fixtures.test.mjs
+new file mode 100644
+index 0000000..393a3de
+--- /dev/null
++++ b/packages/editor/tests/editor-fixtures.test.mjs
+@@ -0,0 +1,90 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
++import fs from "node:fs";
++import path from "node:path";
++import { fileURLToPath } from "node:url";
 +
-+async function load() {
++const __dirname = path.dirname(fileURLToPath(import.meta.url));
++const fixturesDir = path.resolve(__dirname, "../fixtures");
++
++const FIXTURE_CASES = [
++  "task-state-toggle",
++  "wiki-link-preserve",
++  "tag-highlight-preserve",
++  "emoji-preserve",
++  "footnote-comment-preserve",
++  "fold-callout-toggle",
++  "fold-toggle-toggle",
++  "fold-heading-toggle",
++  "protected-region-preserve",
++  "export-loss-controlled",
++];
++
++function readFixture(caseName) {
++  const dir = path.join(fixturesDir, caseName);
++  const input = fs.readFileSync(path.join(dir, "input.md"), "utf8");
++  const expected = fs.readFileSync(path.join(dir, "expected.md"), "utf8");
++  const operation = JSON.parse(
++    fs.readFileSync(path.join(dir, "operation.json"), "utf8"),
++  );
++  return { input, expected, operation };
++}
++
++async function loadEditor() {
 +  return import(new URL("../dist/index.js", import.meta.url));
 +}
 +
-+test("all intended runtime exports exist", async () => {
-+  const mod = await load();
++function runEditorOperation(mod, { input, operation }) {
++  const editor = mod.createEditor();
++  mod.loadSource(editor, input);
 +
-+  assert.equal(mod.NABLA_EDITOR_PACKAGE, "@nabla/editor");
++  if (operation.type === "none") {
++  } else if (operation.type === "toggleTaskState") {
++    mod.toggleTaskState(editor, operation.line);
++  } else if (operation.type === "toggleCalloutFold") {
++    mod.toggleCalloutFold(editor, operation.line);
++  } else if (operation.type === "toggleToggleFold") {
++    mod.toggleToggleFold(editor, operation.line);
++  } else if (operation.type === "toggleFoldedHeadingFold") {
++    mod.toggleFoldedHeadingFold(editor, operation.line);
++  } else {
++    throw new Error(`Unknown editor operation type: ${operation.type}`);
++  }
 +
-+  assert.equal(typeof mod.createEditor, "function");
-+  assert.equal(typeof mod.loadSource, "function");
-+  assert.equal(typeof mod.getSource, "function");
-+  assert.equal(typeof mod.replaceSource, "function");
-+  assert.equal(typeof mod.insertMarkdownBlock, "function");
-+  assert.equal(typeof mod.getDocumentBlockSummary, "function");
-+  assert.equal(typeof mod.getComments, "function");
-+  assert.equal(typeof mod.getEmojiShortcodes, "function");
-+  assert.equal(typeof mod.getFootnotes, "function");
-+  assert.equal(typeof mod.getHighlights, "function");
-+  assert.equal(typeof mod.getTags, "function");
-+  assert.equal(typeof mod.getTaskStates, "function");
-+  assert.equal(typeof mod.getWikiLinks, "function");
-+  assert.equal(typeof mod.setTaskState, "function");
-+  assert.equal(typeof mod.toggleTaskState, "function");
-+  assert.equal(typeof mod.setWikiLinkAlias, "function");
++  return mod.getSource(editor);
++}
 +
-+  assert.equal(typeof mod.toggleCalloutFold, "function");
-+  assert.equal(typeof mod.toggleCalloutFoldInMarkdown, "function");
-+  assert.equal(typeof mod.toggleToggleFold, "function");
-+  assert.equal(typeof mod.toggleToggleFoldInMarkdown, "function");
-+  assert.equal(typeof mod.toggleFoldedHeadingFold, "function");
-+  assert.equal(typeof mod.toggleFoldedHeadingFoldInMarkdown, "function");
++for (const caseName of FIXTURE_CASES) {
++  test(`fixture: ${caseName}`, async () => {
++    const { input, expected, operation } = readFixture(caseName);
++    const mod = await loadEditor();
 +
-+  assert.equal(mod.NABLA_TASK_STATE_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(mod.NABLA_WIKI_LINK_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(mod.NABLA_TAG_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(mod.NABLA_HIGHLIGHT_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(mod.NABLA_EMOJI_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(mod.NABLA_FOOTNOTE_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(mod.NABLA_COMMENT_NODE_VIEW, "node-safe-adapter");
-+
-+  assert.equal(typeof mod.getTaskStateNodeViews, "function");
-+  assert.equal(typeof mod.getWikiLinkNodeViews, "function");
-+  assert.equal(typeof mod.getTagNodeViews, "function");
-+  assert.equal(typeof mod.getHighlightNodeViews, "function");
-+  assert.equal(typeof mod.getEmojiNodeViews, "function");
-+  assert.equal(typeof mod.getFootnoteNodeViews, "function");
-+  assert.equal(typeof mod.getCommentNodeViews, "function");
-+
-+  assert.equal(typeof mod.getTaskStatesFromMarkdown, "function");
-+  assert.equal(typeof mod.getWikiLinksFromMarkdown, "function");
-+  assert.equal(typeof mod.getTagsFromMarkdown, "function");
-+  assert.equal(typeof mod.getHighlightsFromMarkdown, "function");
-+  assert.equal(typeof mod.getEmojiShortcodesFromMarkdown, "function");
-+  assert.equal(typeof mod.getFootnotesFromMarkdown, "function");
-+  assert.equal(typeof mod.getCommentsFromMarkdown, "function");
-+
-+  assert.equal(typeof mod.setTaskStateInMarkdown, "function");
-+  assert.equal(typeof mod.toggleTaskStateInMarkdown, "function");
-+  assert.equal(typeof mod.cycleTaskState, "function");
-+  assert.equal(typeof mod.setWikiLinkAliasInMarkdown, "function");
-+
-+  assert.equal(typeof mod.clampOffset, "function");
-+  assert.equal(typeof mod.createEditorPosition, "function");
-+  assert.equal(typeof mod.createSourcePosition, "function");
-+  assert.equal(typeof mod.editorToSourcePosition, "function");
-+  assert.equal(typeof mod.isValidOffset, "function");
-+  assert.equal(typeof mod.sourceToEditorPosition, "function");
-+
-+  assert.equal(mod.NABLA_EDITOR_SOURCE_OF_TRUTH, "markdown");
-+  assert.equal(typeof mod.NABLA_EDITOR_CANONICAL_SAVE_PATH, "string");
-+
-+  assert.equal(typeof mod.canonicalize, "function");
-+  assert.equal(mod.NABLA_EDITOR_EXPORT_LOSS, "NABLA_EDITOR_EXPORT_LOSS");
-+});
-+
-+test("no forbidden runtime exports exist", async () => {
-+  const mod = await load();
-+  const keys = Object.keys(mod);
-+
-+  assert.equal(keys.includes("NABLA_CALLOUT_NODE_VIEW"), false);
-+  assert.equal(keys.includes("getCalloutNodeViews"), false);
-+  assert.equal(keys.includes("getCalloutsFromMarkdown"), false);
-+
-+  assert.equal(keys.includes("NABLA_TOGGLE_NODE_VIEW"), false);
-+  assert.equal(keys.includes("getToggleNodeViews"), false);
-+  assert.equal(keys.includes("getTogglesFromMarkdown"), false);
-+
-+  assert.equal(keys.includes("NABLA_FOLDED_HEADING_NODE_VIEW"), false);
-+  assert.equal(keys.includes("getFoldedHeadingNodeViews"), false);
-+  assert.equal(keys.includes("getFoldedHeadingsFromMarkdown"), false);
-+
-+  assert.equal(keys.includes("NABLA_TRANSCLUSION_NODE_VIEW"), false);
-+  assert.equal(keys.includes("getTransclusionNodeViews"), false);
-+
-+  assert.equal(keys.includes("NABLA_TOOLTIP_NODE_VIEW"), false);
-+  assert.equal(keys.includes("getTooltipNodeViews"), false);
-+
-+  assert.equal(keys.includes("insertBlockId"), false);
-+  assert.equal(keys.includes("removeBlockId"), false);
-+  assert.equal(keys.includes("setBlockId"), false);
-+  assert.equal(keys.includes("getBlockIds"), false);
-+
-+  assert.equal(keys.includes("renderEditor"), false);
-+  assert.equal(keys.includes("EditorComponent"), false);
-+  assert.equal(keys.includes("mountEditor"), false);
-+});
-+
-+test("NABLA_EDITOR_EXPORT_LOSS is not emitted for canonical-vs-original divergence", async () => {
-+  const mod = await load();
-+
-+  const a = mod.canonicalize("Alpha\n");
-+  const b = mod.canonicalize("Beta\n");
-+
-+  assert.equal(
-+    a.diagnostics.some(d => d.code === mod.NABLA_EDITOR_EXPORT_LOSS),
-+    false,
-+    "valid divergent content must not trigger export loss",
-+  );
-+  assert.equal(
-+    b.diagnostics.some(d => d.code === mod.NABLA_EDITOR_EXPORT_LOSS),
-+    false,
-+  );
-+});
-+
-+test("NABLA_EDITOR_EXPORT_LOSS is emitted under explicit controlled conditions", async () => {
-+  const mod = await load();
-+
-+  const result = mod.canonicalize("Paragraph text.\n", {
-+    preservation: {
-+      message: "Preservation contract failed.",
-+      verify: () => false,
-+    },
++    if (operation.type === "canonicalizeWithFailedPreservation") {
++      const result = mod.canonicalize(input, {
++        preservation: {
++          message: "Fixture preservation contract failed.",
++          verify: () => false,
++        },
++      });
++      assert.equal(
++        result.canonicalMd.trimEnd(),
++        expected.trimEnd(),
++        `${caseName}: canonical output mismatch`,
++      );
++      assert.equal(
++        result.diagnostics.some(
++          (d) => d.code === mod.NABLA_EDITOR_EXPORT_LOSS,
++        ),
++        true,
++        `${caseName}: expected NABLA_EDITOR_EXPORT_LOSS diagnostic`,
++      );
++    } else {
++      const output = runEditorOperation(mod, { input, operation });
++      assert.equal(
++        output.trimEnd(),
++        expected.trimEnd(),
++        `${caseName}: editor output mismatch`,
++      );
++    }
 +  });
-+
-+  assert.equal(
-+    result.diagnostics.some(d => d.code === mod.NABLA_EDITOR_EXPORT_LOSS),
-+    true,
-+    "explicit preservation contract failure must emit export loss",
-+  );
-+});
-+
-+test("source preservation: task states roundtrip", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+
-+  mod.loadSource(editor, "- [ ] a\n- [x] b\n- [-] c\n- [!] d\n");
-+  assert.equal(mod.getSource(editor), "- [ ] a\n- [x] b\n- [-] c\n- [!] d");
-+});
-+
-+test("source preservation: wiki link roundtrip", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+
-+  mod.loadSource(editor, "[[Target]] [[Target|Alias]]\n");
-+  assert.equal(mod.getSource(editor), "[[Target]] [[Target|Alias]]");
-+});
-+
-+test("source preservation: tag and highlight roundtrip", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+
-+  mod.loadSource(editor, "#tag ==hl== =={#ff0}c==\n");
-+  assert.equal(mod.getSource(editor), "#tag ==hl== =={#ff0}c==");
-+});
-+
-+test("source preservation: emoji shortcode roundtrip", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+
-+  mod.loadSource(editor, ":check:\n");
-+  assert.equal(mod.getSource(editor), ":check:");
-+});
-+
-+test("source preservation: footnote and comment roundtrip", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+
-+  mod.loadSource(editor, "a[^b]\n\n[^b]: text\n%%c%%\n");
-+  assert.equal(mod.getSource(editor), "a[^b]\n\n[^b]: text\n%%c%%");
-+});
-+
-+test("source preservation: fold markers roundtrip", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+
-+  mod.loadSource(editor, "[!note]> callout\n");
-+  assert.equal(mod.getSource(editor), "[!note]> callout");
-+});
++}
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index d7602fd..459130e 100644
+index 459130e..5d8d678 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
  
  ## Last Task
  
--`P3-012` — Fold State Commands
-+`P3-013` — Editor Validation/API Consistency
+-`P3-013` — Editor Validation/API Consistency
++`P3-014` — Editor Fixture/Regression Plan
  
  ## Branch
  
@@ -213,29 +348,29 @@ index d7602fd..459130e 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, and fold state commands created.
-+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, and API consistency validation.
+-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, and API consistency validation.
++Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, API consistency validation, and editor fixture/regression tests.
  
  ### Repairs Applied
  
-@@ -123,6 +123,19 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
- - No visual rendering for callouts, toggles, or folded headings was added.
- - No dependencies added.
+@@ -136,6 +136,19 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
+ - No parser/serializer changes.
+ - No workspace changes.
  
-+### P3-013 Notes
++### P3-014 Notes
 +
-+- Audited public API surface of `@nabla/editor`.
-+- Added API consistency tests in `packages/editor/tests/api-consistency.test.mjs`.
-+- Verified all intended runtime exports exist and are grouped logically.
-+- Verified no forbidden runtime exports exist (callout visual, toggle visual, folded heading visual, transclusion, tooltip, block ID editing, components/app integration).
-+- Verified `NABLA_EDITOR_EXPORT_LOSS` is emitted only under explicit controlled conditions, not generic canonical-vs-original divergence.
-+- Verified source preservation for all accepted syntax surfaces: task states, wiki links, tags, highlights, emoji shortcodes, footnotes, comments, and fold markers.
-+- No new editor features implemented.
++- Created editor-level regression fixtures in `packages/editor/fixtures/`.
++- Added 10 fixture cases: task-state-toggle, wiki-link-preserve, tag-highlight-preserve, emoji-preserve, footnote-comment-preserve, fold-callout-toggle, fold-toggle-toggle, fold-heading-toggle, protected-region-preserve, export-loss-controlled.
++- Each fixture has input.md, expected.md, and operation.json.
++- Created fixture test runner in `packages/editor/tests/editor-fixtures.test.mjs`.
++- Fixtures cover all features from P3-007 through P3-012: task state toggle, wiki link preservation, tag/highlight preservation, emoji preservation, footnote/comment preservation, callout fold toggle, toggle fold toggle, heading fold toggle, protected region preservation, and controlled export-loss detection.
++- No deferred visual features tested (callout visual, toggle visual, folded heading visual, transclusion, tooltip).
++- No source files changed.
 +- No dependencies added.
 +- No parser/serializer changes.
 +- No workspace changes.
@@ -243,9 +378,9 @@ index d7602fd..459130e 100644
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -141,4 +154,4 @@ None.
+@@ -154,4 +167,4 @@ None.
  
  ## Next Recommended Task
  
--P3-013 (block id editing) — add the next accepted editor-side source manipulation behavior without broadening into unrelated node views.
-+P3-014 — Editor Fixture/Regression Plan — create editor-level regression fixtures and tests covering all features implemented in P3-007 through P3-012.
+-P3-014 — Editor Fixture/Regression Plan — create editor-level regression fixtures and tests covering all features implemented in P3-007 through P3-012.
++P3-015 — Phase 3 Validation Report — document the completion status of all Phase 3 tasks, quality gate results, deferred scope, and a phase verdict.
