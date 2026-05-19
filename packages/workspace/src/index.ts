@@ -3,6 +3,15 @@ export const NABLA_WORKSPACE_PACKAGE = "@nabla/workspace";
 export { buildBlockIndex } from "./block-index.js";
 export type { BlockIndexResult } from "./block-index.js";
 
+export { buildFileIndex } from "./file-index.js";
+export type { FileIndexInput, FileIndexResult } from "./file-index.js";
+
+export { resolveWikiLinks } from "./wiki-link-resolver.js";
+export type { WikiLinkResolution, WikiLinkResolverResult } from "./wiki-link-resolver.js";
+
+export { createWorkspace } from "./workspace.js";
+export type { WorkspaceResult } from "./workspace.js";
+
 export type WorkspaceFile = {
   path: string;
 };
