@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-MVP-VISUAL-AUDIT` — Manual MVP visual/product audit
+`P5-MVP-RUNTIME-REPAIR` — Fix app runtime CSS package export mismatch
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-005-REPAIR completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed. P5-009 completed. P5-010 completed. P5-011 completed. P5-MVP-VISUAL-AUDIT attempted and blocked (runtime app load failure under `pnpm dev:app`; no app source modified).
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-005-REPAIR completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed. P5-009 completed. P5-010 completed. P5-011 completed. P5-MVP-VISUAL-AUDIT attempted and blocked (runtime app load failure under `pnpm dev:app`; no app source modified). P5-MVP-RUNTIME-REPAIR completed (exported `@nabla/components` CSS specifiers used by `packages/app/src/app.css`; runtime smoke check passed on `http://127.0.0.1:5173`; no product features added).
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -636,8 +636,8 @@ Phase 5 (`@nabla/app`) — MVP COMPLETED. PASS WITH DEFERRED SCOPE.
 
 ## Active Blockers
 
-`pnpm dev:app` starts Vite but the MVP app does not load cleanly because `packages/app/src/app.css` imports `@nabla/components/src/*.css` paths that are not exported by `@nabla/components` at runtime. Observed dev error: `[postcss] Missing "./src/tokens.css" specifier in "@nabla/components" package`.
+None.
 
 ## Next Recommended Task
 
-`P5-MVP-RUNTIME-REPAIR` - repair the `@nabla/components` CSS export/runtime mismatch so `pnpm dev:app` loads successfully in a browser, then re-run `P5-MVP-VISUAL-AUDIT`. Do not start Phase 6 before the MVP is manually auditable.
+`P5-MVP-VISUAL-AUDIT-RERUN` - re-run the manual MVP visual/product audit now that `pnpm dev:app` loads cleanly again. Do not start Phase 6 before the MVP is re-audited.

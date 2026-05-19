@@ -9,10 +9,22 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./src/tokens.css": "./src/tokens.css",
+    "./src/task-state.css": "./src/task-state.css",
+    "./src/wiki-link.css": "./src/wiki-link.css",
+    "./src/tag.css": "./src/tag.css",
+    "./src/highlight.css": "./src/highlight.css",
+    "./src/emoji.css": "./src/emoji.css",
+    "./src/footnote.css": "./src/footnote.css",
+    "./src/comment.css": "./src/comment.css",
+    "./src/callout.css": "./src/callout.css",
+    "./src/toggle.css": "./src/toggle.css",
+    "./src/folded-heading.css": "./src/folded-heading.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/*.css"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
