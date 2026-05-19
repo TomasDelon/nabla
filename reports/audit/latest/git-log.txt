@@ -1,1 +1,1 @@
-b2a9d30 fix(markup): repair block ID parsing gates
+0f84dca feat(markup): implement transclusion parsing

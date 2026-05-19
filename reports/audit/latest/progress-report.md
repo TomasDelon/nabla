@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-019 folded headings`
+`P1-021 transclusions`
 
 ## Branch
 
@@ -14,41 +14,52 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Folded heading parsing and serialization implemented against checked-in fixture contracts (P1-019).
+Transclusion parsing and serialization implemented against checked-in fixture contracts (P1-021).
 
-All 3 folded heading fixture groups pass:
-- `folded-headings/basic` — `#>` closed and `##v` open folded headings with following paragraphs
-- `folded-headings/levels` — all 6 heading levels with alternating fold states (`>` closed, `v` open)
-- `folded-headings/tag-conflict` — `#v Vocabulary` is a folded heading, `#vocabulary` is a tag
+All 5 transclusion fixture groups pass:
+- `transclusions/note` — `![[Analyse]]` canonical transclusion
+- `transclusions/heading` — `![[Analyse#Limits]]` heading transclusion
+- `transclusions/block-canonical` — `![[Analyse^thm-main]]` canonical block ID transclusion
+- `transclusions/block-compatible` — `![[Analyse#^thm-main]]` compatible block ID transclusion serialized to canonical
+- `transclusions/inline-unsupported` — inline `![[Analyse]]` remains text with diagnostic
 
-Toggle (P1-018), callout (P1-017) and all earlier fixture groups remain passing.
+Block ID attachment for transclusions verified via `block-ids/callout-toggle-transclusion-attachment`.
+
+All existing wiki-links/tags/highlights/comments/task-states/frontmatter/code/footnotes/callouts/toggles/folded-headings/block-ids fixtures remain passing.
 
 ## Scope Guardrails
 
 - No workspace/editor/components/app
+- No workspace-level file resolution
+- No actual embedded rendering
+- No cycle detection
+- No table parsing
 - No spec changes
 - No fixture changes
 
 ## Files Created
 
-- `packages/markup/src/extensions/folded-headings.ts`
+- `packages/markup/src/extensions/transclusions.ts`
 
 ## Files Modified
 
-- `packages/markup/src/parser.ts` — `parseFoldedHeadingMarker` import, `FoldState` usage in BlockSpec, parameterized `createFoldableHeading`, all-level folded heading detection, updated block dispatch
-- `packages/markup/src/serializer.ts` — blank-line rule narrowed from paragraph→(heading|foldableHeading) to paragraph→foldableHeading only, fixing tags/basic conflict
-- `packages/markup/tests/wiki-links.test.mjs` — 3 folded heading fixture IDs and fixture-driven test
+- `packages/markup/src/parser.ts` — transclusion block detection in parseBlocks, inline transclusion diagnostic in parseParagraphChildren, AST construction for transclusion blocks
+- `packages/markup/src/serializer.ts` — transclusion serialization with block ID appending
+- `packages/markup/src/extensions/block-ids.ts` — transclusion added to ATTACHABLE_KINDS, getBlockText, setBlockText; stripInlineBrackets fixed to use \0 instead of space to prevent space-run merging
+- `packages/markup/src/index.ts` — exported parseTransclusionLine and serializeTransclusion
+- `packages/markup/tests/wiki-links.test.mjs` — 5 transclusion fixture IDs and block-ids/callout-toggle-transclusion-attachment fixture ID, inline transclusion diagnostic expectation
+- `packages/markup/tests/parser.test.mjs` — updated paragraph test that parse ![[note]] as transclusion
 - `reports/IMPLEMENTATION_PROGRESS.md` — this update
 
 ## Verification Summary
 
-- `node --test packages/markup/tests/**/*.test.mjs` — tests pass (including 3 folded heading fixture tests)
+- `node --test packages/markup/tests/**/*.test.mjs` — 65 tests pass
 - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
+- `tsc -b packages/markup/tsconfig.json` — build passed
 - `node scripts/validate-fixtures.mjs` — fixture validation passed
 - `node scripts/validate-spec-version.mjs` — spec version validation passed
 - `node scripts/check-boundaries.mjs` — boundary check passed
 - `node scripts/report-unavailable.mjs lint` — lint unavailable (bootstrap placeholder)
-- `tsc -b packages/markup/tsconfig.json` — build passed
 
 ## Active Blockers
 
@@ -56,4 +67,4 @@ None.
 
 ## Next Recommended Task
 
-P1-020 block IDs
+P1-022 emoji shortcodes

@@ -1,3 +1,9 @@
- packages/markup/src/extensions/block-ids.ts | 4 +++-
- packages/markup/src/parser.ts               | 4 ++--
- 2 files changed, 5 insertions(+), 3 deletions(-)
+ packages/markup/src/extensions/block-ids.ts     | 10 ++--
+ packages/markup/src/extensions/transclusions.ts | 61 +++++++++++++++++++++++++
+ packages/markup/src/index.ts                    |  4 ++
+ packages/markup/src/parser.ts                   | 25 ++++++++++
+ packages/markup/src/serializer.ts               | 10 +++-
+ packages/markup/tests/parser.test.mjs           |  8 ++--
+ packages/markup/tests/wiki-links.test.mjs       | 39 +++++++++++++++-
+ reports/IMPLEMENTATION_PROGRESS.md              | 39 ++++++++++------
+ 8 files changed, 171 insertions(+), 25 deletions(-)

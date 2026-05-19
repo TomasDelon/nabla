@@ -1,34 +1,387 @@
 diff --git a/packages/markup/src/extensions/block-ids.ts b/packages/markup/src/extensions/block-ids.ts
-index 1c8d97e..7a889fc 100644
+index 7a889fc..845a414 100644
 --- a/packages/markup/src/extensions/block-ids.ts
 +++ b/packages/markup/src/extensions/block-ids.ts
-@@ -12,7 +12,9 @@ const MID_BLOCK_ID = /\^([A-Za-z][A-Za-z0-9_-]*)/;
- export const OWN_LINE_ONLY = /^\^([A-Za-z][A-Za-z0-9_-]*)\s*$/;
+@@ -13,8 +13,8 @@ export const OWN_LINE_ONLY = /^\^([A-Za-z][A-Za-z0-9_-]*)\s*$/;
  
  function stripInlineBrackets(text: string): string {
--  return text.replace(/\[\[[^\]]*\]\]/g, (m) => " ".repeat(m.length));
-+  return text
-+    .replace(/\[\[[^\]]*\]\]/g, (m) => " ".repeat(m.length))
-+    .replace(/\[\^[^\]\s]+\]/g, (m) => " ".repeat(m.length));
+   return text
+-    .replace(/\[\[[^\]]*\]\]/g, (m) => " ".repeat(m.length))
+-    .replace(/\[\^[^\]\s]+\]/g, (m) => " ".repeat(m.length));
++    .replace(/\[\[[^\]]*\]\]/g, (m) => "\0".repeat(m.length))
++    .replace(/\[\^[^\]\s]+\]/g, (m) => "\0".repeat(m.length));
  }
  
  export type BlockIdResult = {
+@@ -92,11 +92,11 @@ export function extractBlockId(text: string): BlockIdResult {
+ 
+ const ATTACHABLE_KINDS = new Set([
+   "paragraph", "heading", "foldableHeading", "listItem",
+-  "callout", "toggle"
++  "callout", "toggle", "transclusion"
+ ]);
+ 
+ export function getBlockText(block: { kind: string; text?: string; content?: string; title?: string }): string | null {
+-  if (block.kind === "paragraph" || block.kind === "listItem") {
++  if (block.kind === "paragraph" || block.kind === "listItem" || block.kind === "transclusion") {
+     return block.text ?? null;
+   }
+   if (block.kind === "heading") {
+@@ -109,7 +109,7 @@ export function getBlockText(block: { kind: string; text?: string; content?: str
+ }
+ 
+ export function setBlockText(block: { kind: string; text?: string; content?: string; title?: string }, value: string): void {
+-  if (block.kind === "paragraph" || block.kind === "listItem") {
++  if (block.kind === "paragraph" || block.kind === "listItem" || block.kind === "transclusion") {
+     block.text = value;
+   } else if (block.kind === "heading") {
+     block.content = value;
+diff --git a/packages/markup/src/extensions/transclusions.ts b/packages/markup/src/extensions/transclusions.ts
+new file mode 100644
+index 0000000..be8b7a7
+--- /dev/null
++++ b/packages/markup/src/extensions/transclusions.ts
+@@ -0,0 +1,61 @@
++import type { TransclusionNode, SyntaxStatus } from "../ast.js";
++
++export type TransclusionContent = {
++  target: string;
++  heading?: string;
++  blockId?: string;
++  syntax: SyntaxStatus;
++};
++
++export function parseTransclusionContent(content: string): TransclusionContent {
++  let syntax: SyntaxStatus = "canonical";
++  let targetText = content;
++  let blockId: string | undefined;
++  let heading: string | undefined;
++
++  const compatibleBlockIndex = targetText.lastIndexOf("#^");
++  if (compatibleBlockIndex !== -1 && compatibleBlockIndex + 2 < targetText.length) {
++    syntax = "compatible";
++    blockId = targetText.slice(compatibleBlockIndex + 2);
++    targetText = targetText.slice(0, compatibleBlockIndex);
++  } else {
++    const blockIndex = targetText.lastIndexOf("^");
++    if (blockIndex !== -1 && blockIndex + 1 < targetText.length) {
++      blockId = targetText.slice(blockIndex + 1);
++      targetText = targetText.slice(0, blockIndex);
++    }
++  }
++
++  if (blockId === undefined) {
++    const headingIndex = targetText.indexOf("#");
++    if (headingIndex !== -1) {
++      heading = targetText.slice(headingIndex + 1);
++      targetText = targetText.slice(0, headingIndex);
++    }
++  }
++
++  return { target: targetText, heading, blockId, syntax };
++}
++
++export function parseTransclusionLine(line: string): TransclusionNode {
++  const content = line.slice(3, -2);
++  const parsed = parseTransclusionContent(content);
++  return {
++    type: "transclusion",
++    target: parsed.target,
++    ...(parsed.heading ? { heading: parsed.heading } : {}),
++    ...(parsed.blockId ? { blockId: parsed.blockId } : {}),
++    syntax: parsed.syntax,
++    raw: line
++  };
++}
++
++export function serializeTransclusion(node: TransclusionNode): string {
++  let inner = node.target;
++  if (node.blockId !== undefined) {
++    inner += `^${node.blockId}`;
++  } else if (node.heading !== undefined) {
++    inner += `#${node.heading}`;
++  }
++  return `![[${inner}]]`;
++}
+diff --git a/packages/markup/src/index.ts b/packages/markup/src/index.ts
+index 35b0eb6..cc7912f 100644
+--- a/packages/markup/src/index.ts
++++ b/packages/markup/src/index.ts
+@@ -56,6 +56,10 @@ export type {
+   DiagnosticCode
+ } from "./diagnostics.js";
+ export type { ParseOptions } from "./parser.js";
++export {
++  parseTransclusionLine,
++  serializeTransclusion
++} from "./extensions/transclusions.js";
+ export type {
+   ProtectedRegion,
+   ProtectedRegionKind
 diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index 5f6cf29..f6990e3 100644
+index f6990e3..f555d88 100644
 --- a/packages/markup/src/parser.ts
 +++ b/packages/markup/src/parser.ts
-@@ -1,4 +1,4 @@
--import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode, CalloutNode, ToggleNode, FoldState, SyntaxStatus } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode, CalloutNode, ToggleNode, FoldState, SyntaxStatus, TextNode } from "./ast.js";
- import type { ParseMode } from "./parse-mode.js";
- import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
- import { parseWikiLink } from "./extensions/wiki-links.js";
-@@ -23,7 +23,7 @@ const HEADING_PATTERN = /^(#{1,6}) (.+)/;
- const FENCE_PATTERN = /^( {0,3})(`{3,}|~{3,})(.*)$/;
- const FENCE_CLOSE_PATTERN = /^( {0,3})(`{3,}|~{3,})[ \t]*$/;
+@@ -11,7 +11,9 @@ import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefin
+ import { parseCalloutMarker, collectTabIndentedChildren, collectCompatibleChildren } from "./extensions/callouts.js";
+ import { parseToggleMarker } from "./extensions/toggles.js";
+ import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
++import { parseTransclusionLine } from "./extensions/transclusions.js";
+ import { processBlockIds } from "./extensions/block-ids.js";
++import { DIAGNOSTIC_CODES } from "./diagnostics.js";
  
--function createTextNode(value: string): MarkdownNode {
-+function createTextNode(value: string): TextNode {
-   return {
-     type: "text",
-     value
+ export type ParseOptions = {
+   mode?: ParseMode;
+@@ -85,6 +87,7 @@ type BlockSpec = (
+   | { kind: "footnoteDefinition"; id: string; content: string; raw: string }
+   | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string; nablaBlockId?: string }
+   | { kind: "toggle"; foldState: FoldState; title: string; rawMarker: string; childContent: string; nablaBlockId?: string }
++  | { kind: "transclusion"; text: string; nablaBlockId?: string }
+ );
+ 
+ function parseBlocks(source: string): BlockSpec[] {
+@@ -276,6 +279,12 @@ function parseBlocks(source: string): BlockSpec[] {
+       continue;
+     }
+ 
++    if (line.startsWith("![[") && line.indexOf("]]") !== -1) {
++      flushParagraph();
++      blocks.push({ kind: "transclusion", text: line });
++      continue;
++    }
++
+     paragraphLines.push(line);
+   }
+ 
+@@ -344,6 +353,14 @@ function parseParagraphChildren(source: string) {
+ 
+     if (source[index] === "[" && source[index + 1] === "[") {
+       if (index > 0 && source[index - 1] === "!") {
++        const closingIndex = findClosingDelimiter(source, index);
++        if (closingIndex !== -1) {
++          diagnostics.push({
++            severity: "warning",
++            code: DIAGNOSTIC_CODES.TRANSCLUSION_INLINE_UNSUPPORTED,
++            message: "Inline transclusions are not supported in Nabla v0."
++          });
++        }
+         index += 2;
+         continue;
+       }
+@@ -595,6 +612,14 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
+         children: childDoc ? (childDoc.children as Array<MarkdownNode | NablaBlockNode>) : [],
+         rawMarker: block.rawMarker
+       } as ToggleNode);
++    } else if (block.kind === "transclusion") {
++      const transclusionNode = parseTransclusionLine(block.text);
++      const blockData: Record<string, unknown> = {};
++      if (block.nablaBlockId) blockData.nablaBlockId = block.nablaBlockId;
++      if (Object.keys(blockData).length > 0) {
++        transclusionNode.data = blockData as import("./ast.js").BlockNodeData;
++      }
++      docChildren.push(transclusionNode as unknown as NablaBlockNode);
+     }
+   }
+ 
+diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
+index d6742ce..132c00b 100644
+--- a/packages/markup/src/serializer.ts
++++ b/packages/markup/src/serializer.ts
+@@ -1,4 +1,4 @@
+-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode } from "./ast.js";
++import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode, TransclusionNode } from "./ast.js";
+ import { serializeWikiLink } from "./extensions/wiki-links.js";
+ import { serializeTag } from "./extensions/tags.js";
+ import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
+@@ -6,6 +6,7 @@ import { taskStateToMarker } from "./extensions/task-states.js";
+ import { serializeFrontmatter } from "./extensions/frontmatter.js";
+ import { serializeFootnoteReference, serializeFootnoteDefinition } from "./extensions/footnotes.js";
+ import { serializeCallout, serializeToggle } from "./extensions/callouts.js";
++import { serializeTransclusion } from "./extensions/transclusions.js";
+ 
+ export type SerializeOptions = {
+   lineEnding?: "lf" | "crlf";
+@@ -149,6 +150,13 @@ function serializeBlockNode(node: MarkdownNode) {
+     return appendBlockIdToHeader(result, blockId);
+   }
+ 
++  if (node.type === "transclusion") {
++    const result = serializeTransclusion(node as TransclusionNode);
++    const blockId = getBlockId(node);
++    if (!blockId) return `\n${result}`;
++    return `\n${result} ^${blockId}`;
++  }
++
+   return "";
+ }
+ 
+diff --git a/packages/markup/tests/parser.test.mjs b/packages/markup/tests/parser.test.mjs
+index ad944a9..e133e1e 100644
+--- a/packages/markup/tests/parser.test.mjs
++++ b/packages/markup/tests/parser.test.mjs
+@@ -58,12 +58,14 @@ test("parser returns a minimal paragraph document when no wiki link grammar appl
+     ],
+     diagnostics: []
+   });
+-  assert.deepEqual(parse("![[note]]", { mode: "tolerant" }), {
++  assert.deepEqual(parse("![[note]]"), {
+     type: "document",
+     children: [
+       {
+-        type: "paragraph",
+-        children: [{ type: "text", value: "![[note]]" }]
++        type: "transclusion",
++        target: "note",
++        syntax: "canonical",
++        raw: "![[note]]"
+       }
+     ],
+     diagnostics: []
+diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
+index c0adb84..0cb5e7a 100644
+--- a/packages/markup/tests/wiki-links.test.mjs
++++ b/packages/markup/tests/wiki-links.test.mjs
+@@ -65,7 +65,16 @@ const blockIdFixtureIds = [
+   "block-ids/list-item",
+   "block-ids/duplicate",
+   "block-ids/invalid",
+-  "block-ids/invalid-grammar"
++  "block-ids/invalid-grammar",
++  "block-ids/callout-toggle-transclusion-attachment"
++];
++
++const transclusionFixtureIds = [
++  "transclusions/note",
++  "transclusions/heading",
++  "transclusions/block-canonical",
++  "transclusions/block-compatible",
++  "transclusions/inline-unsupported"
+ ];
+ 
+ let parserModulePromise;
+@@ -399,6 +408,26 @@ test("block ID fixtures parse and serialize according to the checked-in contract
+   }
+ });
+ 
++test("transclusion fixtures parse and serialize according to the checked-in contracts", async () => {
++  const { parse } = await loadParserModule();
++  const { serialize } = await loadSerializerModule();
++  const {
++    compareFixtureAst,
++    compareFixtureDiagnostics,
++    compareFixtureOutput,
++    loadParserFixture
++  } = await loadFixturesModule();
++
++  for (const fixtureId of transclusionFixtureIds) {
++    const fixture = await loadParserFixture(fixtureId);
++    const parsed = parse(fixture.input);
++
++    compareFixtureAst(parsed, fixture.ast);
++    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
++    compareFixtureOutput(serialize(parsed), fixture.output);
++  }
++});
++
+ test("folded heading fixtures parse and serialize according to the checked-in contracts", async () => {
+   const { parse } = await loadParserModule();
+   const { serialize } = await loadSerializerModule();
+@@ -471,7 +500,13 @@ test("wiki link parser handles heading-only links and leaves transclusion syntax
+         children: [{ type: "text", value: "See ![[Analyse]]." }]
+       }
+     ],
+-    diagnostics: []
++    diagnostics: [
++      {
++        severity: "warning",
++        code: "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED",
++        message: "Inline transclusions are not supported in Nabla v0."
++      }
++    ]
+   });
+ });
+ 
+diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
+index 2093a1e..66b9c02 100644
+--- a/reports/IMPLEMENTATION_PROGRESS.md
++++ b/reports/IMPLEMENTATION_PROGRESS.md
+@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
+ 
+ ## Task ID
+ 
+-`P1-019 folded headings`
++`P1-021 transclusions`
+ 
+ ## Branch
+ 
+@@ -14,41 +14,52 @@ Phase 1 - `@nabla/markup`
+ 
+ ## Status
+ 
+-Folded heading parsing and serialization implemented against checked-in fixture contracts (P1-019).
++Transclusion parsing and serialization implemented against checked-in fixture contracts (P1-021).
+ 
+-All 3 folded heading fixture groups pass:
+-- `folded-headings/basic` — `#>` closed and `##v` open folded headings with following paragraphs
+-- `folded-headings/levels` — all 6 heading levels with alternating fold states (`>` closed, `v` open)
+-- `folded-headings/tag-conflict` — `#v Vocabulary` is a folded heading, `#vocabulary` is a tag
++All 5 transclusion fixture groups pass:
++- `transclusions/note` — `![[Analyse]]` canonical transclusion
++- `transclusions/heading` — `![[Analyse#Limits]]` heading transclusion
++- `transclusions/block-canonical` — `![[Analyse^thm-main]]` canonical block ID transclusion
++- `transclusions/block-compatible` — `![[Analyse#^thm-main]]` compatible block ID transclusion serialized to canonical
++- `transclusions/inline-unsupported` — inline `![[Analyse]]` remains text with diagnostic
+ 
+-Toggle (P1-018), callout (P1-017) and all earlier fixture groups remain passing.
++Block ID attachment for transclusions verified via `block-ids/callout-toggle-transclusion-attachment`.
++
++All existing wiki-links/tags/highlights/comments/task-states/frontmatter/code/footnotes/callouts/toggles/folded-headings/block-ids fixtures remain passing.
+ 
+ ## Scope Guardrails
+ 
+ - No workspace/editor/components/app
++- No workspace-level file resolution
++- No actual embedded rendering
++- No cycle detection
++- No table parsing
+ - No spec changes
+ - No fixture changes
+ 
+ ## Files Created
+ 
+-- `packages/markup/src/extensions/folded-headings.ts`
++- `packages/markup/src/extensions/transclusions.ts`
+ 
+ ## Files Modified
+ 
+-- `packages/markup/src/parser.ts` — `parseFoldedHeadingMarker` import, `FoldState` usage in BlockSpec, parameterized `createFoldableHeading`, all-level folded heading detection, updated block dispatch
+-- `packages/markup/src/serializer.ts` — blank-line rule narrowed from paragraph→(heading|foldableHeading) to paragraph→foldableHeading only, fixing tags/basic conflict
+-- `packages/markup/tests/wiki-links.test.mjs` — 3 folded heading fixture IDs and fixture-driven test
++- `packages/markup/src/parser.ts` — transclusion block detection in parseBlocks, inline transclusion diagnostic in parseParagraphChildren, AST construction for transclusion blocks
++- `packages/markup/src/serializer.ts` — transclusion serialization with block ID appending
++- `packages/markup/src/extensions/block-ids.ts` — transclusion added to ATTACHABLE_KINDS, getBlockText, setBlockText; stripInlineBrackets fixed to use \0 instead of space to prevent space-run merging
++- `packages/markup/src/index.ts` — exported parseTransclusionLine and serializeTransclusion
++- `packages/markup/tests/wiki-links.test.mjs` — 5 transclusion fixture IDs and block-ids/callout-toggle-transclusion-attachment fixture ID, inline transclusion diagnostic expectation
++- `packages/markup/tests/parser.test.mjs` — updated paragraph test that parse ![[note]] as transclusion
+ - `reports/IMPLEMENTATION_PROGRESS.md` — this update
+ 
+ ## Verification Summary
+ 
+-- `node --test packages/markup/tests/**/*.test.mjs` — tests pass (including 3 folded heading fixture tests)
++- `node --test packages/markup/tests/**/*.test.mjs` — 65 tests pass
+ - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
++- `tsc -b packages/markup/tsconfig.json` — build passed
+ - `node scripts/validate-fixtures.mjs` — fixture validation passed
+ - `node scripts/validate-spec-version.mjs` — spec version validation passed
+ - `node scripts/check-boundaries.mjs` — boundary check passed
+ - `node scripts/report-unavailable.mjs lint` — lint unavailable (bootstrap placeholder)
+-- `tsc -b packages/markup/tsconfig.json` — build passed
+ 
+ ## Active Blockers
+ 
+@@ -56,4 +67,4 @@ None.
+ 
+ ## Next Recommended Task
+ 
+-P1-020 block IDs
++P1-022 emoji shortcodes

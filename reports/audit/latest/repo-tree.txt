@@ -16,6 +16,7 @@ packages/markup/src/extensions/highlights.ts
 packages/markup/src/extensions/tags.ts
 packages/markup/src/extensions/task-states.ts
 packages/markup/src/extensions/toggles.ts
+packages/markup/src/extensions/transclusions.ts
 packages/markup/src/extensions/wiki-links.ts
 packages/markup/src/fixtures.ts
 packages/markup/src/index.ts
