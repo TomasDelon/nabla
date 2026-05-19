@@ -3,7 +3,7 @@ import type { TaskStateValue } from "./types.js";
 export const TASK_STATE_ORDER: readonly TaskStateValue[] = [
   "unchecked",
   "checked",
-  "cancelled",
+  "inProgress",
   "important",
 ];
 Object.freeze(TASK_STATE_ORDER);
@@ -11,7 +11,7 @@ Object.freeze(TASK_STATE_ORDER);
 export const TASK_STATE_MARKERS: Record<TaskStateValue, string> = {
   unchecked: " ",
   checked: "x",
-  cancelled: "-",
+  inProgress: "-",
   important: "!",
 };
 Object.freeze(TASK_STATE_MARKERS);
@@ -19,7 +19,7 @@ Object.freeze(TASK_STATE_MARKERS);
 export const TASK_STATE_LABELS: Record<TaskStateValue, string> = {
   unchecked: "Unchecked",
   checked: "Checked",
-  cancelled: "Cancelled",
+  inProgress: "In progress",
   important: "Important",
 };
 Object.freeze(TASK_STATE_LABELS);

@@ -23,6 +23,20 @@ test("descriptor list includes taskState", async () => {
   assert.ok(kinds.includes("taskState"));
 });
 
+test("task state descriptors use inProgress semantics for dash marker", async () => {
+  const mod = await load();
+
+  const descriptors = mod.createSampleComponentDescriptors();
+  const taskStates = descriptors.filter((d) => d.kind === "taskState");
+  const states = taskStates.map((d) => d.props.state);
+  const texts = taskStates.map((d) => d.props.text);
+
+  assert.ok(states.includes("inProgress"));
+  assert.equal(states.includes("cancelled"), false);
+  assert.ok(texts.includes("In progress task"));
+  assert.equal(texts.includes("Cancelled task"), false);
+});
+
 test("descriptor list includes wikiLink", async () => {
   const mod = await load();
 

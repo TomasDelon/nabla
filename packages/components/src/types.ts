@@ -54,7 +54,7 @@ export interface NablaComponentContext {
 export type TaskStateValue =
   | "unchecked"
   | "checked"
-  | "cancelled"
+  | "inProgress"
   | "important";
 
 export interface TaskStateProps {

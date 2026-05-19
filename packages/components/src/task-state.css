@@ -23,8 +23,8 @@
   accent-color: var(--nabla-color-success);
 }
 
-.nabla-task-state__input[data-task-state="cancelled"] {
-  accent-color: var(--nabla-color-text-muted);
+.nabla-task-state__input[data-task-state="inProgress"] {
+  accent-color: var(--nabla-color-warning);
 }
 
 .nabla-task-state__input[data-task-state="important"] {
@@ -35,7 +35,6 @@
   user-select: none;
 }
 
-.nabla-task-state__input[data-task-state="cancelled"] ~ .nabla-task-state__text {
-  text-decoration: line-through;
-  color: var(--nabla-color-text-muted);
+.nabla-task-state__input[data-task-state="inProgress"] ~ .nabla-task-state__text {
+  color: var(--nabla-color-warning);
 }

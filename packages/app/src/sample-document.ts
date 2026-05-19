@@ -12,7 +12,7 @@ Here is an emoji shortcode: :check:
 
 - [ ] Unchecked task
 - [x] Checked task
-- [-] Cancelled task
+- [-] In progress task
 - [!] Important task
 
 ## Wiki Links

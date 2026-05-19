@@ -27,6 +27,13 @@ test("SAMPLE_DOCUMENT_SOURCE contains task state markers", async () => {
   assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [!]"));
 });
 
+test("SAMPLE_DOCUMENT_SOURCE labels dash marker as in progress", async () => {
+  const mod = await load();
+
+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [-] In progress task"));
+  assert.equal(mod.SAMPLE_DOCUMENT_SOURCE.includes("Cancelled task"), false);
+});
+
 test("SAMPLE_DOCUMENT_SOURCE contains wiki link syntax", async () => {
   const mod = await load();
 

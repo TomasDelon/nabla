@@ -20,7 +20,7 @@ import type {
 const SAMPLE_METADATA: BridgeComponentMetadata[] = [
   { kind: "taskState", state: "unchecked", text: "Unchecked task" },
   { kind: "taskState", state: "checked", text: "Checked task" },
-  { kind: "taskState", state: "cancelled", text: "Cancelled task" },
+  { kind: "taskState", state: "inProgress", text: "In progress task" },
   { kind: "taskState", state: "important", text: "Important task" },
   { kind: "wikiLink", target: "ResolvedPage", alias: "Resolved Link", unresolved: false, raw: "[[ResolvedPage|Resolved Link]]" },
   { kind: "wikiLink", target: "MissingPage", unresolved: true, raw: "[[MissingPage]]" },

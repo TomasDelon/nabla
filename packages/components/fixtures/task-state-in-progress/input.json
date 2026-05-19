@@ -1,4 +1,4 @@
 {
   "operation": "getNextTaskState",
-  "args": ["cancelled"]
+  "args": ["inProgress"]
 }
