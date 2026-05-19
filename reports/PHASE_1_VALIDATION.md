@@ -50,7 +50,7 @@ All Phase 1 features are implemented with full parse/serialize/diagnostics suppo
 - **Footnotes** — `[^id]` references and `[^id]:` definitions with cross-reference diagnostics
 - **Callouts** — `[!type]` with fold states, nested/fenced/blank/empty variants
 - **Toggles** — `<details>` style with fold states
-- **Folded headings** — `# Heading >` foldable markers
+- **Folded headings** — `#> Heading` / `#v Heading` foldable markers
 - **Block IDs** — `^block-id` own-line attachment to paragraphs, headings, list items, callouts, toggles, transclusions, tables
 - **Transclusions** — `![[Target]]` block-level only (inline emits diagnostic)
 - **Emoji shortcodes** — `:check:` canonical mappings with unknown-emoji diagnostics
@@ -58,7 +58,7 @@ All Phase 1 features are implemented with full parse/serialize/diagnostics suppo
 
 ## Fixture Coverage
 
-### Covered (56 parser fixtures across 15 groups)
+### Covered (57 parser fixtures across 15 groups)
 
 | Feature | Fixtures | Test file | Status |
 |---|---|---|---|

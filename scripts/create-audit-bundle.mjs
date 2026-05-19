@@ -76,7 +76,7 @@ async function main() {
     "git remote get-url origin"
   ];
 
-  const rawUrls = {
+  const reviewedHeadRawUrls = {
     AUDIT_INDEX_MD: rawUrlFor(head, "reports/audit/latest/AUDIT_INDEX.md"),
     audit_json: rawUrlFor(head, "reports/audit/latest/audit.json"),
     git_show_patch: rawUrlFor(head, "reports/audit/latest/git-show.patch"),
@@ -99,12 +99,13 @@ async function main() {
     currentWorkingTreeStatus,
     changedFiles: nameOnly ? nameOnly.split("\n") : [],
     commandsUsed,
-    rawUrls,
+    reviewedHeadRawUrls,
+    auditBundleCommitKnownAfterCommit: true,
     reviewAnchor: "commit",
-    reviewInstruction: "Use the audit bundle commit hash, not branch raw URLs, as source of truth."
+    reviewInstruction: "Use the audit bundle commit hash to read reports/audit/latest/*. reviewedHeadRawUrls point to the reviewed implementation commit and are not the source of truth for the new bundle."
   };
 
-  const auditIndex = `# Audit Bundle\n\nReviewed range: \`${reviewedRange}\`\nCurrent branch: \`${branch}\`\nCurrent HEAD at generation time: \`${currentHead}\`\n\nStart with this order:\n1. \`audit.json\` for task, branch, reviewed range, current HEAD, working tree status, and raw URLs.\n2. \`git-status.txt\` for current working tree state at generation time.\n3. \`git-log.txt\` for the commit slice under review.\n4. \`git-show-name-only.txt\` and \`git-show.patch\` for the actual reviewed diff.\n5. \`repo-tree.txt\` and \`package-json.txt\` for repository context.\n\nThis bundle is text-only and is intended for review from GitHub without manual uploads.\n`;
+  const auditIndex = `# Audit Bundle\n\nReviewed range: \`${reviewedRange}\`\nCurrent branch: \`${branch}\`\nCurrent HEAD at generation time: \`${currentHead}\`\n\nReview source of truth: use the audit bundle commit hash to read \`reports/audit/latest/*\`.\n\nStart with this order:\n1. \`audit.json\` for task, branch, reviewed range, current HEAD, working tree status, review instructions, and reviewed-head reference URLs.\n2. \`git-status.txt\` for current working tree state at generation time.\n3. \`git-log.txt\` for the commit slice under review.\n4. \`git-show-name-only.txt\` and \`git-show.patch\` for the actual reviewed diff.\n5. \`repo-tree.txt\` and \`package-json.txt\` for repository context.\n\nThis bundle is text-only and is intended for review from GitHub without manual uploads.\n`;
 
   const files = [
     ["AUDIT_INDEX.md", auditIndex],
