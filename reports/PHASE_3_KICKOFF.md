@@ -74,6 +74,7 @@ All derived layers (AST, editor document, rendered UI, workspace indexes) are ep
 ### From `14_DIAGNOSTICS.md`
 
 - `NABLA_EDITOR_EXPORT_LOSS` (severity: error) — emitted when editor Markdown export lost a source construct before save.
+- Crucially, export loss must NOT be detected by comparing canonical output to the original source — valid user edits legitimately diverge. Detection is limited to explicit controlled conditions: no-op load/export roundtrip loses constructs, protected/literal regions are dropped, parser diagnostics indicate unsupported constructs, or a specific preservation contract fails.
 
 ## Known Deferred Scope from Previous Phases
 
@@ -122,7 +123,7 @@ Phase 3 MUST NOT silently solve these unless explicitly tasked:
 | ID | Risk | Impact | Mitigation |
 |---|---|---|---|
 | R3.1 | **Milkdown/Crepe version incompatibility** — chosen editor framework may not support all required ProseMirror plugin hookups | High | Start with minimal Milkdown setup; test basic load/save before adding Nabla features |
-| R3.2 | **Source fidelity loss on save** — Milkdown Markdown export normalizes or drops Nabla constructs | High | Save pipeline through parser+serializer; `NABLA_EDITOR_EXPORT_LOSS` diagnostic; original-source snapshot |
+| R3.2 | **Source fidelity loss on save** — Milkdown Markdown export normalizes or drops Nabla constructs | High | Save pipeline through parser+serializer; `NABLA_EDITOR_EXPORT_LOSS` diagnostic under controlled conditions (no-op roundtrip, protected region loss, parser diagnostics, preservation contract); original-source snapshot for regression detection, NOT for loss detection trigger |
 | R3.3 | **Fold state sync bugs** — editor fold state and source fold markers desynchronize | Medium | Test fold → save → reload → verify fold state in serialized source |
 | R3.4 | **Protected region leakage** — editor exposes Nabla syntax inside code/HTML blocks | Medium | Protected region tests in editor context; verify roundtrip preserves literal content |
 | R3.5 | **Scope creep into components/app** — implementing node views that belong in Phase 4 | Medium | Strict allowed/forbidden file lists per task; boundary checks |
@@ -132,8 +133,8 @@ Phase 3 MUST NOT silently solve these unless explicitly tasked:
 
 ## Recommendation
 
-**Phase 3 can start after P3-000.**
+**Phase 3 can start after P3-000-REPAIR.**
 
 The spec pack and implementation control pack provide sufficient guidance for the editor adapter architecture. The deferred scope from Phase 1 and Phase 2 is well-documented and does not block editor skeleton work. All risks are manageable with clear task boundaries, the save-pipeline pattern, and strict gate enforcement.
 
-Proceed to P3-001 (editor package skeleton) after this kickoff is committed and audit-bundled.
+Proceed to P3-001 (editor package skeleton) after this kickoff and backlog repair are committed and audit-bundled.

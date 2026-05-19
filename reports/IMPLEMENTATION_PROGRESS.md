@@ -2,41 +2,31 @@
 
 ## Phase
 
-Phase 2 — `@nabla/workspace`
+Phase 3 — `@nabla/editor`
 
-## Task ID
+## Last Task
 
-`P2-012` — Phase 2 validation report
+`P3-000-REPAIR` — Repair Phase 3 kickoff and backlog control docs
 
 ## Branch
 
-`phase-2-workspace-core`
+`phase-3-editor-core`
 
 ## Status
 
-P2-012 completed: official Phase 2 validation report added.
+P3-000 completed. P3-000-REPAIR completed.
 
-### Validation Outcome
+Phase 1 (`@nabla/markup`) — ACCEPTED.
+Phase 2 (`@nabla/workspace`) — ACCEPTED.
+Phase 3 (`@nabla/editor`) — kickoff and backlog repaired and ready for implementation.
 
-- Added `reports/PHASE_2_VALIDATION.md` as the phase-final validation report for
-  `@nabla/workspace`.
-- Confirmed all accepted Phase 2 tasks through `P2-011A` are complete.
-- Confirmed all requested gates pass for Phase 2 validation.
-- Confirmed no specs or checked-in fixtures were modified.
-- Confirmed no Phase 3/editor work was started.
-- Confirmed `@nabla/markup` source was untouched by the validation task.
+### Repairs Applied
 
-### Validation Verdict
-
-**PASS WITH DEFERRED SCOPE**
-
-Remaining deferred scope:
-
-1. `sourcePositionPolicy`
-2. cycle path array
-3. `maxDepth` output / `stoppedAt`
-4. inline transclusion resolution parser-blocked
-5. exact diagnostic message text
+1. **P3-003 export-loss semantics fixed**: save pipeline canonicalizes editor export; `NABLA_EDITOR_EXPORT_LOSS` not detected by comparing to original source. Detection only under explicit controlled conditions (no-op roundtrip, protected region loss, parser diagnostics, preservation contract).
+2. **P3-007 split**: monolithic node view task split into P3-007 (task states), P3-008 (wiki links), P3-009 (tags/highlights), P3-010 (emoji shortcodes), P3-011 (footnotes/comments).
+3. **P3-004 forbidden files fixed**: replaced ambiguous `(binary)` with clear read-only rule for `model.ts`.
+4. **P3-009/P3-014 aligned**: fixture/regression plan (now P3-014) scoped to only features implemented before it; fold state commands (P3-012) added as explicit prerequisite for fold roundtrip tests.
+5. **Phase 3 scope kept clean**: no Phase 4/5 work, no parser/serializer changes, no specs/fixtures modifications.
 
 ### Verification Summary
 
@@ -56,4 +46,4 @@ None.
 
 ## Next Recommended Task
 
-Await external audit/approval for Phase 2 closure. Do not start Phase 3 until Phase 2 is accepted.
+P3-001 (editor package skeleton) — after P3-000-REPAIR is committed and audit-bundled.
