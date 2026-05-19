@@ -1,8 +1,8 @@
 # Audit Bundle
 
-Reviewed range: `7802856..fd89a9d`
-Current branch: `phase-3-editor-core`
-Current HEAD at generation time: `fd89a9dcdd0e46dccd918c36476fce4dd34331ba`
+Reviewed range: `db7a771..7d18b10`
+Current branch: `phase-1-markup-core`
+Current HEAD at generation time: `7d18b109dab928529c1b04e3d4a1d1b70e6ddaa7`
 
 Review source of truth: use the audit bundle commit hash to read `reports/audit/latest/*`.
 
