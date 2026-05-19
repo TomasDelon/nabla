@@ -1,9 +1,1 @@
-7721b7d merge: integrate P2-004 block ID index
-f61f002 merge: integrate P2-003 heading slug index
-10535dd merge: integrate P2-002 path normalization
-b0404bd docs: add audit bundle for P2-003 heading slug index
-4ded6bf feat(workspace): add heading slug index
-4d24b6c docs: add audit bundle for P2-004 block ID index
-66989ae feat(workspace): add block ID index
-538bdff docs: add audit bundle for P2-002 path normalization
-2e3dc73 feat(workspace): add path normalization utilities
+d858fb4 feat(workspace): add file index and wiki link resolver

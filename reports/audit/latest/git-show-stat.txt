@@ -1,20 +1,7 @@
- packages/workspace/src/block-index.ts              |  77 +++++
- packages/workspace/src/heading-index.ts            |  61 ++++
- packages/workspace/src/index.ts                    |   7 +
- packages/workspace/src/path-utils.ts               |  25 ++
- packages/workspace/src/slug.ts                     |  21 ++
- packages/workspace/tests/block-id.test.mjs         | 343 +++++++++++++++++++++
- packages/workspace/tests/heading-slugs.test.mjs    | 148 +++++++++
- .../workspace/tests/helpers/load-ts-module.mjs     |  72 +++++
- packages/workspace/tests/path-utils.test.mjs       |  87 ++++++
- reports/IMPLEMENTATION_PROGRESS.md                 |  92 +++---
- reports/audit/latest/AUDIT_INDEX.md                |   6 +-
- reports/audit/latest/audit.json                    |  48 ++-
- reports/audit/latest/git-branch.txt                |   2 +-
- reports/audit/latest/git-log.txt                   |   2 +-
- reports/audit/latest/git-show-name-only.txt        |   6 +-
- reports/audit/latest/git-show-stat.txt             |  10 +-
- reports/audit/latest/git-show.patch                | 277 ++++++++---------
- reports/audit/latest/progress-report.md            |  73 ++---
- reports/audit/latest/repo-tree.txt                 |   2 +
- 19 files changed, 1074 insertions(+), 285 deletions(-)
+ packages/workspace/src/file-index.ts               |  42 ++++
+ packages/workspace/src/index.ts                    |   9 +
+ packages/workspace/src/wiki-link-resolver.ts       | 232 +++++++++++++++++++
+ packages/workspace/src/workspace.ts                |  37 ++++
+ packages/workspace/tests/file-index.test.mjs       | 111 ++++++++++
+ .../workspace/tests/wiki-link-resolver.test.mjs    | 246 +++++++++++++++++++++
+ 6 files changed, 677 insertions(+)
