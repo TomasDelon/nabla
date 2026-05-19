@@ -5,12 +5,13 @@ import { parseWikiLink } from "./extensions/wiki-links.js";
 import { parseTag } from "./extensions/tags.js";
 import { parseHighlight } from "./extensions/highlights.js";
 import { parsePrivateCommentBlock } from "./extensions/comments.js";
-import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from "./extensions/task-states.js";
+import { parseTaskStateMarker, parseListMarkerPrefix } from "./extensions/task-states.js";
 import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
 import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefinition, collectFootnoteIds, collectFootnoteDiagnostics } from "./extensions/footnotes.js";
 import { parseCalloutMarker, collectTabIndentedChildren, collectCompatibleChildren } from "./extensions/callouts.js";
 import { parseToggleMarker } from "./extensions/toggles.js";
 import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
+import { processBlockIds } from "./extensions/block-ids.js";
 
 export type ParseOptions = {
   mode?: ParseMode;
@@ -29,44 +30,62 @@ function createTextNode(value: string): MarkdownNode {
   };
 }
 
-function createParagraph(children: MarkdownNode[]) {
-  return {
+function createParagraph(children: MarkdownNode[], nablaBlockId?: string, nablaBlockIdOwnLine?: boolean) {
+  const node: MarkdownNode = {
     type: "paragraph",
     children
-  } as MarkdownNode;
+  };
+  if (nablaBlockId) {
+    node.data = { nablaBlockId };
+    if (nablaBlockIdOwnLine) {
+      Object.defineProperty(node.data, "nablaBlockIdOwnLine", {
+        value: true,
+        enumerable: false,
+        writable: false,
+        configurable: false
+      });
+    }
+  }
+  return node;
 }
 
-function createHeading(depth: number, content: string): MarkdownNode {
+function createHeading(depth: number, content: string, nablaBlockId?: string): MarkdownNode {
   return {
     type: "heading",
     depth,
+    ...(nablaBlockId ? { data: { nablaBlockId } } : {}),
     children: [createTextNode(content)]
   };
 }
 
-function createFoldableHeading(depth: number, foldState: FoldState, content: string, rawMarker: string): NablaBlockNode {
-  return {
+function createFoldableHeading(depth: number, foldState: FoldState, content: string, rawMarker: string, nablaBlockId?: string): NablaBlockNode {
+  const node: FoldableHeadingNode = {
     type: "foldableHeading",
     depth: depth as 1 | 2 | 3 | 4 | 5 | 6,
     foldState,
     title: [createTextNode(content)],
     rawMarker
-  } as unknown as FoldableHeadingNode;
+  };
+  if (nablaBlockId) {
+    node.data = { nablaBlockId };
+  }
+  return node as unknown as NablaBlockNode;
 }
 
-type BlockSpec =
-  | { kind: "heading"; depth: number; content: string }
-  | { kind: "foldableHeading"; depth: number; foldState: FoldState; title: string; rawMarker: string }
+type BlockSpec = (
+  | { kind: "heading"; depth: number; content: string; nablaBlockId?: string }
+  | { kind: "foldableHeading"; depth: number; foldState: FoldState; title: string; rawMarker: string; nablaBlockId?: string }
   | { kind: "code"; lang: string; value: string }
-  | { kind: "paragraph"; text: string }
+  | { kind: "paragraph"; text: string; nablaBlockId?: string }
   | { kind: "privateComment"; value: string; raw: string }
   | { kind: "html"; value: string }
-  | { kind: "listItem"; taskState?: TaskState; text: string }
+  | { kind: "listItem"; taskState?: TaskState; text: string; nablaBlockId?: string }
   | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic }
   | { kind: "thematicBreak" }
   | { kind: "footnoteDefinition"; id: string; content: string; raw: string }
-  | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string }
-  | { kind: "toggle"; foldState: FoldState; title: string; rawMarker: string; childContent: string };
+  | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string; nablaBlockId?: string }
+  | { kind: "toggle"; foldState: FoldState; title: string; rawMarker: string; childContent: string; nablaBlockId?: string }
+);
 
 function parseBlocks(source: string): BlockSpec[] {
   const lines = source.split("\n");
@@ -175,11 +194,8 @@ function parseBlocks(source: string): BlockSpec[] {
       const taskState = parseTaskStateMarker(line);
       if (taskState !== null) {
         blocks.push({ kind: "listItem", taskState: taskState.state, text: taskState.text });
-      } else if (hasBracketMarker(listPrefix.rest)) {
-        blocks.push({ kind: "listItem", text: listPrefix.rest });
       } else {
-        paragraphLines.push(line);
-        continue;
+        blocks.push({ kind: "listItem", text: listPrefix.rest });
       }
       continue;
     }
@@ -455,6 +471,9 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
   }
 
   const blocks = parseBlocks(source);
+  const blockDiagnostics = processBlockIds(blocks as Array<Record<string, unknown>>);
+  allDiagnostics.push(...blockDiagnostics.diagnostics);
+
   const docChildren: Array<MarkdownNode | NablaBlockNode> = [];
 
   for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
@@ -462,7 +481,7 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
     if (block.kind === "paragraph") {
       const { children, diagnostics } = parseParagraphChildren(block.text);
       allDiagnostics.push(...diagnostics);
-      docChildren.push(createParagraph(children));
+      docChildren.push(createParagraph(children, block.nablaBlockId, (block as Record<string, unknown>).nablaBlockIdOwnLine as boolean | undefined));
     } else if (block.kind === "code") {
       docChildren.push({
         type: "code",
@@ -470,9 +489,9 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
         value: block.value
       } as MarkdownNode);
     } else if (block.kind === "heading") {
-      docChildren.push(createHeading(block.depth, block.content));
+      docChildren.push(createHeading(block.depth, block.content, block.nablaBlockId));
     } else if (block.kind === "foldableHeading") {
-      docChildren.push(createFoldableHeading(block.depth, block.foldState, block.title, block.rawMarker));
+      docChildren.push(createFoldableHeading(block.depth, block.foldState, block.title, block.rawMarker, block.nablaBlockId));
     } else if (block.kind === "privateComment") {
       docChildren.push({
         type: "privateComment",
@@ -500,27 +519,33 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
     } else if (block.kind === "footnoteDefinition") {
       docChildren.push(buildFootnoteDefinition(block.id, block.content, block.raw) as unknown as NablaBlockNode);
     } else if (block.kind === "listItem") {
-      const items: Array<{ taskState?: TaskState; text: string }> = [
-        { taskState: block.taskState, text: block.text }
+      interface ListItemEntry { taskState?: TaskState; text: string; nablaBlockId?: string }
+      const items: ListItemEntry[] = [
+        { taskState: block.taskState, text: block.text, nablaBlockId: block.nablaBlockId }
       ];
       while (blockIndex + 1 < blocks.length && blocks[blockIndex + 1].kind === "listItem") {
         blockIndex++;
         const nextBlock = blocks[blockIndex] as BlockSpec & { kind: "listItem" };
-        items.push({ taskState: nextBlock.taskState, text: nextBlock.text });
+        items.push({ taskState: nextBlock.taskState, text: nextBlock.text, nablaBlockId: nextBlock.nablaBlockId });
       }
       docChildren.push({
         type: "list",
         ordered: false,
-        children: items.map((item) => ({
-          type: "listItem",
-          ...(item.taskState ? { data: { nablaTaskState: item.taskState } } : {}),
-          children: [
-            {
-              type: "paragraph",
-              children: [{ type: "text", value: item.text }]
-            }
-          ]
-        }))
+        children: items.map((item) => {
+          const data: Record<string, unknown> = {};
+          if (item.taskState) data.nablaTaskState = item.taskState;
+          if (item.nablaBlockId) data.nablaBlockId = item.nablaBlockId;
+          return {
+            type: "listItem",
+            ...(Object.keys(data).length > 0 ? { data } : {}),
+            children: [
+              {
+                type: "paragraph",
+                children: [{ type: "text", value: item.text }]
+              }
+            ]
+          };
+        })
       } as MarkdownNode);
     } else if (block.kind === "callout") {
       const titleDoc = parse(block.title);
@@ -533,11 +558,15 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
         allDiagnostics.push(...childDoc.diagnostics);
       }
 
+      const calloutData: Record<string, unknown> = {};
+      if (block.nablaBlockId) calloutData.nablaBlockId = block.nablaBlockId;
+
       const calloutNode: CalloutNode = {
         type: "callout",
         calloutType: block.calloutType,
         title: titleChildren as import("./ast.js").NablaInlineNode[],
         ...(block.foldState ? { foldState: block.foldState } : {}),
+        ...(Object.keys(calloutData).length > 0 ? { data: calloutData as import("./ast.js").BlockNodeData } : {}),
         children: childDoc ? (childDoc.children as Array<MarkdownNode | NablaBlockNode>) : [],
         syntax: block.syntax,
         rawMarker: block.rawMarker
@@ -555,10 +584,14 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
         allDiagnostics.push(...childDoc.diagnostics);
       }
 
+      const toggleData: Record<string, unknown> = {};
+      if (block.nablaBlockId) toggleData.nablaBlockId = block.nablaBlockId;
+
       docChildren.push({
         type: "toggle",
         title: titleChildren as import("./ast.js").NablaInlineNode[],
         foldState: block.foldState,
+        ...(Object.keys(toggleData).length > 0 ? { data: toggleData as import("./ast.js").BlockNodeData } : {}),
         children: childDoc ? (childDoc.children as Array<MarkdownNode | NablaBlockNode>) : [],
         rawMarker: block.rawMarker
       } as ToggleNode);

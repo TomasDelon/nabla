@@ -18,6 +18,25 @@ function normalizeLineEnding(value: string, lineEnding: SerializeOptions["lineEn
   return value;
 }
 
+function getBlockId(node: MarkdownNode): string | undefined {
+  const nodeData = node.data as { nablaBlockId?: string } | undefined;
+  return nodeData?.nablaBlockId;
+}
+
+function appendBlockIdToHeader(serialized: string, blockId: string): string {
+  const firstNl = serialized.indexOf("\n");
+  if (firstNl === -1) {
+    return `${serialized} ^${blockId}`;
+  }
+  const secondNl = serialized.indexOf("\n", firstNl + 1);
+  if (secondNl === -1) {
+    return `${serialized} ^${blockId}`;
+  }
+  const before = serialized.slice(0, secondNl);
+  const after = serialized.slice(secondNl);
+  return `${before} ^${blockId}${after}`;
+}
+
 function serializeInlineNode(node: MarkdownNode) {
   if (node.type === "text") {
     return typeof node.value === "string" ? node.value : "";
@@ -52,7 +71,14 @@ function serializeInlineNode(node: MarkdownNode) {
 
 function serializeBlockNode(node: MarkdownNode) {
   if (node.type === "paragraph" && Array.isArray(node.children)) {
-    return node.children.map((child) => serializeInlineNode(child as MarkdownNode)).join("");
+    const text = node.children.map((child) => serializeInlineNode(child as MarkdownNode)).join("");
+    const blockId = getBlockId(node);
+    if (!blockId) return text;
+    const isOwnLine = (node.data as Record<string, unknown> | undefined)?.nablaBlockIdOwnLine;
+    if (isOwnLine) {
+      return `${text}\n^${blockId}`;
+    }
+    return `${text} ^${blockId}`;
   }
 
   if (node.type === "code") {
@@ -66,7 +92,9 @@ function serializeBlockNode(node: MarkdownNode) {
     const content = (Array.isArray(node.children) ? node.children : [])
       .map((child) => serializeInlineNode(child as MarkdownNode))
       .join("");
-    return `${"#".repeat(node.depth)} ${content}`;
+    const blockId = getBlockId(node);
+    if (!blockId) return `${"#".repeat(node.depth)} ${content}`;
+    return `${"#".repeat(node.depth)} ${content} ^${blockId}`;
   }
 
   if (node.type === "foldableHeading") {
@@ -75,7 +103,9 @@ function serializeBlockNode(node: MarkdownNode) {
     const content = (Array.isArray(foldNode.title) ? foldNode.title : [])
       .map((child) => serializeInlineNode(child as MarkdownNode))
       .join("");
-    return `${marker} ${content}`;
+    const blockId = getBlockId(node);
+    if (!blockId) return `${marker} ${content}`;
+    return `${marker} ${content} ^${blockId}`;
   }
 
   if (node.type === "privateComment") {
@@ -106,19 +136,26 @@ function serializeBlockNode(node: MarkdownNode) {
   }
 
   if (node.type === "callout") {
-    return serializeCallout(node as CalloutNode);
+    const result = serializeCallout(node as CalloutNode);
+    const blockId = getBlockId(node);
+    if (!blockId) return result;
+    return appendBlockIdToHeader(result, blockId);
   }
 
   if (node.type === "toggle") {
-    return serializeToggle(node as ToggleNode);
+    const result = serializeToggle(node as ToggleNode);
+    const blockId = getBlockId(node);
+    if (!blockId) return result;
+    return appendBlockIdToHeader(result, blockId);
   }
 
   return "";
 }
 
 function serializeListItem(node: MarkdownNode): string {
-  const data = node.data as { nablaTaskState?: TaskState } | undefined;
+  const data = node.data as { nablaTaskState?: TaskState; nablaBlockId?: string } | undefined;
   const taskState = data?.nablaTaskState;
+  const blockId = data?.nablaBlockId;
 
   const paragraph = (Array.isArray(node.children) ? node.children : [])
     .find((child) => (child as MarkdownNode).type === "paragraph") as MarkdownNode | undefined;
@@ -128,12 +165,14 @@ function serializeListItem(node: MarkdownNode): string {
         .join("")
     : "";
 
+  const suffix = blockId ? ` ^${blockId}` : "";
+
   if (taskState) {
     const marker = taskStateToMarker(taskState);
-    return `- [${marker}] ${text}`;
+    return `- [${marker}] ${text}${suffix}`;
   }
 
-  return `- ${text}`;
+  return `- ${text}${suffix}`;
 }
 
 export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
@@ -152,10 +191,7 @@ export function serialize(source: NablaDocument, options: SerializeOptions = {})
 
     if (currSerialized.startsWith("\n")) {
       parts.push(currSerialized);
-    } else if (
-      prevType === "paragraph" &&
-      currType === "foldableHeading"
-    ) {
+    } else if (prevType === "paragraph" && (currType === "paragraph" || currType === "foldableHeading")) {
       parts.push("", currSerialized);
     } else {
       parts.push(currSerialized);
