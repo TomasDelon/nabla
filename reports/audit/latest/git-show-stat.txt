@@ -1,5 +1,4 @@
- packages/app/src/main.tsx                         |  17 +++
- packages/app/src/workspace-integration.ts         |  29 +++++
- packages/app/tests/workspace-integration.test.mjs | 128 ++++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md                |  21 +++-
- 4 files changed, 192 insertions(+), 3 deletions(-)
+ packages/app/src/app.css           | 141 +++++++++++++++++++++++--------------
+ packages/app/src/main.tsx          |  90 +++++++++++------------
+ reports/IMPLEMENTATION_PROGRESS.md |  29 +++++++-
+ 3 files changed, 160 insertions(+), 100 deletions(-)

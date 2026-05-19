@@ -1,1 +1,1 @@
-5c3354b feat(app): add workspace integration status
+1fb9c88 style(app): polish MVP layout

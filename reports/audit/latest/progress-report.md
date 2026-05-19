@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-007` — Workspace Document Index Integration (Conditional)
+`P5-008` — App Visual Polish Pass
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -550,10 +550,33 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - Created `packages/app/tests/workspace-integration.test.mjs` with 11 tests: documentCount >= 1, linkCount numeric, backlinkCount numeric, diagnosticCount numeric, hasWorkspaceIndex true, no filesystem paths in summary, no hidden JSON/HTML/editorState/jsonState/serializedState keys.
 - `@nabla/workspace` symlinked in `packages/app/node_modules/` for workspace resolution.
 
+### P5-008 Notes
+
+- Visual polish pass for the app MVP layout.
+- Updated `packages/app/src/app.css` with:
+  - Softer body background (`#f5f5f7`) for improved visual depth.
+  - Wider max-width (680px) for better content density.
+  - Centered app header with larger title.
+  - Unified `.card` component replacing ad-hoc `.status-card` / `.sample-section` for consistent section styling (white background, subtle shadow).
+  - `.card__stats` with labeled stat items using `.card__stat` and `.card__stat-label`.
+  - Improved editor textarea: larger min-height, blue border with focus ring, transition.
+  - Readonly source view with muted gray background and color.
+  - Updated preview groups: uppercase section labels, lighter dividers, `.preview-examples--row` variant for inline groups (wiki link, tag, highlight, emoji) to display side-by-side.
+  - Removed unused `.status-card__note`, `.status-card__stats`, `.sample-section`, `.section-note` legacy classes.
+- Updated `packages/app/src/main.tsx` with structural class migration:
+  - Replaced `.status-card` with `.card` for render pipeline, editor, canonical export, and workspace sections.
+  - Replaced `.section-title`/`.section-note` with `.card__title`/`.card__note` where appropriate.
+  - Added `.preview-examples--row` and `.preview-item--inline` for inline preview groups.
+  - Editor section wrapped in `.card` for consistent card styling.
+- No app logic or helper function behavior changed.
+- No tests modified.
+- No component/editor/workspace/markup source changes.
+- No tooltip/transclusion rendering.
+
 ## Active Blockers
 
 None.
 
 ## Next Recommended Task
 
-P5-008 — Visual Polish & Component Integration Sweep — refine layout, styling, and component display consistency across the app.
+P5-009 — App Fixture/Regression Coverage — add app-level regression fixtures and fixture-driven tests covering the sample document and editor/save/export pipeline.
