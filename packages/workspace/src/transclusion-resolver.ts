@@ -43,6 +43,7 @@ export function resolveTransclusions(
   fileIndex: FileIndexEntry[],
   headingIndex: HeadingIndexEntry[],
   blockIndex: BlockIndexEntry[],
+  maxDepth?: number,
 ): TransclusionResolverResult {
   const resolutions: TransclusionResolution[] = [];
   const diagnostics: Diagnostic[] = [];
@@ -84,7 +85,7 @@ export function resolveTransclusions(
     }
   }
 
-  detectTransclusionCycles(resolutions, diagnostics);
+  detectTransclusionIssues(resolutions, diagnostics, maxDepth);
 
   return { resolutions, diagnostics };
 }
@@ -258,13 +259,15 @@ function resolveBlockTransclusion(
   }
 }
 
-function detectTransclusionCycles(
+function detectTransclusionIssues(
   resolutions: TransclusionResolution[],
   diagnostics: Diagnostic[],
+  maxDepth?: number,
 ): void {
-  const graph = new Map<string, string[]>();
+  const graph = new Map<string, Map<string, number>>();
 
-  for (const res of resolutions) {
+  for (let i = 0; i < resolutions.length; i++) {
+    const res = resolutions[i];
     if (!res.resolved || !res.resolvedFilePath) continue;
 
     const sourceId = normalizeWorkspacePath(res.filePath);
@@ -279,15 +282,125 @@ function detectTransclusionCycles(
     }
 
     if (!graph.has(sourceId)) {
-      graph.set(sourceId, []);
+      graph.set(sourceId, new Map());
     }
-    graph.get(sourceId)!.push(targetId);
+    graph.get(sourceId)!.set(targetId, i);
   }
 
-  const visited = new Set<string>();
+  const allTargets = new Set<string>();
+  for (const [, edges] of graph) {
+    for (const target of edges.keys()) {
+      allTargets.add(target);
+    }
+  }
+
+  const toRemove = new Set<number>();
+
+  if (maxDepth !== undefined) {
+    const depthVisited = new Set<string>();
+
+    const dfsDepth = (node: string, depth: number): void => {
+      if (depthVisited.has(node)) return;
+
+      depthVisited.add(node);
+
+      const edges = graph.get(node);
+      if (edges) {
+        for (const [target, resIdx] of edges) {
+          if (depth + 1 > maxDepth) {
+            toRemove.add(resIdx);
+            diagnostics.push({
+              severity: "warning",
+              code: DIAGNOSTIC_CODES.TRANSCLUSION_DEPTH_LIMIT,
+              message: "Transclusion depth limit reached.",
+            });
+            continue;
+          }
+          dfsDepth(target, depth + 1);
+        }
+      }
+    };
+
+    for (const node of graph.keys()) {
+      if (!allTargets.has(node) && !depthVisited.has(node)) {
+        dfsDepth(node, 0);
+      }
+    }
+
+    const reverseGraph = new Map<string, Set<string>>();
+    for (const [source, edges] of graph) {
+      for (const target of edges.keys()) {
+        if (!reverseGraph.has(target)) reverseGraph.set(target, new Set());
+        reverseGraph.get(target)!.add(source);
+      }
+    }
+
+    const depthLimited = new Set<string>();
+    const queue: string[] = [];
+
+    for (const node of graph.keys()) {
+      if (!depthVisited.has(node)) {
+        const parents = reverseGraph.get(node);
+        if (parents && [...parents].some(p => depthVisited.has(p))) {
+          depthLimited.add(node);
+          queue.push(node);
+        }
+      }
+    }
+
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+      const edges = graph.get(node);
+      if (edges) {
+        for (const target of edges.keys()) {
+          if (!depthVisited.has(target) && !depthLimited.has(target)) {
+            depthLimited.add(target);
+            queue.push(target);
+          }
+        }
+      }
+    }
+
+    for (const node of depthLimited) {
+      const edges = graph.get(node);
+      if (edges) {
+        for (const resIdx of edges.values()) {
+          toRemove.add(resIdx);
+        }
+      }
+    }
+
+    const sorted = [...toRemove].sort((a, b) => b - a);
+    for (const idx of sorted) {
+      resolutions.splice(idx, 1);
+    }
+  }
+
+  const cycleGraph = new Map<string, string[]>();
+  for (const res of resolutions) {
+    if (!res.resolved || !res.resolvedFilePath) continue;
+
+    const sourceId = normalizeWorkspacePath(res.filePath);
+
+    let targetId: string;
+    if (res.heading) {
+      targetId = `${normalizeWorkspacePath(res.resolvedFilePath)}#${createSlug(res.heading)}`;
+    } else if (res.blockId) {
+      targetId = `${normalizeWorkspacePath(res.resolvedFilePath)}^${res.blockId}`;
+    } else {
+      targetId = normalizeWorkspacePath(res.resolvedFilePath);
+    }
+
+    if (!cycleGraph.has(sourceId)) {
+      cycleGraph.set(sourceId, []);
+    }
+    cycleGraph.get(sourceId)!.push(targetId);
+  }
+
+  const cycleVisited = new Set<string>();
   const recursionStack = new Set<string>();
 
-  const dfs = (node: string): void => {
+  const dfsCycle = (node: string): void => {
     if (recursionStack.has(node)) {
       diagnostics.push({
         severity: "error",
@@ -296,24 +409,24 @@ function detectTransclusionCycles(
       });
       return;
     }
-    if (visited.has(node)) return;
+    if (cycleVisited.has(node)) return;
 
-    visited.add(node);
+    cycleVisited.add(node);
     recursionStack.add(node);
 
-    const neighbors = graph.get(node);
+    const neighbors = cycleGraph.get(node);
     if (neighbors) {
       for (const neighbor of neighbors) {
-        dfs(neighbor);
+        dfsCycle(neighbor);
       }
     }
 
     recursionStack.delete(node);
   };
 
-  for (const node of graph.keys()) {
-    if (!visited.has(node)) {
-      dfs(node);
+  for (const node of cycleGraph.keys()) {
+    if (!cycleVisited.has(node)) {
+      dfsCycle(node);
     }
   }
 }

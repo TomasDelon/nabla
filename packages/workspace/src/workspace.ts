@@ -24,11 +24,13 @@ export function createWorkspace(files: FileIndexInput[], options: WorkspaceOptio
     fileIndexResult.headings,
     fileIndexResult.blocks,
   );
+  const maxDepth = options.maxTransclusionDepth ?? 5;
   const transclusionResult = resolveTransclusions(
     files,
     fileIndexResult.entries,
     fileIndexResult.headings,
     fileIndexResult.blocks,
+    maxDepth,
   );
 
   const index: WorkspaceIndex = {
