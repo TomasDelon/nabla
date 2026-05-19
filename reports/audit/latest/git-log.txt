@@ -1,1 +1,1 @@
-8e777dd chore(workspace): add workspace package skeleton
+4ded6bf feat(workspace): add heading slug index

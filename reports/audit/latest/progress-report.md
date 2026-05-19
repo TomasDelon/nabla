@@ -2,74 +2,51 @@
 
 ## Phase
 
-Phase 1 - `@nabla/markup`
+Phase 2 - `@nabla/workspace`
 
 ## Task ID
 
-`P1-025 Phase 1 validation`
+`P2-003 heading slug index`
 
 ## Branch
 
-`phase-1-markup-core`
+`p2-003-heading-slug-index`
 
 ## Status
 
-Phase 1 validation complete. See `reports/PHASE_1_VALIDATION.md` for full report.
+P2-003 heading slug index complete.
 
-All 25 Phase 1 tasks are complete. 69 tests pass. All quality gates pass.
+## Implemented
 
-### Fixture Coverage Summary
-
-| Feature | Fixtures | Status |
-|---|---|---|
-| wiki-links | 8/8 | covered |
-| tags | 1/1 | covered |
-| highlights | 5/5 | covered |
-| comments | 3/3 | covered |
-| callouts | 7/7 | covered |
-| toggles | 5/5 | covered |
-| folded-headings | 3/3 | covered |
-| block-ids | 8/8 | covered |
-| transclusions | 5/5 | covered |
-| emoji-shortcodes | 2/2 | covered |
-| gfm-tables | 1/1 | covered |
-| task-states | 2/2 | covered |
-| frontmatter | 3/3 | covered |
-| footnotes | 3/3 | covered |
-| conflicts:protected-regions | 1/1 | covered |
-| **tooltips** | **4/4** | **deferred** |
-| **conflicts:inline-html** | **1/1** | **deferred** |
-| **conflicts:tooltip-vs-footnote** | **1/1** | **deferred** |
+- `packages/workspace/src/slug.ts` — `createSlug` slug algorithm per spec (NFC, lowercase, trim, NFD accent removal, whitespace→`-`, punctuation removal, collapse `-`, trim `-`); `deduplicateSlugs` for `slug`, `slug-2`, `slug-3` dedup
+- `packages/workspace/src/heading-index.ts` — `buildHeadingIndex` extracts standard `heading` and `foldableHeading` nodes from `NablaDocument`, generates slugged entries with dedup
+- `packages/workspace/tests/heading-slugs.test.mjs` — 15 tests covering slug creation, dedup, and heading index extraction
 
 ## Scope Guardrails
 
-- No workspace/editor/components/app
-- No workspace-level file resolution
-- No actual embedded rendering
-- No fixture changes
-- No spec changes
-
-## Files Created
-
-- `reports/PHASE_1_VALIDATION.md` — full validation report
+- No workspace file index touched
+- No backlink or transclusion code
+- No specs or fixtures modified
+- No `@nabla/markup` behavior changes
+- No other Phase 2 packages touched
 
 ## Verification Summary
 
-- `node --test packages/markup/tests/**/*.test.mjs` — 69 tests pass
-- `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
-- `tsc -b packages/markup/tsconfig.json` — build passed
-- `node scripts/validate-fixtures.mjs` — fixture validation passed
-- `node scripts/validate-spec-version.mjs` — spec version validation passed
-- `node scripts/check-boundaries.mjs` — boundary check passed
+- `pnpm test:workspace` — 15/15 tests pass
+- `pnpm test:markup` — 69/69 tests pass
+- `pnpm test` — 84/84 tests pass
+- `pnpm typecheck` — passed
+- `pnpm build` — passed
+- `pnpm validate:fixtures` — passed
+- `pnpm validate:spec-version` — passed
+- `pnpm check:boundaries` — passed
+- `pnpm lint` — reported as unavailable (expected)
+- `git status --short` — clean
 
 ## Active Blockers
 
 None.
 
-## Phase 1 Verdict
-
-**PASS** — pending phase-final mega audit.
-
 ## Next Recommended Task
 
-Phase 2 — `@nabla/workspace`
+P2-004 — block ID index
