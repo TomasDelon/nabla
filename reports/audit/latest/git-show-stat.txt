@@ -1,6 +1,6 @@
- packages/app/src/app.css                    |  9 ++++
- packages/app/src/main.tsx                   | 30 ++++++++----
- packages/app/src/render-pipeline.ts         | 30 ++++++++++++
- packages/app/tests/render-pipeline.test.mjs | 73 +++++++++++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md          | 16 +++++--
- 5 files changed, 147 insertions(+), 11 deletions(-)
+ packages/app/src/app.css                        |  67 +++++++
+ packages/app/src/component-rendering.ts         |  67 +++++++
+ packages/app/src/main.tsx                       | 245 +++++++++++++++++++++++-
+ packages/app/tests/component-rendering.test.mjs | 191 ++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md              |  19 +-
+ 5 files changed, 583 insertions(+), 6 deletions(-)

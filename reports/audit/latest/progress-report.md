@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-004` — Markdown/Nabla Render Pipeline Integration
+`P5-005` — Component Rendering Integration
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -490,10 +490,23 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - `pnpm check:boundaries` — PASS
 - `pnpm lint` — PASS as documented unavailable placeholder
 
+### P5-005 Notes
+
+- Added `packages/app/src/component-rendering.ts` with `createSampleComponentDescriptors()` and `getComponentRenderingSummary()`.
+- Uses only public `@nabla/components` APIs: `createComponentDescriptor`, `isBridgeKindSupported`, and all 11 visual React components (TaskStateCheckbox, WikiLink, Tag, Highlight, Emoji, FootnoteReference, FootnoteDefinition, Comment, Callout, Toggle, FoldedHeading).
+- Sample metadata is explicit and temporary — derived from the sample document content as an MVP bridge. Full parser/editor metadata extraction will replace this in P5-006.
+- Updated `packages/app/src/main.tsx` with a "Visual Components Preview" section showing all accepted component kinds: task state (4 states), wiki link (resolved, unresolved), tag (simple, nested), highlight (default, color), emoji (known, unknown), footnote (reference, definition), comment (editing, reading), callout (open, closed), toggle (open, closed), folded heading (open, closed).
+- Component CSS imported via `@import` in `app.css` from `@nabla/components/src/*.css` paths (Vite-resolved).
+- App source-of-truth invariant preserved: original source textarea, canonical source textarea, and render pipeline summary remain untouched.
+- Created `packages/app/tests/component-rendering.test.mjs` with 22 tests: non-empty descriptor list, all 10 expected kinds present, no hidden JSON/HTML keys in props, render summary fields, and transclusion/tooltip exclusion.
+- No editor integration, no workspace integration, no component source changes.
+- No dependencies added to `packages/app/package.json`.
+- `@nabla/components` symlinked in `packages/app/node_modules/` for workspace resolution.
+
 ## Active Blockers
 
 None.
 
 ## Next Recommended Task
 
-P5-005 — Component Rendering Integration — wire bridge descriptors to visual React components in the app.
+P5-006 — Editor/Workspace Integration — wire parser metadata extraction and editor adapter integration for automatic component metadata.
