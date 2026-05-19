@@ -1,7 +1,9 @@
- packages/components/src/index.ts              |  3 ++
- packages/components/src/wiki-link.css         | 28 ++++++++++
- packages/components/src/wiki-link.tsx         | 55 ++++++++++++++++++++
- packages/components/tests/public-api.test.mjs |  8 ++-
- packages/components/tests/wiki-link.test.mjs  | 75 +++++++++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md            | 18 +++++--
- 6 files changed, 183 insertions(+), 4 deletions(-)
+ packages/components/src/highlight.css            |  9 ++++
+ packages/components/src/highlight.tsx            | 40 ++++++++++++++
+ packages/components/src/index.ts                 |  6 +++
+ packages/components/src/tag.css                  | 12 +++++
+ packages/components/src/tag.tsx                  | 32 +++++++++++
+ packages/components/tests/public-api.test.mjs    | 11 +++-
+ packages/components/tests/tag-highlight.test.mjs | 68 ++++++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md               | 18 +++++--
+ 8 files changed, 191 insertions(+), 5 deletions(-)

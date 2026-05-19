@@ -1,230 +1,251 @@
+diff --git a/packages/components/src/highlight.css b/packages/components/src/highlight.css
+new file mode 100644
+index 0000000..36df679
+--- /dev/null
++++ b/packages/components/src/highlight.css
+@@ -0,0 +1,9 @@
++.nabla-highlight {
++  background-color: #ffff0066;
++  color: inherit;
++  padding: 0 0.125rem;
++  border-radius: var(--nabla-radius-sm);
++  font-family: var(--nabla-font-family);
++  font-size: var(--nabla-font-size-md);
++  line-height: var(--nabla-line-height);
++}
+diff --git a/packages/components/src/highlight.tsx b/packages/components/src/highlight.tsx
+new file mode 100644
+index 0000000..2aca2d7
+--- /dev/null
++++ b/packages/components/src/highlight.tsx
+@@ -0,0 +1,40 @@
++export interface HighlightStyle {
++  readonly text: string;
++  readonly color: string | undefined;
++  readonly backgroundColor: string;
++}
++
++export function getHighlightStyle(props: {
++  readonly text: string;
++  readonly color?: string;
++}): HighlightStyle {
++  return {
++    text: props.text,
++    color: props.color,
++    backgroundColor: props.color ?? "#ffff0066",
++  };
++}
++
++export interface HighlightProps {
++  readonly text: string;
++  readonly color?: string;
++  readonly raw: string;
++}
++
++export function Highlight({ text, color }: HighlightProps) {
++  const style = getHighlightStyle({ text, color });
++
++  return (
++    <mark
++      className="nabla-highlight"
++      data-has-color={color ? "" : undefined}
++      style={
++        color
++          ? { backgroundColor: color, color: "#1a1a1a" }
++          : undefined
++      }
++    >
++      {style.text}
++    </mark>
++  );
++}
 diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-index 133dac0..f728e2e 100644
+index f728e2e..ac3f674 100644
 --- a/packages/components/src/index.ts
 +++ b/packages/components/src/index.ts
-@@ -12,6 +12,8 @@ export {
-   TASK_STATE_LABELS,
- } from "./task-state.js";
+@@ -14,6 +14,10 @@ export {
  
-+export { WikiLink, getWikiLinkDisplay } from "./wiki-link.js";
+ export { WikiLink, getWikiLinkDisplay } from "./wiki-link.js";
+ 
++export { Tag, getTagDisplay } from "./tag.js";
++
++export { Highlight, getHighlightStyle } from "./highlight.js";
 +
  export type { NablaComponentTheme } from "./theme.js";
  
  export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
-@@ -20,3 +22,4 @@ export type { TaskStateProps, WikiLinkProps, TagProps, HighlightProps, EmojiProp
- export type { FootnoteProps, CommentProps, CalloutProps, ToggleProps, FoldedHeadingProps } from "./types.js";
+@@ -23,3 +27,5 @@ export type { FootnoteProps, CommentProps, CalloutProps, ToggleProps, FoldedHead
  export type { TaskStateCheckboxProps } from "./task-state.js";
  export type { TaskStateValue } from "./types.js";
-+export type { WikiLinkDisplay } from "./wiki-link.js";
-diff --git a/packages/components/src/wiki-link.css b/packages/components/src/wiki-link.css
+ export type { WikiLinkDisplay } from "./wiki-link.js";
++export type { TagDisplay } from "./tag.js";
++export type { HighlightStyle } from "./highlight.js";
+diff --git a/packages/components/src/tag.css b/packages/components/src/tag.css
 new file mode 100644
-index 0000000..3f122bc
+index 0000000..f4a6c7a
 --- /dev/null
-+++ b/packages/components/src/wiki-link.css
-@@ -0,0 +1,28 @@
-+.nabla-wiki-link {
-+  display: inline-flex;
-+  align-items: baseline;
-+  gap: var(--nabla-spacing-xs);
-+  cursor: pointer;
-+  line-height: var(--nabla-line-height);
++++ b/packages/components/src/tag.css
+@@ -0,0 +1,12 @@
++.nabla-tag {
++  display: inline-block;
++  padding: 0.0625rem var(--nabla-spacing-sm);
 +  font-family: var(--nabla-font-family);
-+  font-size: var(--nabla-font-size-md);
-+  color: var(--nabla-color-primary);
-+  text-decoration: underline;
-+  text-underline-offset: 2px;
-+  text-decoration-thickness: 1px;
-+}
-+
-+.nabla-wiki-link[data-unresolved] {
-+  color: var(--nabla-color-text-muted);
-+  text-decoration-style: dashed;
-+}
-+
-+.nabla-wiki-link__text {
-+  white-space: nowrap;
-+}
-+
-+.nabla-wiki-link__meta {
 +  font-size: var(--nabla-font-size-sm);
-+  opacity: 0.7;
++  line-height: var(--nabla-line-height);
++  color: var(--nabla-color-primary);
++  background-color: var(--nabla-color-primary-muted);
++  border-radius: var(--nabla-radius-full);
 +  white-space: nowrap;
++  user-select: none;
 +}
-diff --git a/packages/components/src/wiki-link.tsx b/packages/components/src/wiki-link.tsx
+diff --git a/packages/components/src/tag.tsx b/packages/components/src/tag.tsx
 new file mode 100644
-index 0000000..15429ec
+index 0000000..a88dd3b
 --- /dev/null
-+++ b/packages/components/src/wiki-link.tsx
-@@ -0,0 +1,55 @@
-+export interface WikiLinkDisplay {
++++ b/packages/components/src/tag.tsx
+@@ -0,0 +1,32 @@
++export interface TagDisplay {
++  readonly value: string;
++  readonly segments: readonly string[];
 +  readonly displayText: string;
-+  readonly hasAlias: boolean;
-+  readonly hasHeading: boolean;
-+  readonly hasBlockId: boolean;
 +}
 +
-+export function getWikiLinkDisplay(props: {
-+  readonly target: string;
-+  readonly alias?: string;
-+  readonly heading?: string;
-+  readonly blockId?: string;
-+}): WikiLinkDisplay {
++export function getTagDisplay(props: {
++  readonly value: string;
++  readonly segments: readonly string[];
++}): TagDisplay {
 +  return {
-+    displayText: props.alias ?? props.target,
-+    hasAlias: props.alias !== undefined,
-+    hasHeading: props.heading !== undefined,
-+    hasBlockId: props.blockId !== undefined,
++    value: props.value,
++    segments: props.segments,
++    displayText: `#${props.value}`,
 +  };
 +}
 +
-+export interface WikiLinkProps {
-+  readonly target: string;
-+  readonly alias?: string;
-+  readonly heading?: string;
-+  readonly blockId?: string;
-+  readonly unresolved: boolean;
++export interface TagProps {
++  readonly value: string;
++  readonly segments: readonly string[];
 +  readonly raw: string;
 +}
 +
-+export function WikiLink({
-+  target,
-+  alias,
-+  heading,
-+  blockId,
-+  unresolved,
-+}: WikiLinkProps) {
-+  const display = getWikiLinkDisplay({ target, alias, heading, blockId });
++export function Tag({ value, segments }: TagProps) {
++  const display = getTagDisplay({ value, segments });
 +
 +  return (
-+    <span
-+      className="nabla-wiki-link"
-+      data-unresolved={unresolved ? "" : undefined}
-+      title={unresolved ? `Missing note: ${target}` : target}
-+    >
-+      <span className="nabla-wiki-link__text">{display.displayText}</span>
-+      {display.hasHeading && (
-+        <span className="nabla-wiki-link__meta">#{heading}</span>
-+      )}
-+      {display.hasBlockId && (
-+        <span className="nabla-wiki-link__meta">^{blockId}</span>
-+      )}
++    <span className="nabla-tag" title={display.value}>
++      {display.displayText}
 +    </span>
 +  );
 +}
 diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
-index 7a4185b..894c170 100644
+index 894c170..d9ad856 100644
 --- a/packages/components/tests/public-api.test.mjs
 +++ b/packages/components/tests/public-api.test.mjs
-@@ -18,11 +18,17 @@ test("TaskStateCheckbox is exported from public API", async () => {
-   assert.equal(typeof mod.getNextTaskState, "function");
+@@ -25,12 +25,19 @@ test("WikiLink is exported from public API", async () => {
+   assert.equal(typeof mod.getWikiLinkDisplay, "function");
  });
  
-+test("WikiLink is exported from public API", async () => {
++test("Tag and Highlight are exported from public API", async () => {
 +  const mod = await load();
 +
-+  assert.equal(typeof mod.WikiLink, "function");
-+  assert.equal(typeof mod.getWikiLinkDisplay, "function");
++  assert.equal(typeof mod.Tag, "function");
++  assert.equal(typeof mod.getTagDisplay, "function");
++  assert.equal(typeof mod.Highlight, "function");
++  assert.equal(typeof mod.getHighlightStyle, "function");
 +});
 +
  test("no forbidden visual components are exported", async () => {
    const mod = await load();
    const keys = Object.keys(mod);
  
--  assert.equal(keys.includes("WikiLink"), false);
-   assert.equal(keys.includes("Tag"), false);
-   assert.equal(keys.includes("Highlight"), false);
+-  assert.equal(keys.includes("Tag"), false);
+-  assert.equal(keys.includes("Highlight"), false);
    assert.equal(keys.includes("Emoji"), false);
-diff --git a/packages/components/tests/wiki-link.test.mjs b/packages/components/tests/wiki-link.test.mjs
+   assert.equal(keys.includes("Footnote"), false);
+   assert.equal(keys.includes("Comment"), false);
+diff --git a/packages/components/tests/tag-highlight.test.mjs b/packages/components/tests/tag-highlight.test.mjs
 new file mode 100644
-index 0000000..1e9b54e
+index 0000000..21d2524
 --- /dev/null
-+++ b/packages/components/tests/wiki-link.test.mjs
-@@ -0,0 +1,75 @@
++++ b/packages/components/tests/tag-highlight.test.mjs
+@@ -0,0 +1,68 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
-+async function load() {
-+  return import(new URL("../dist/wiki-link.js", import.meta.url));
++async function loadTag() {
++  return import(new URL("../dist/tag.js", import.meta.url));
 +}
 +
-+test("getWikiLinkDisplay uses alias when provided", async () => {
-+  const mod = await load();
++async function loadHighlight() {
++  return import(new URL("../dist/highlight.js", import.meta.url));
++}
 +
-+  const result = mod.getWikiLinkDisplay({
-+    target: "TargetPage",
-+    alias: "Custom Alias",
++test("getTagDisplay returns value and segments", async () => {
++  const mod = await loadTag();
++
++  const result = mod.getTagDisplay({
++    value: "mytag",
++    segments: ["mytag"],
 +  });
 +
-+  assert.equal(result.displayText, "Custom Alias");
-+  assert.equal(result.hasAlias, true);
++  assert.equal(result.value, "mytag");
++  assert.deepEqual(result.segments, ["mytag"]);
++  assert.equal(result.displayText, "#mytag");
 +});
 +
-+test("getWikiLinkDisplay falls back to target when no alias", async () => {
-+  const mod = await load();
++test("getTagDisplay preserves nested tag segments", async () => {
++  const mod = await loadTag();
 +
-+  const result = mod.getWikiLinkDisplay({
-+    target: "TargetPage",
++  const result = mod.getTagDisplay({
++    value: "nested/tag",
++    segments: ["nested", "tag"],
 +  });
 +
-+  assert.equal(result.displayText, "TargetPage");
-+  assert.equal(result.hasAlias, false);
++  assert.equal(result.value, "nested/tag");
++  assert.deepEqual(result.segments, ["nested", "tag"]);
++  assert.equal(result.displayText, "#nested/tag");
 +});
 +
-+test("getWikiLinkDisplay detects heading reference", async () => {
-+  const mod = await load();
++test("Tag is a function", async () => {
++  const mod = await loadTag();
 +
-+  const result = mod.getWikiLinkDisplay({
-+    target: "TargetPage",
-+    heading: "Section",
-+  });
-+
-+  assert.equal(result.hasHeading, true);
-+  assert.equal(result.hasBlockId, false);
++  assert.equal(typeof mod.Tag, "function");
 +});
 +
-+test("getWikiLinkDisplay detects block reference", async () => {
-+  const mod = await load();
++test("getHighlightStyle returns default background for simple highlight", async () => {
++  const mod = await loadHighlight();
 +
-+  const result = mod.getWikiLinkDisplay({
-+    target: "TargetPage",
-+    blockId: "abc123",
-+  });
++  const result = mod.getHighlightStyle({ text: "hello" });
 +
-+  assert.equal(result.hasBlockId, true);
-+  assert.equal(result.hasHeading, false);
++  assert.equal(result.text, "hello");
++  assert.equal(result.color, undefined);
++  assert.equal(result.backgroundColor, "#ffff0066");
 +});
 +
-+test("getWikiLinkDisplay combines alias, heading, and block metadata", async () => {
-+  const mod = await load();
++test("getHighlightStyle preserves color", async () => {
++  const mod = await loadHighlight();
 +
-+  const result = mod.getWikiLinkDisplay({
-+    target: "Target",
-+    alias: "Alias",
-+    heading: "Head",
-+    blockId: "block1",
-+  });
++  const result = mod.getHighlightStyle({ text: "colored", color: "#ff0" });
 +
-+  assert.equal(result.displayText, "Alias");
-+  assert.equal(result.hasAlias, true);
-+  assert.equal(result.hasHeading, true);
-+  assert.equal(result.hasBlockId, true);
++  assert.equal(result.text, "colored");
++  assert.equal(result.color, "#ff0");
++  assert.equal(result.backgroundColor, "#ff0");
 +});
 +
-+test("WikiLink is a function", async () => {
-+  const mod = await load();
++test("Highlight is a function", async () => {
++  const mod = await loadHighlight();
 +
-+  assert.equal(typeof mod.WikiLink, "function");
++  assert.equal(typeof mod.Highlight, "function");
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 063ab9a..56e7177 100644
+index 56e7177..619a891 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-004` — Task State Visual Component
-+`P4-005` — Wiki Link Visual Component
+-`P4-005` — Wiki Link Visual Component
++`P4-006` — Tag and Highlight Visual Components
  
  ## Branch
  
@@ -232,33 +253,33 @@ index 063ab9a..56e7177 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -223,6 +223,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
- - Browser DOM rendering tests deferred to P4-014 (no DOM/jsdom setup in repo).
+@@ -235,6 +235,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+ - No dependencies added.
  - No editor/markup/workspace source changes.
  
-+### P4-005 Notes
++### P4-006 Notes
 +
-+- Created `packages/components/src/wiki-link.tsx` with `WikiLink` component.
-+- Pure helper: `getWikiLinkDisplay` — resolves display text (alias over target) and metadata flags.
-+- Created `packages/components/src/wiki-link.css` using `--nabla-*` token variables.
-+- Resolved links styled with primary color solid underline; unresolved links with muted color dashed underline.
-+- Created tests: `tests/wiki-link.test.mjs` (6 tests); updated `tests/public-api.test.mjs`.
-+- Public API consistency: `WikiLink` and `getWikiLinkDisplay` exported; no other visual components leak.
-+- No workspace resolver integration — component receives resolved/unresolved state as props.
++- Created `packages/components/src/tag.tsx` with `Tag` component and `getTagDisplay` helper.
++- Created `packages/components/src/tag.css` — pill-style rendering using `--nabla-*` tokens.
++- Created `packages/components/src/highlight.tsx` with `Highlight` component and `getHighlightStyle` helper.
++- Created `packages/components/src/highlight.css` — default yellow highlight; color highlights use inline `style` with provided hex color.
++- Created tests: `tests/tag-highlight.test.mjs` (6 tests); updated `tests/public-api.test.mjs`.
++- Public API consistency: `Tag`, `Highlight`, and helpers exported; no future components leak.
++- No color picker or tag suggestion UI implemented.
 +- No dependencies added.
 +- No editor/markup/workspace source changes.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -241,4 +253,4 @@ None.
+@@ -253,4 +265,4 @@ None.
  
  ## Next Recommended Task
  
--P4-005 — Wiki Link Visual Component — implement a React component for wiki links.
-+P4-006 — Tag and Highlight Visual Components — implement React components for tags and highlights.
+-P4-006 — Tag and Highlight Visual Components — implement React components for tags and highlights.
++P4-007 — Emoji Visual Component — implement a React component for emoji shortcodes.

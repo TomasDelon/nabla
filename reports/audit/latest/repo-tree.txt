@@ -4,7 +4,11 @@ nabla_complete_project_documentation_pack_v1_final.zip
 nabla_complete_project_documentation_pack_v1_final.zip.sha256
 package.json
 packages/components/package.json
+packages/components/src/highlight.css
+packages/components/src/highlight.tsx
 packages/components/src/index.ts
+packages/components/src/tag.css
+packages/components/src/tag.tsx
 packages/components/src/task-state.css
 packages/components/src/task-state.tsx
 packages/components/src/theme.ts
@@ -13,6 +17,7 @@ packages/components/src/types.ts
 packages/components/src/wiki-link.css
 packages/components/src/wiki-link.tsx
 packages/components/tests/public-api.test.mjs
+packages/components/tests/tag-highlight.test.mjs
 packages/components/tests/task-state.test.mjs
 packages/components/tests/wiki-link.test.mjs
 packages/components/tsconfig.json
