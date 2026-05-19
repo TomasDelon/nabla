@@ -31,6 +31,9 @@ test("editor runtime exports are wired", async () => {
   const mod = await load();
 
   assert.equal(typeof mod.createEditor, "function");
+  assert.equal(typeof mod.replaceSource, "function");
+  assert.equal(typeof mod.insertMarkdownBlock, "function");
+  assert.equal(typeof mod.getDocumentBlockSummary, "function");
   assert.equal(typeof mod.loadSource, "function");
   assert.equal(typeof mod.getSource, "function");
 });

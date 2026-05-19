@@ -1,6 +1,13 @@
 export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
 
-export { createEditor, getSource, loadSource } from "./editor.js";
+export {
+  createEditor,
+  getDocumentBlockSummary,
+  getSource,
+  insertMarkdownBlock,
+  loadSource,
+  replaceSource,
+} from "./editor.js";
 export {
   clampOffset,
   createEditorPosition,
@@ -16,7 +23,7 @@ export {
 
 export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
 
-export type { Editor } from "./editor.js";
+export type { Editor, EditorBlockSummary } from "./editor.js";
 export type { EditorPosition, SourcePosition } from "./position.js";
 export type {
   EditorAdapter,
