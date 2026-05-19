@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-006-REPAIR` — Wire editor integration into app runtime
+`P5-007` — Workspace Document Index Integration (Conditional)
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -535,10 +535,25 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - No workspace integration.
 - No editor/markup/components/workspace source changes.
 
+### P5-007 Notes
+
+- Added `packages/app/src/workspace-integration.ts` with `createSampleWorkspaceIndex()` and `getWorkspaceIntegrationSummary()`.
+- Uses only public `@nabla/workspace` API: `createWorkspace`.
+- Workspace is browser-compatible — all operations are in-memory with no Node filesystem requirements. `FileIndexInput` takes `{ path: string; source: string }` where source is document content.
+- Updated `packages/app/src/main.tsx` with a "Workspace" section showing: document count, link count, backlink count, and diagnostics count.
+- Workspace computed from the edited source as a single in-memory document (`sample.md`).
+- Integration is MVP-level summary only — no transclusion embedded rendering, no tooltip rendering.
+- Workspace source (`@nabla/workspace`) not modified.
+- No file system loading implemented.
+- No transclusion embedded rendering.
+- No tooltip rendering.
+- Created `packages/app/tests/workspace-integration.test.mjs` with 11 tests: documentCount >= 1, linkCount numeric, backlinkCount numeric, diagnosticCount numeric, hasWorkspaceIndex true, no filesystem paths in summary, no hidden JSON/HTML/editorState/jsonState/serializedState keys.
+- `@nabla/workspace` symlinked in `packages/app/node_modules/` for workspace resolution.
+
 ## Active Blockers
 
 None.
 
 ## Next Recommended Task
 
-P5-007 — Workspace Document Index Integration (Conditional) — integrate @nabla/workspace resolver and backlink tracking into the app document model.
+P5-008 — Visual Polish & Component Integration Sweep — refine layout, styling, and component display consistency across the app.

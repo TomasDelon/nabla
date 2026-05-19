@@ -1,110 +1,224 @@
-diff --git a/packages/app/src/editor-integration.ts b/packages/app/src/editor-integration.ts
-index 693dc98..a80894d 100644
---- a/packages/app/src/editor-integration.ts
-+++ b/packages/app/src/editor-integration.ts
-@@ -16,6 +16,13 @@ export function getEditableSource(source: string): string {
-   return getSource(editor);
- }
- 
-+/**
-+ * Export canonical Markdown from the edited source.
-+ *
-+ * Delegates to the existing app save/export pipeline
-+ * (canonicalizeSampleSource) which centralizes @nabla/markup
-+ * parse/serialize. No editor-specific canonicalization is applied.
-+ */
- export function exportCanonicalSource(source: string): string {
-   return canonicalizeSampleSource(source);
- }
 diff --git a/packages/app/src/main.tsx b/packages/app/src/main.tsx
-index 9c5e881..d929d06 100644
+index d929d06..ced4d62 100644
 --- a/packages/app/src/main.tsx
 +++ b/packages/app/src/main.tsx
-@@ -7,7 +7,6 @@ import {
-   getComponentRenderingSummary,
- } from "./component-rendering.js";
- import {
--  createSourceEditor,
-   getEditableSource,
+@@ -11,6 +11,9 @@ import {
    exportCanonicalSource,
    getEditorIntegrationSummary,
-@@ -29,10 +28,12 @@ import {
- import "./app.css";
- 
- function App() {
--  const [editedSource, setEditedSource] = useState(SAMPLE_DOCUMENT_SOURCE);
-+  const [editedSource, setEditedSource] = useState(
-+    getEditableSource(SAMPLE_DOCUMENT_SOURCE),
-+  );
- 
+ } from "./editor-integration.js";
++import {
++  getWorkspaceIntegrationSummary,
++} from "./workspace-integration.js";
+ import {
+   TaskStateCheckbox,
+   getNextTaskState,
+@@ -35,6 +38,7 @@ function App() {
    const pipelineSummary = getRenderPipelineSummary(SAMPLE_DOCUMENT_SOURCE);
--  const editedSummary = getRenderPipelineSummary(editedSource);
-+  const canonicalExport = exportCanonicalSource(editedSource);
+   const canonicalExport = exportCanonicalSource(editedSource);
    const editorSummary = getEditorIntegrationSummary(editedSource);
++  const workspaceSummary = getWorkspaceIntegrationSummary(editedSource);
  
    const componentSummary = getComponentRenderingSummary();
-@@ -123,7 +124,7 @@ function App() {
-           <textarea
-             className="source-view"
-             readOnly
--            value={editedSummary.canonicalSource}
-+            value={canonicalExport}
-             rows={10}
+ 
+@@ -129,6 +133,19 @@ function App() {
            />
          </div>
-diff --git a/packages/app/tests/editor-integration.test.mjs b/packages/app/tests/editor-integration.test.mjs
-index c4b0b14..c19851e 100644
---- a/packages/app/tests/editor-integration.test.mjs
-+++ b/packages/app/tests/editor-integration.test.mjs
-@@ -18,6 +18,19 @@ test("editor integration can load sample source", async () => {
-   assert.ok(editor.source.length > 0);
- });
  
-+test("getEditableSource returns sample document source content", async () => {
++        <div className="status-card">
++          <h2 className="status-card__title">Workspace</h2>
++          <p className="section-note">
++            MVP-level workspace index from in-memory document. No filesystem, no transclusion rendering.
++          </p>
++          <div className="status-card__stats">
++            <span>Documents: {workspaceSummary.documentCount}</span>
++            <span>Links: {workspaceSummary.linkCount}</span>
++            <span>Backlinks: {workspaceSummary.backlinkCount}</span>
++            <span>Diagnostics: {workspaceSummary.diagnosticCount}</span>
++          </div>
++        </div>
++
+         <section className="component-preview">
+           <h2 className="section-title">Visual Components Preview</h2>
+           <p className="section-note">
+diff --git a/packages/app/src/workspace-integration.ts b/packages/app/src/workspace-integration.ts
+new file mode 100644
+index 0000000..0a4e48a
+--- /dev/null
++++ b/packages/app/src/workspace-integration.ts
+@@ -0,0 +1,29 @@
++import { createWorkspace } from "@nabla/workspace";
++import type { WorkspaceResult } from "@nabla/workspace";
++
++export interface WorkspaceIntegrationSummary {
++  readonly hasWorkspaceIndex: boolean;
++  readonly documentCount: number;
++  readonly linkCount: number;
++  readonly backlinkCount: number;
++  readonly diagnosticCount: number;
++}
++
++export function createSampleWorkspaceIndex(
++  source: string,
++): WorkspaceResult {
++  return createWorkspace([{ path: "sample.md", source }]);
++}
++
++export function getWorkspaceIntegrationSummary(
++  source: string,
++): WorkspaceIntegrationSummary {
++  const result = createSampleWorkspaceIndex(source);
++  return {
++    hasWorkspaceIndex: result.workspace.index.files.length > 0,
++    documentCount: result.workspace.index.files.length,
++    linkCount: result.wikiLinks.resolutions.length,
++    backlinkCount: result.workspace.index.backlinks.length,
++    diagnosticCount: result.diagnostics.length,
++  };
++}
+diff --git a/packages/app/tests/workspace-integration.test.mjs b/packages/app/tests/workspace-integration.test.mjs
+new file mode 100644
+index 0000000..b313949
+--- /dev/null
++++ b/packages/app/tests/workspace-integration.test.mjs
+@@ -0,0 +1,128 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++async function load() {
++  return import(new URL("../dist/workspace-integration.js", import.meta.url));
++}
++
++test("sample workspace summary has documentCount >= 1", async () => {
 +  const mod = await load();
 +  const { SAMPLE_DOCUMENT_SOURCE } = await import(
 +    new URL("../dist/sample-document.js", import.meta.url)
 +  );
 +
-+  const editable = mod.getEditableSource(SAMPLE_DOCUMENT_SOURCE);
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
 +
-+  assert.equal(typeof editable, "string");
-+  assert.ok(editable.length > 0);
-+  assert.ok(editable.includes("Nabla Sample Document"));
++  assert.equal(typeof summary.documentCount, "number");
++  assert.ok(summary.documentCount >= 1);
 +});
 +
- test("editable source can be retrieved", async () => {
-   const mod = await load();
-   const source = "# Hello\n\nWorld.\n";
-@@ -134,6 +147,18 @@ test("summary contains no serializedState key", async () => {
-   assert.equal("serializedState" in summary, false);
- });
- 
-+test("editor integration does not use workspace", async () => {
++test("linkCount is numeric", async () => {
 +  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
 +
-+  assert.equal(typeof mod.createSourceEditor, "function");
-+  assert.equal(typeof mod.getEditableSource, "function");
-+  assert.equal(typeof mod.exportCanonicalSource, "function");
-+  assert.equal(typeof mod.getEditorIntegrationSummary, "function");
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
 +
-+  assert.ok(!("createWorkspace" in mod));
-+  assert.ok(!("resolveWikiLinks" in mod));
++  assert.equal(typeof summary.linkCount, "number");
 +});
 +
- test("exported canonical export contains no hidden state keys", async () => {
-   const mod = await load();
-   const source = "# Hello\n\nWorld.\n";
++test("backlinkCount is numeric", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.equal(typeof summary.backlinkCount, "number");
++});
++
++test("diagnosticCount is numeric", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.equal(typeof summary.diagnosticCount, "number");
++});
++
++test("summary hasWorkspaceIndex is true for valid source", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.equal(summary.hasWorkspaceIndex, true);
++});
++
++test("no filesystem path assumptions leak into summary", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.equal("path" in summary, false);
++});
++
++test("summary contains no html key", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.equal("html" in summary, false);
++});
++
++test("summary contains no innerHTML key", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.equal("innerHTML" in summary, false);
++});
++
++test("summary contains no editorState key", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.equal("editorState" in summary, false);
++});
++
++test("summary contains no jsonState key", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.equal("jsonState" in summary, false);
++});
++
++test("summary contains no serializedState key", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const summary = mod.getWorkspaceIntegrationSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.equal("serializedState" in summary, false);
++});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index d90f564..ee02329 100644
+index ee02329..41dd577 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
  
  ## Last Task
  
--`P5-006` — Editor Source Editing MVP
-+`P5-006-REPAIR` — Wire editor integration into app runtime
+-`P5-006-REPAIR` — Wire editor integration into app runtime
++`P5-007` — Workspace Document Index Integration (Conditional)
  
  ## Branch
  
@@ -112,44 +226,29 @@ index d90f564..ee02329 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -498,7 +498,7 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
- - Updated `packages/app/src/main.tsx` with a "Visual Components Preview" section showing all accepted component kinds: task state (4 states), wiki link (resolved, unresolved), tag (simple, nested), highlight (default, color), emoji (known, unknown), footnote (reference, definition), comment (editing, reading), callout (open, closed), toggle (open, closed), folded heading (open, closed).
- - Component CSS imported via `@import` in `app.css` from `@nabla/components/src/*.css` paths (Vite-resolved).
- - App source-of-truth invariant preserved: original source textarea, canonical source textarea, and render pipeline summary remain untouched.
--- Created `packages/app/tests/component-rendering.test.mjs` with 22 tests: non-empty descriptor list, all 10 expected kinds present, no hidden JSON/HTML keys in props, render summary fields, and transclusion/tooltip exclusion.
-+- Created `packages/app/tests/component-rendering.test.mjs` with 20 tests: non-empty descriptor list, all 10 expected kinds present, no hidden JSON/HTML keys in props, render summary fields, and transclusion/tooltip exclusion.
- - No editor integration, no workspace integration, no component source changes.
- - No dependencies added to `packages/app/package.json`.
- - `@nabla/components` symlinked in `packages/app/node_modules/` for workspace resolution.
-@@ -515,17 +515,30 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
-   - Note added: "This is plain source editing MVP. Rich-text editor node views are deferred."
-   - Visual components preview, status card, and source-of-truth reminder preserved.
- - Source-of-truth rules maintained: edited text source is the working document source; canonical export is derived through the save pipeline; no hidden JSON/HTML/editorState.
--- Created `packages/app/tests/editor-integration.test.mjs` with 15 tests: can load sample source, editable source retrieval, canonical export non-empty, deterministic export changes on edit, summary fields (sourceLength, exportedLength, diagnosticsCount, hasExportedSource), no hidden JSON/HTML/editorState/jsonState/serializedState keys.
-+- Created `packages/app/tests/editor-integration.test.mjs` with tests: can load sample source, editable source retrieval, canonical export non-empty, deterministic export changes on edit, summary fields (sourceLength, exportedLength, diagnosticsCount, hasExportedSource), no hidden JSON/HTML/editorState/jsonState/serializedState keys, no workspace integration.
- - No rich-text ProseMirror node views implemented.
+@@ -535,10 +535,25 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
  - No workspace integration.
- - No automatic component metadata extraction.
- - No dependencies added to `packages/app/package.json`.
- - `@nabla/editor` symlinked in `packages/app/node_modules/` for workspace resolution.
+ - No editor/markup/components/workspace source changes.
  
-+### P5-006-REPAIR Notes
++### P5-007 Notes
 +
-+- App runtime now actually uses the editor integration helper for editable source initialization and canonical export.
-+- `main.tsx` initializes edited source via `getEditableSource(SAMPLE_DOCUMENT_SOURCE)` instead of raw `SAMPLE_DOCUMENT_SOURCE`.
-+- `main.tsx` computes canonical export via `exportCanonicalSource(editedSource)` instead of `getRenderPipelineSummary(editedSource).canonicalSource`.
-+- Unused `createSourceEditor` import removed from main.tsx.
-+- `exportCanonicalSource` documented as delegating to the existing app save/export pipeline.
-+- Added test: `getEditableSource` returns sample document content.
-+- Added test: no workspace integration assertions on the module exports.
-+- No rich-text node views implemented.
-+- No workspace integration.
-+- No editor/markup/components/workspace source changes.
++- Added `packages/app/src/workspace-integration.ts` with `createSampleWorkspaceIndex()` and `getWorkspaceIntegrationSummary()`.
++- Uses only public `@nabla/workspace` API: `createWorkspace`.
++- Workspace is browser-compatible — all operations are in-memory with no Node filesystem requirements. `FileIndexInput` takes `{ path: string; source: string }` where source is document content.
++- Updated `packages/app/src/main.tsx` with a "Workspace" section showing: document count, link count, backlink count, and diagnostics count.
++- Workspace computed from the edited source as a single in-memory document (`sample.md`).
++- Integration is MVP-level summary only — no transclusion embedded rendering, no tooltip rendering.
++- Workspace source (`@nabla/workspace`) not modified.
++- No file system loading implemented.
++- No transclusion embedded rendering.
++- No tooltip rendering.
++- Created `packages/app/tests/workspace-integration.test.mjs` with 11 tests: documentCount >= 1, linkCount numeric, backlinkCount numeric, diagnosticCount numeric, hasWorkspaceIndex true, no filesystem paths in summary, no hidden JSON/HTML/editorState/jsonState/serializedState keys.
++- `@nabla/workspace` symlinked in `packages/app/node_modules/` for workspace resolution.
 +
  ## Active Blockers
  
@@ -157,5 +256,5 @@ index d90f564..ee02329 100644
  
  ## Next Recommended Task
  
--P5-007 — Workspace Integration — integrate @nabla/workspace resolver and backlink tracking into the app document model.
-+P5-007 — Workspace Document Index Integration (Conditional) — integrate @nabla/workspace resolver and backlink tracking into the app document model.
+-P5-007 — Workspace Document Index Integration (Conditional) — integrate @nabla/workspace resolver and backlink tracking into the app document model.
++P5-008 — Visual Polish & Component Integration Sweep — refine layout, styling, and component display consistency across the app.
