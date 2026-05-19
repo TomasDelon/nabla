@@ -1,8 +1,9 @@
- packages/editor/src/editor.ts             |  39 ++++++++-
- packages/editor/src/index.ts              |  12 +++
- packages/editor/src/nodes/task-state.ts   | 127 ++++++++++++++++++++++++++++++
- packages/editor/tests/editor.test.mjs     |   7 +-
- packages/editor/tests/public-api.test.mjs |  14 ++++
- packages/editor/tests/task-state.test.mjs |  80 +++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md        |  16 +++-
- 7 files changed, 287 insertions(+), 8 deletions(-)
+ packages/editor/src/editor.ts             |  29 ++++-
+ packages/editor/src/index.ts              |   9 ++
+ packages/editor/src/nodes/wiki-link.ts    | 173 ++++++++++++++++++++++++++++++
+ packages/editor/tests/editor.test.mjs     |   9 +-
+ packages/editor/tests/public-api.test.mjs |  11 ++
+ packages/editor/tests/task-state.test.mjs |   3 +-
+ packages/editor/tests/wiki-link.test.mjs  | 140 ++++++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md        |  17 ++-
+ 8 files changed, 382 insertions(+), 9 deletions(-)

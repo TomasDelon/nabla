@@ -1,308 +1,372 @@
 diff --git a/packages/editor/src/editor.ts b/packages/editor/src/editor.ts
-index 731162a..18b036e 100644
+index 18b036e..29183d5 100644
 --- a/packages/editor/src/editor.ts
 +++ b/packages/editor/src/editor.ts
-@@ -1,9 +1,22 @@
- import { defaultMarkdownParser, defaultMarkdownSerializer } from "prosemirror-markdown";
- import { EditorState as ProseMirrorEditorState } from "prosemirror-state";
- 
+@@ -7,15 +7,22 @@ import {
+   setTaskStateInMarkdown,
+   toggleTaskStateInMarkdown,
+ } from "./nodes/task-state.js";
 +import {
-+  getTaskStateNodeViews,
-+  getTaskStatesFromMarkdown,
-+  setTaskStateInMarkdown,
-+  toggleTaskStateInMarkdown,
-+} from "./nodes/task-state.js";
-+
-+import type { TaskState } from "@nabla/markup";
-+import type { EditorTaskState } from "./nodes/task-state.js";
-+
++  getWikiLinkNodeViews,
++  getWikiLinksFromMarkdown,
++  setWikiLinkAliasInMarkdown,
++} from "./nodes/wiki-link.js";
+ 
+ import type { TaskState } from "@nabla/markup";
+ import type { EditorTaskState } from "./nodes/task-state.js";
++import type { EditorWikiLink } from "./nodes/wiki-link.js";
+ 
  export interface Editor {
    state: ProseMirrorEditorState;
--  readonly nodeViews: Readonly<Record<string, never>>;
-+  source: string;
-+  readonly nodeViews: Readonly<{
-+    readonly taskState: string;
-+  }>;
+   source: string;
+   readonly nodeViews: Readonly<{
+     readonly taskState: string;
++    readonly wikiLink: string;
+   }>;
  }
  
- export interface EditorBlockSummary {
-@@ -35,15 +48,21 @@ function createState(markdown: string) {
-   });
+@@ -52,11 +59,21 @@ function normalizeExportedMarkdown(markdown: string): string {
+   return markdown.replace(/\n$/, "");
  }
  
-+function normalizeExportedMarkdown(markdown: string): string {
-+  return markdown.replace(/\n$/, "");
++function shouldPreserveSource(editor: Editor): boolean {
++  return (
++    getTaskStatesFromMarkdown(editor.source).length > 0 ||
++    getWikiLinksFromMarkdown(editor.source).length > 0
++  );
 +}
 +
  export function createEditor(): Editor {
    return {
      state: createState(""),
--    nodeViews: Object.freeze({}),
-+    source: "",
-+    nodeViews: getTaskStateNodeViews(),
+     source: "",
+-    nodeViews: getTaskStateNodeViews(),
++    nodeViews: Object.freeze({
++      ...getTaskStateNodeViews(),
++      ...getWikiLinkNodeViews(),
++    }),
    };
  }
  
- export function loadSource(editor: Editor, markdown: string): Editor {
-   editor.state = createState(markdown);
-+  editor.source = markdown;
-   return editor;
- }
- 
-@@ -58,9 +77,25 @@ export function insertMarkdownBlock(editor: Editor, markdown: string): Editor {
+@@ -77,7 +94,7 @@ export function insertMarkdownBlock(editor: Editor, markdown: string): Editor {
  }
  
  export function getSource(editor: Editor): string {
-+  if (getTaskStatesFromMarkdown(editor.source).length > 0) {
-+    return normalizeExportedMarkdown(editor.source);
-+  }
-+
-   return defaultMarkdownSerializer.serialize(editor.state.doc);
+-  if (getTaskStatesFromMarkdown(editor.source).length > 0) {
++  if (shouldPreserveSource(editor)) {
+     return normalizeExportedMarkdown(editor.source);
+   }
+ 
+@@ -96,6 +113,14 @@ export function toggleTaskState(editor: Editor, index: number): Editor {
+   return loadSource(editor, toggleTaskStateInMarkdown(editor.source, index));
  }
  
-+export function getTaskStates(editor: Editor): readonly EditorTaskState[] {
-+  return getTaskStatesFromMarkdown(editor.source);
++export function getWikiLinks(editor: Editor): readonly EditorWikiLink[] {
++  return getWikiLinksFromMarkdown(editor.source);
 +}
 +
-+export function setTaskState(editor: Editor, index: number, state: TaskState): Editor {
-+  return loadSource(editor, setTaskStateInMarkdown(editor.source, index, state));
-+}
-+
-+export function toggleTaskState(editor: Editor, index: number): Editor {
-+  return loadSource(editor, toggleTaskStateInMarkdown(editor.source, index));
++export function setWikiLinkAlias(editor: Editor, index: number, alias?: string): Editor {
++  return loadSource(editor, setWikiLinkAliasInMarkdown(editor.source, index, alias));
 +}
 +
  function appendBlockSummaries(node: SummaryNode, summary: EditorBlockSummary[]): void {
    switch (node.type.name) {
      case "heading":
 diff --git a/packages/editor/src/index.ts b/packages/editor/src/index.ts
-index 0059dbb..ba6da27 100644
+index ba6da27..9fd85a6 100644
 --- a/packages/editor/src/index.ts
 +++ b/packages/editor/src/index.ts
-@@ -4,10 +4,21 @@ export {
-   createEditor,
+@@ -5,10 +5,12 @@ export {
    getDocumentBlockSummary,
    getSource,
-+  getTaskStates,
+   getTaskStates,
++  getWikiLinks,
    insertMarkdownBlock,
    loadSource,
    replaceSource,
-+  setTaskState,
-+  toggleTaskState,
+   setTaskState,
++  setWikiLinkAlias,
+   toggleTaskState,
  } from "./editor.js";
+ export {
+@@ -19,6 +21,12 @@ export {
+   setTaskStateInMarkdown,
+   toggleTaskStateInMarkdown,
+ } from "./nodes/task-state.js";
 +export {
-+  cycleTaskState,
-+  getTaskStateNodeViews,
-+  getTaskStatesFromMarkdown,
-+  NABLA_TASK_STATE_NODE_VIEW,
-+  setTaskStateInMarkdown,
-+  toggleTaskStateInMarkdown,
-+} from "./nodes/task-state.js";
++  getWikiLinkNodeViews,
++  getWikiLinksFromMarkdown,
++  NABLA_WIKI_LINK_NODE_VIEW,
++  setWikiLinkAliasInMarkdown,
++} from "./nodes/wiki-link.js";
  export {
    clampOffset,
    createEditorPosition,
-@@ -24,6 +35,7 @@ export {
- export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
+@@ -36,6 +44,7 @@ export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
  
  export type { Editor, EditorBlockSummary } from "./editor.js";
-+export type { EditorTaskState } from "./nodes/task-state.js";
+ export type { EditorTaskState } from "./nodes/task-state.js";
++export type { EditorWikiLink } from "./nodes/wiki-link.js";
  export type { EditorPosition, SourcePosition } from "./position.js";
  export type {
    EditorAdapter,
-diff --git a/packages/editor/src/nodes/task-state.ts b/packages/editor/src/nodes/task-state.ts
+diff --git a/packages/editor/src/nodes/wiki-link.ts b/packages/editor/src/nodes/wiki-link.ts
 new file mode 100644
-index 0000000..e39b853
+index 0000000..183fe4f
 --- /dev/null
-+++ b/packages/editor/src/nodes/task-state.ts
-@@ -0,0 +1,127 @@
-+import type { TaskState } from "@nabla/markup";
++++ b/packages/editor/src/nodes/wiki-link.ts
+@@ -0,0 +1,173 @@
++export const NABLA_WIKI_LINK_NODE_VIEW = "node-safe-adapter";
 +
-+export const NABLA_TASK_STATE_NODE_VIEW = "node-safe-adapter";
-+
-+export interface EditorTaskState {
++export interface EditorWikiLink {
 +  readonly index: number;
-+  readonly line: number;
-+  readonly state: TaskState;
-+  readonly text: string;
++  readonly target: string;
++  readonly alias?: string;
++  readonly heading?: string;
++  readonly blockId?: string;
++  readonly syntax: "canonical" | "compatible";
++  readonly raw: string;
++  readonly unresolved: false;
 +}
 +
-+const TASK_STATE_ORDER: readonly TaskState[] = [
-+  "unchecked",
-+  "checked",
-+  "cancelled",
-+  "important",
-+];
++type ParsedWikiLink = Omit<EditorWikiLink, "index" | "unresolved">;
 +
-+const TASK_STATE_MARKERS: Readonly<Record<TaskState, string>> = Object.freeze({
-+  unchecked: " ",
-+  checked: "x",
-+  cancelled: "-",
-+  important: "!",
-+});
++function findFirstUnescaped(value: string, target: string): number {
++  let escaped = false;
 +
-+const MARKER_TO_TASK_STATE: Readonly<Record<string, TaskState>> = Object.freeze({
-+  " ": "unchecked",
-+  x: "checked",
-+  "-": "cancelled",
-+  "!": "important",
-+});
++  for (let index = 0; index < value.length; index += 1) {
++    const character = value[index];
++    if (escaped) {
++      escaped = false;
++      continue;
++    }
 +
-+const TASK_STATE_LINE_PATTERN = /^(?<indent>\s*)(?<bullet>(?:[-*+])|(?:\d+\.)) \[(?<marker>[ x\-!])\] (?<text>.*)$/;
++    if (character === "\\") {
++      escaped = true;
++      continue;
++    }
 +
-+type TaskStateMatch = {
-+  readonly indent: string;
-+  readonly bullet: string;
-+  readonly marker: string;
-+  readonly text: string;
-+};
-+
-+function parseTaskStateLine(line: string): TaskStateMatch | null {
-+  const match = line.match(TASK_STATE_LINE_PATTERN);
-+  if (!match?.groups) {
-+    return null;
++    if (character === target) {
++      return index;
++    }
 +  }
 +
-+  const marker = match.groups.marker;
-+  if (!(marker in MARKER_TO_TASK_STATE)) {
-+    return null;
++  return -1;
++}
++
++function findLastUnescaped(value: string, target: string): number {
++  let escaped = false;
++  let lastIndex = -1;
++
++  for (let index = 0; index < value.length; index += 1) {
++    const character = value[index];
++    if (escaped) {
++      escaped = false;
++      continue;
++    }
++
++    if (character === "\\") {
++      escaped = true;
++      continue;
++    }
++
++    if (character === target) {
++      lastIndex = index;
++    }
++  }
++
++  return lastIndex;
++}
++
++function unescapeWikiText(value: string): string {
++  return value.replace(/\\([|#^\]])/g, "$1");
++}
++
++function parseWikiLink(raw: string): ParsedWikiLink | null {
++  const content = raw.slice(2, -2);
++  const aliasIndex = findFirstUnescaped(content, "|");
++  const targetSide = aliasIndex === -1 ? content : content.slice(0, aliasIndex);
++  const aliasSide = aliasIndex === -1 ? undefined : content.slice(aliasIndex + 1);
++
++  let syntax: EditorWikiLink["syntax"] = "canonical";
++  let targetText = targetSide;
++  let blockId: string | undefined;
++  let heading: string | undefined;
++
++  const compatibleBlockIndex = targetText.endsWith("#^") ? -1 : targetText.lastIndexOf("#^");
++  if (compatibleBlockIndex !== -1 && compatibleBlockIndex + 2 < targetText.length) {
++    syntax = "compatible";
++    blockId = targetText.slice(compatibleBlockIndex + 2);
++    targetText = targetText.slice(0, compatibleBlockIndex);
++  } else {
++    const blockIndex = findLastUnescaped(targetText, "^");
++    if (blockIndex !== -1 && blockIndex + 1 < targetText.length) {
++      blockId = targetText.slice(blockIndex + 1);
++      targetText = targetText.slice(0, blockIndex);
++    }
++  }
++
++  if (blockId !== undefined) {
++    const headingMarkerIndex = findFirstUnescaped(targetText, "#");
++    if (headingMarkerIndex !== -1) {
++      return null;
++    }
++  } else {
++    const headingIndex = findFirstUnescaped(targetText, "#");
++    if (headingIndex !== -1) {
++      heading = targetText.slice(headingIndex + 1);
++      targetText = targetText.slice(0, headingIndex);
++    }
 +  }
 +
 +  return {
-+    indent: match.groups.indent,
-+    bullet: match.groups.bullet,
-+    marker,
-+    text: match.groups.text,
++    target: unescapeWikiText(targetText),
++    ...(aliasSide !== undefined ? { alias: unescapeWikiText(aliasSide) } : {}),
++    ...(heading !== undefined ? { heading: unescapeWikiText(heading) } : {}),
++    ...(blockId !== undefined ? { blockId: unescapeWikiText(blockId) } : {}),
++    syntax,
++    raw,
 +  };
 +}
 +
-+export function getTaskStatesFromMarkdown(markdown: string): readonly EditorTaskState[] {
-+  const lines = markdown.split("\n");
-+  const tasks: EditorTaskState[] = [];
++export function getWikiLinksFromMarkdown(markdown: string): readonly EditorWikiLink[] {
++  const links: EditorWikiLink[] = [];
 +
-+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-+    const parsed = parseTaskStateLine(lines[lineIndex]);
++  for (const match of markdown.matchAll(/\[\[[\s\S]*?\]\]/g)) {
++    const raw = match[0];
++    const parsed = parseWikiLink(raw);
 +    if (!parsed) {
 +      continue;
 +    }
 +
-+    tasks.push({
-+      index: tasks.length,
-+      line: lineIndex,
-+      state: MARKER_TO_TASK_STATE[parsed.marker],
-+      text: parsed.text,
++    links.push({
++      index: links.length,
++      ...parsed,
++      unresolved: false,
 +    });
 +  }
 +
-+  return tasks;
++  return links;
 +}
 +
-+export function cycleTaskState(state: TaskState): TaskState {
-+  const currentIndex = TASK_STATE_ORDER.indexOf(state);
-+  const nextIndex = (currentIndex + 1) % TASK_STATE_ORDER.length;
-+  return TASK_STATE_ORDER[nextIndex];
-+}
-+
-+export function setTaskStateInMarkdown(
++export function setWikiLinkAliasInMarkdown(
 +  markdown: string,
 +  index: number,
-+  state: TaskState,
++  alias?: string,
 +): string {
-+  const lines = markdown.split("\n");
-+  let taskIndex = 0;
++  let linkIndex = 0;
 +
-+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-+    const parsed = parseTaskStateLine(lines[lineIndex]);
++  return markdown.replace(/\[\[[\s\S]*?\]\]/g, (raw) => {
++    const parsed = parseWikiLink(raw);
 +    if (!parsed) {
-+      continue;
++      return raw;
 +    }
 +
-+    if (taskIndex === index) {
-+      lines[lineIndex] = `${parsed.indent}${parsed.bullet} [${TASK_STATE_MARKERS[state]}] ${parsed.text}`;
-+      return lines.join("\n");
++    if (linkIndex !== index) {
++      linkIndex += 1;
++      return raw;
 +    }
 +
-+    taskIndex += 1;
-+  }
++    linkIndex += 1;
 +
-+  throw new RangeError(`Task state index out of range: ${index}`);
++    let target = parsed.target;
++    if (parsed.blockId !== undefined) {
++      target += parsed.syntax === "compatible" ? `#^${parsed.blockId}` : `^${parsed.blockId}`;
++    } else if (parsed.heading !== undefined) {
++      target += `#${parsed.heading}`;
++    }
++
++    if (alias !== undefined) {
++      return `[[${target}|${alias}]]`;
++    }
++
++    return `[[${target}]]`;
++  });
 +}
 +
-+export function toggleTaskStateInMarkdown(markdown: string, index: number): string {
-+  const tasks = getTaskStatesFromMarkdown(markdown);
-+  const task = tasks[index];
-+  if (!task) {
-+    throw new RangeError(`Task state index out of range: ${index}`);
-+  }
-+
-+  return setTaskStateInMarkdown(markdown, index, cycleTaskState(task.state));
-+}
-+
-+export function getTaskStateNodeViews() {
++export function getWikiLinkNodeViews() {
 +  return Object.freeze({
-+    taskState: NABLA_TASK_STATE_NODE_VIEW,
++    wikiLink: NABLA_WIKI_LINK_NODE_VIEW,
 +  });
 +}
 diff --git a/packages/editor/tests/editor.test.mjs b/packages/editor/tests/editor.test.mjs
-index 11c1625..99c452d 100644
+index 99c452d..3807183 100644
 --- a/packages/editor/tests/editor.test.mjs
 +++ b/packages/editor/tests/editor.test.mjs
-@@ -16,6 +16,9 @@ test("public editor exports exist", async () => {
-   assert.equal(typeof mod.replaceSource, "function");
+@@ -17,7 +17,9 @@ test("public editor exports exist", async () => {
    assert.equal(typeof mod.insertMarkdownBlock, "function");
    assert.equal(typeof mod.getDocumentBlockSummary, "function");
-+  assert.equal(typeof mod.getTaskStates, "function");
-+  assert.equal(typeof mod.setTaskState, "function");
-+  assert.equal(typeof mod.toggleTaskState, "function");
+   assert.equal(typeof mod.getTaskStates, "function");
++  assert.equal(typeof mod.getWikiLinks, "function");
+   assert.equal(typeof mod.setTaskState, "function");
++  assert.equal(typeof mod.setWikiLinkAlias, "function");
+   assert.equal(typeof mod.toggleTaskState, "function");
    assert.equal(typeof mod.loadSource, "function");
    assert.equal(typeof mod.getSource, "function");
- });
-@@ -108,9 +111,9 @@ test("block summary identifies standard markdown block node types", async () =>
+@@ -111,9 +113,12 @@ test("block summary identifies standard markdown block node types", async () =>
    ]);
  });
  
--test("no Nabla-specific node views are registered", async () => {
-+test("only task-state Nabla node view adapter is registered", async () => {
+-test("only task-state Nabla node view adapter is registered", async () => {
++test("only task-state and wiki-link node view adapters are registered", async () => {
    const mod = await load();
    const editor = mod.createEditor();
  
--  assert.deepEqual(editor.nodeViews, {});
-+  assert.deepEqual(editor.nodeViews, { taskState: "node-safe-adapter" });
+-  assert.deepEqual(editor.nodeViews, { taskState: "node-safe-adapter" });
++  assert.deepEqual(editor.nodeViews, {
++    taskState: "node-safe-adapter",
++    wikiLink: "node-safe-adapter",
++  });
  });
 diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
-index d81d205..bdfe14f 100644
+index bdfe14f..d654edd 100644
 --- a/packages/editor/tests/public-api.test.mjs
 +++ b/packages/editor/tests/public-api.test.mjs
-@@ -34,10 +34,24 @@ test("editor runtime exports are wired", async () => {
-   assert.equal(typeof mod.replaceSource, "function");
+@@ -35,7 +35,9 @@ test("editor runtime exports are wired", async () => {
    assert.equal(typeof mod.insertMarkdownBlock, "function");
    assert.equal(typeof mod.getDocumentBlockSummary, "function");
-+  assert.equal(typeof mod.getTaskStates, "function");
-+  assert.equal(typeof mod.setTaskState, "function");
-+  assert.equal(typeof mod.toggleTaskState, "function");
+   assert.equal(typeof mod.getTaskStates, "function");
++  assert.equal(typeof mod.getWikiLinks, "function");
+   assert.equal(typeof mod.setTaskState, "function");
++  assert.equal(typeof mod.setWikiLinkAlias, "function");
+   assert.equal(typeof mod.toggleTaskState, "function");
    assert.equal(typeof mod.loadSource, "function");
    assert.equal(typeof mod.getSource, "function");
+@@ -52,6 +54,15 @@ test("task state runtime exports are wired", async () => {
+   assert.equal(typeof mod.cycleTaskState, "function");
  });
  
-+test("task state runtime exports are wired", async () => {
++test("wiki link runtime exports are wired", async () => {
 +  const mod = await load();
 +
-+  assert.equal(mod.NABLA_TASK_STATE_NODE_VIEW, "node-safe-adapter");
-+  assert.equal(typeof mod.getTaskStateNodeViews, "function");
-+  assert.equal(typeof mod.getTaskStatesFromMarkdown, "function");
-+  assert.equal(typeof mod.setTaskStateInMarkdown, "function");
-+  assert.equal(typeof mod.toggleTaskStateInMarkdown, "function");
-+  assert.equal(typeof mod.cycleTaskState, "function");
++  assert.equal(mod.NABLA_WIKI_LINK_NODE_VIEW, "node-safe-adapter");
++  assert.equal(typeof mod.getWikiLinkNodeViews, "function");
++  assert.equal(typeof mod.getWikiLinksFromMarkdown, "function");
++  assert.equal(typeof mod.setWikiLinkAliasInMarkdown, "function");
 +});
 +
  test("position runtime exports are wired", async () => {
    const mod = await load();
  
 diff --git a/packages/editor/tests/task-state.test.mjs b/packages/editor/tests/task-state.test.mjs
-new file mode 100644
-index 0000000..f6649f3
---- /dev/null
+index f6649f3..5f088dd 100644
+--- a/packages/editor/tests/task-state.test.mjs
 +++ b/packages/editor/tests/task-state.test.mjs
-@@ -0,0 +1,80 @@
+@@ -75,6 +75,7 @@ test("no other Nabla node views are registered", async () => {
+   const mod = await loadEditor();
+   const editor = mod.createEditor();
+ 
+-  assert.deepEqual(Object.keys(editor.nodeViews), ["taskState"]);
++  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["taskState", "wikiLink"]);
+   assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
++  assert.equal(editor.nodeViews.wikiLink, "node-safe-adapter");
+ });
+diff --git a/packages/editor/tests/wiki-link.test.mjs b/packages/editor/tests/wiki-link.test.mjs
+new file mode 100644
+index 0000000..c1efa55
+--- /dev/null
++++ b/packages/editor/tests/wiki-link.test.mjs
+@@ -0,0 +1,140 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
@@ -310,89 +374,149 @@ index 0000000..f6649f3
 +  return import(new URL("../dist/editor.js", import.meta.url));
 +}
 +
-+async function loadTaskState() {
-+  return import(new URL("../dist/nodes/task-state.js", import.meta.url));
++async function loadWikiLink() {
++  return import(new URL("../dist/nodes/wiki-link.js", import.meta.url));
 +}
 +
-+test("detects unchecked task state", async () => {
-+  const mod = await loadTaskState();
++test("detects [[Target]]", async () => {
++  const mod = await loadWikiLink();
 +
-+  assert.deepEqual(mod.getTaskStatesFromMarkdown("- [ ] one\n"), [
-+    { index: 0, line: 0, state: "unchecked", text: "one" },
++  assert.deepEqual(mod.getWikiLinksFromMarkdown("[[Target]]\n"), [
++    {
++      index: 0,
++      target: "Target",
++      syntax: "canonical",
++      raw: "[[Target]]",
++      unresolved: false,
++    },
 +  ]);
 +});
 +
-+test("detects checked task state", async () => {
-+  const mod = await loadTaskState();
++test("detects [[Target|Alias]]", async () => {
++  const mod = await loadWikiLink();
 +
-+  assert.deepEqual(mod.getTaskStatesFromMarkdown("- [x] one\n"), [
-+    { index: 0, line: 0, state: "checked", text: "one" },
++  assert.deepEqual(mod.getWikiLinksFromMarkdown("[[Target|Alias]]\n"), [
++    {
++      index: 0,
++      target: "Target",
++      alias: "Alias",
++      syntax: "canonical",
++      raw: "[[Target|Alias]]",
++      unresolved: false,
++    },
 +  ]);
 +});
 +
-+test("detects cancelled task state", async () => {
-+  const mod = await loadTaskState();
++test("detects [[Target#Heading]]", async () => {
++  const mod = await loadWikiLink();
 +
-+  assert.deepEqual(mod.getTaskStatesFromMarkdown("- [-] one\n"), [
-+    { index: 0, line: 0, state: "cancelled", text: "one" },
++  assert.deepEqual(mod.getWikiLinksFromMarkdown("[[Target#Heading]]\n"), [
++    {
++      index: 0,
++      target: "Target",
++      heading: "Heading",
++      syntax: "canonical",
++      raw: "[[Target#Heading]]",
++      unresolved: false,
++    },
 +  ]);
 +});
 +
-+test("detects important task state", async () => {
-+  const mod = await loadTaskState();
++test("detects [[Target^block]]", async () => {
++  const mod = await loadWikiLink();
 +
-+  assert.deepEqual(mod.getTaskStatesFromMarkdown("- [!] one\n"), [
-+    { index: 0, line: 0, state: "important", text: "one" },
++  assert.deepEqual(mod.getWikiLinksFromMarkdown("[[Target^block]]\n"), [
++    {
++      index: 0,
++      target: "Target",
++      blockId: "block",
++      syntax: "canonical",
++      raw: "[[Target^block]]",
++      unresolved: false,
++    },
 +  ]);
 +});
 +
-+test("toggling cycles task states deterministically", async () => {
-+  const mod = await loadTaskState();
++test("detects combined target and alias forms", async () => {
++  const mod = await loadWikiLink();
 +
-+  const checked = mod.toggleTaskStateInMarkdown("- [ ] one\n", 0);
-+  const cancelled = mod.toggleTaskStateInMarkdown(checked, 0);
-+  const important = mod.toggleTaskStateInMarkdown(cancelled, 0);
-+  const unchecked = mod.toggleTaskStateInMarkdown(important, 0);
-+
-+  assert.equal(checked, "- [x] one\n");
-+  assert.equal(cancelled, "- [-] one\n");
-+  assert.equal(important, "- [!] one\n");
-+  assert.equal(unchecked, "- [ ] one\n");
++  assert.deepEqual(mod.getWikiLinksFromMarkdown("[[Target#Heading|Alias]] [[Target#^block|Alias]]\n"), [
++    {
++      index: 0,
++      target: "Target",
++      heading: "Heading",
++      alias: "Alias",
++      syntax: "canonical",
++      raw: "[[Target#Heading|Alias]]",
++      unresolved: false,
++    },
++    {
++      index: 1,
++      target: "Target",
++      blockId: "block",
++      alias: "Alias",
++      syntax: "compatible",
++      raw: "[[Target#^block|Alias]]",
++      unresolved: false,
++    },
++  ]);
 +});
 +
-+test("load toggle export produces correct markdown", async () => {
++test("ignores standard markdown links", async () => {
++  const mod = await loadWikiLink();
++
++  assert.deepEqual(mod.getWikiLinksFromMarkdown("[text](url)\n"), []);
++});
++
++test("load detect export preserves wiki link syntax", async () => {
++  const mod = await loadEditor();
++  const editor = mod.createEditor();
++  const source = "See [[Target#Heading|Alias]] today.\n";
++
++  mod.loadSource(editor, source);
++
++  assert.deepEqual(mod.getWikiLinks(editor), [
++    {
++      index: 0,
++      target: "Target",
++      heading: "Heading",
++      alias: "Alias",
++      syntax: "canonical",
++      raw: "[[Target#Heading|Alias]]",
++      unresolved: false,
++    },
++  ]);
++  assert.equal(mod.getSource(editor), "See [[Target#Heading|Alias]] today.");
++});
++
++test("setWikiLinkAlias updates source alias deterministically", async () => {
 +  const mod = await loadEditor();
 +  const editor = mod.createEditor();
 +
-+  mod.loadSource(editor, "- [ ] one\n");
-+  mod.toggleTaskState(editor, 0);
++  mod.loadSource(editor, "[[Target]]\n");
++  mod.setWikiLinkAlias(editor, 0, "Alias");
 +
-+  assert.equal(mod.getSource(editor), "- [x] one");
++  assert.equal(mod.getSource(editor), "[[Target|Alias]]");
 +});
 +
-+test("non-task list items are ignored", async () => {
-+  const mod = await loadTaskState();
-+
-+  assert.deepEqual(mod.getTaskStatesFromMarkdown("- one\n* two\n"), []);
-+});
-+
-+test("no other Nabla node views are registered", async () => {
++test("no node views other than task-state and wiki-link are registered", async () => {
 +  const mod = await loadEditor();
 +  const editor = mod.createEditor();
 +
-+  assert.deepEqual(Object.keys(editor.nodeViews), ["taskState"]);
++  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["taskState", "wikiLink"]);
 +  assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
++  assert.equal(editor.nodeViews.wikiLink, "node-safe-adapter");
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 3ae6205..2c01fda 100644
+index 2c01fda..2368629 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
  
  ## Last Task
  
--`P3-006` — Editor Block Navigation Basics
-+`P3-007` — Task State Node View
+-`P3-007` — Task State Node View
++`P3-008` — Wiki Link Node View
  
  ## Branch
  
@@ -400,24 +524,25 @@ index 3ae6205..2c01fda 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, and basic Markdown block helpers created.
-+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, and task-state helpers created.
+-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, and task-state helpers created.
++Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, and wiki-link helpers created.
  
  ### Repairs Applied
  
-@@ -73,6 +73,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
+@@ -81,6 +81,15 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
+ - No other Nabla node views added.
  - No dependencies added.
- - No Nabla-specific node views added.
  
-+### P3-007 Notes
++### P3-008 Notes
 +
-+- Added task-state support only in `packages/editor/src/nodes/task-state.ts` and editor integration helpers.
-+- Supported task markers: `[ ]`, `[x]`, `[-]`, `[!]`.
++- Added wiki-link support only in `packages/editor/src/nodes/wiki-link.ts` and editor integration helpers.
++- Supported syntax: `[[Target]]`, `[[Target|Alias]]`, `[[Target#Heading]]`, `[[Target^block]]`, `[[Target#Heading|Alias]]`, and compatible `[[Target#^block|Alias]]`.
++- No workspace resolver integration was added; unresolved state remains adapter metadata only.
 +- Runtime strategy remains a Node-safe adapter boundary; no browser DOM node view rendering was added.
 +- No other Nabla node views added.
 +- No dependencies added.
@@ -425,9 +550,9 @@ index 3ae6205..2c01fda 100644
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -91,4 +99,4 @@ None.
+@@ -99,4 +108,4 @@ None.
  
  ## Next Recommended Task
  
--P3-007 (task states) — begin Nabla-specific editor rendering with task-state support.
-+P3-008 (wiki links) — extend editor-specific behavior to wiki-link handling without broadening into other Nabla nodes.
+-P3-008 (wiki links) — extend editor-specific behavior to wiki-link handling without broadening into other Nabla nodes.
++P3-009 (tags/highlights) — extend editor-specific behavior to the next accepted Nabla syntax surface without adding unrelated node views.
