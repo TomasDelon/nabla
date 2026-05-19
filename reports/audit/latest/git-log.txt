@@ -1,3 +1,1 @@
-b929de4 fix(markup): keep callout task scoped to callouts
-9b59ec6 docs: update implementation progress for P1-017 callouts
-822d71f docs: add audit bundle for P1-017 callouts
+2e1f8b7 feat(markup): implement toggle parsing

@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-017 callouts`
+`P1-018 toggles`
 
 ## Branch
 
@@ -14,17 +14,16 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Callout parsing and serialization implemented against checked-in fixture contracts (P1-017).
+Toggle parsing and serialization implemented against checked-in fixture contracts (P1-018).
 
-All 6 callout fixture groups pass:
-- `callouts/canonical` — standard `[!type] title` syntax with tab-indented children
-- `callouts/compatible` — compatible `> **type** title` syntax
-- `callouts/fold-states` — `[!type +/-]` folded/unfolded callouts
-- `callouts/empty` — callout with no title text or children
-- `callouts/blank-child` — callout with an empty child (blank child line preserved)
-- `callouts/fenced-child` — fenced code block as a child inside a callout
+All 5 toggle fixture groups pass:
+- `toggles/basic` — `]>` closed and `]v` open toggles with tab-indented children
+- `toggles/empty` — toggle with no title text or children
+- `toggles/blank-child` — toggle with blank-line-separated children
+- `toggles/fenced-child` — fenced code block as a child inside a toggle
+- `toggles/nested-child` — callout as a child inside a toggle
 
-Note: `callouts/nested-child` is deferred to P1-018 (toggle implementation) since it tests callout+toggle nesting.
+Callout fixtures (P1-017) remain passing. `callouts/nested-child` now also passes since it depends on toggle child nesting.
 
 ## Scope Guardrails
 
@@ -34,18 +33,25 @@ Note: `callouts/nested-child` is deferred to P1-018 (toggle implementation) sinc
 
 ## Files Created
 
-- `packages/markup/src/extensions/callouts.ts`
+- `packages/markup/src/extensions/toggles.ts`
 
 ## Files Modified
 
-- `packages/markup/src/parser.ts` — `callout` BlockSpec kind, `parseCalloutMarker` detection in `parseBlocks`, recursive `parse()` for child content, `CalloutNode` construction
-- `packages/markup/src/serializer.ts` — `serializeCallout` dispatch, leading `\n` strip in `serialize()` to normalize first-block separator
-- `packages/markup/tests/wiki-links.test.mjs` — 6 callout fixture IDs and fixture-driven test (nested-child deferred to P1-018)
+- `packages/markup/src/extensions/callouts.ts` — added `serializeToggle` and toggle child handling in `serializeChildBlock`
+- `packages/markup/src/parser.ts` — `ToggleNode` import, `parseToggleMarker` import, `kind: "toggle"` BlockSpec, toggle detection in `parseBlocks`, `block.kind === "toggle"` handling in `parse()`
+- `packages/markup/src/serializer.ts` — `ToggleNode` import, `serializeToggle` import, `node.type === "toggle"` dispatch in `serializeBlockNode`
+- `packages/markup/tests/wiki-links.test.mjs` — 5 toggle fixture IDs and fixture-driven test; re-added `callouts/nested-child` to callout fixture IDs
+- `reports/IMPLEMENTATION_PROGRESS.md` — this update
 
 ## Verification Summary
 
-- `node --test packages/markup/tests/**/*.test.mjs` — 60 tests pass (6 callout fixture tests)
+- `node --test packages/markup/tests/**/*.test.mjs` — 62 tests pass (5 toggle + 7 callout fixture tests)
 - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
+- `node scripts/validate-fixtures.mjs` — fixture validation passed
+- `node scripts/validate-spec-version.mjs` — spec version validation passed
+- `node scripts/check-boundaries.mjs` — boundary check passed
+- `node scripts/report-unavailable.mjs lint` — lint unavailable (bootstrap placeholder)
+- `tsc -b packages/markup/tsconfig.json` — build passed
 
 ## Active Blockers
 
@@ -53,4 +59,4 @@ None.
 
 ## Next Recommended Task
 
-P1-013 comments
+P1-019 folded headings
