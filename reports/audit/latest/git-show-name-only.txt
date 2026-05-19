@@ -1,14 +1,3 @@
-packages/workspace/src/backlink-index.ts
-packages/workspace/src/index.ts
-packages/workspace/src/transclusion-resolver.ts
-packages/workspace/src/workspace.ts
-packages/workspace/tests/backlink-index.test.mjs
-packages/workspace/tests/transclusion-resolver.test.mjs
-reports/audit/latest/AUDIT_INDEX.md
-reports/audit/latest/audit.json
-reports/audit/latest/git-branch.txt
-reports/audit/latest/git-log.txt
-reports/audit/latest/git-show-name-only.txt
-reports/audit/latest/git-show-stat.txt
-reports/audit/latest/git-show.patch
-reports/audit/latest/repo-tree.txt
+packages/workspace/tests/diagnostics.test.mjs
+packages/workspace/tests/public-api.test.mjs
+reports/IMPLEMENTATION_PROGRESS.md

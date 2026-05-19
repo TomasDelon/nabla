@@ -6,7 +6,7 @@ Phase 2 — `@nabla/workspace`
 
 ## Task ID
 
-`P2-002 / P2-003 / P2-004` — parallel sprint merged
+`P2-008` — diagnostics and public API consistency
 
 ## Branch
 
@@ -14,55 +14,55 @@ Phase 2 — `@nabla/workspace`
 
 ## Status
 
-Three parallel P2 tasks implemented and merged:
+P2-008 completed: diagnostics and public API consistency consolidation.
 
-### P2-002 — Path normalization
+### Diagnostic Consistency
 
-- `packages/workspace/src/path-utils.ts` — `normalizeWorkspacePath`: NFC, preserve case, `.md`/`.mp` stripping, candidate matching (target, target.md, target.mp, target/index.md, target/index.mp)
-- `packages/workspace/tests/path-utils.test.mjs` — path normalization tests
+- Wiki link missing-target diagnostics verified consistent:
+  - Missing note file → `NABLA_LINK_MISSING_TARGET`
+  - Missing heading on existing file → `NABLA_HEADING_MISSING_TARGET`
+  - Missing block on existing file → `NABLA_BLOCK_MISSING_TARGET`
+- Transclusion missing-target diagnostics verified consistent:
+  - Missing note/heading/block target → `NABLA_TRANSCLUSION_MISSING_TARGET`
+- `createWorkspace` aggregates diagnostics in stable order: fileIndex → wikiLinks → transclusions
 
-### P2-003 — Heading slug index
+### Public API Consistency
 
-- `packages/workspace/src/slug.ts` — `createSlug` algorithm (NFC, lowercase, trim, accent removal, whitespace→`-`, punctuation removal, collapse `-`, trim `-`); `deduplicateSlugs` for slug/slug-2/slug-3 dedup
-- `packages/workspace/src/heading-index.ts` — `buildHeadingIndex` extracts `heading` and `foldableHeading` nodes from `NablaDocument`
-- `packages/workspace/tests/heading-slugs.test.mjs` — 15 tests
+- All required exports verified:
+  - `buildFileIndex`, `resolveWikiLinks`, `buildBacklinkIndex`, `resolveTransclusions`, `createWorkspace`
+  - All relevant result/types exported
+- `createWorkspace` return shape verified
 
-### P2-004 — Block ID index
+### Tests Added
 
-- `packages/workspace/src/block-index.ts` — `buildBlockIndex` extracts `data.nablaBlockId` from block-level AST nodes with recursive nested traversal and duplicate detection
-- `packages/workspace/tests/block-id.test.mjs` — 13 tests
-
-## Files Created
-
-- `packages/workspace/src/path-utils.ts`
-- `packages/workspace/src/slug.ts`
-- `packages/workspace/src/heading-index.ts`
-- `packages/workspace/src/block-index.ts`
-- `packages/workspace/tests/path-utils.test.mjs`
-- `packages/workspace/tests/heading-slugs.test.mjs`
-- `packages/workspace/tests/block-id.test.mjs`
-
-## Files Modified
-
-- `packages/workspace/src/index.ts` — exports for all new modules
-- `reports/IMPLEMENTATION_PROGRESS.md` — this report
+- `packages/workspace/tests/diagnostics.test.mjs` — integration tests for:
+  - Diagnostic aggregation order (fileIndex → wikiLinks → transclusions)
+  - Wiki link missing-target diagnostic codes
+  - Transclusion missing-target diagnostic codes
+  - All diagnostics severity warning
+- `packages/workspace/tests/public-api.test.mjs` — import/export inventory tests for:
+  - All expected function exports
+  - All expected type exports
+  - `createWorkspace` return shape verification
 
 ## Scope Guardrails
 
 - No `@nabla/markup` behavior changes
 - No spec or fixture modifications
-- No backlink or transclusion code started
+- No cycle detection, depth limit, or transclusion expansion
+- No broad refactor
 
 ## Verification Summary
 
-- `pnpm test` — all markup (69) + workspace tests pass
+- `pnpm test` — all markup + workspace tests pass
+- `pnpm test:workspace` — passes
+- `pnpm test:markup` — passes
 - `pnpm typecheck` — passed
 - `pnpm build` — passed
 - `pnpm validate:fixtures` — passed
 - `pnpm validate:spec-version` — passed
 - `pnpm check:boundaries` — passed
 - `pnpm lint` — unavailable (expected)
-- `git status --short` — clean
 
 ## Active Blockers
 
@@ -70,4 +70,4 @@ None.
 
 ## Next Recommended Task
 
-P2-005 — file index and wiki link resolver
+P2-009 — workspace consolidation follow-up
