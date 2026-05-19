@@ -1,9 +1,6 @@
- packages/markup/src/extensions/block-ids.ts     | 10 ++--
- packages/markup/src/extensions/transclusions.ts | 61 +++++++++++++++++++++++++
- packages/markup/src/index.ts                    |  4 ++
- packages/markup/src/parser.ts                   | 25 ++++++++++
- packages/markup/src/serializer.ts               | 10 +++-
- packages/markup/tests/parser.test.mjs           |  8 ++--
- packages/markup/tests/wiki-links.test.mjs       | 39 +++++++++++++++-
- reports/IMPLEMENTATION_PROGRESS.md              | 39 ++++++++++------
- 8 files changed, 171 insertions(+), 25 deletions(-)
+ packages/markup/src/extensions/emoji-shortcodes.ts | 59 ++++++++++++++++++++++
+ packages/markup/src/index.ts                       |  6 +++
+ packages/markup/src/parser.ts                      | 27 ++++++++++
+ packages/markup/src/serializer.ts                  |  7 ++-
+ packages/markup/tests/wiki-links.test.mjs          | 25 +++++++++
+ 5 files changed, 123 insertions(+), 1 deletion(-)

@@ -1,1 +1,1 @@
-0f84dca feat(markup): implement transclusion parsing
+59af998 feat(markup): implement emoji shortcode parsing
