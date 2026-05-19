@@ -25,10 +25,16 @@ index 0000000..1e6ed0d
 +  return backlinks;
 +}
 diff --git a/packages/workspace/src/index.ts b/packages/workspace/src/index.ts
-index bc32002..c5432d3 100644
+index bc32002..c5f284c 100644
 --- a/packages/workspace/src/index.ts
 +++ b/packages/workspace/src/index.ts
-@@ -12,6 +12,8 @@ export type { WikiLinkResolution, WikiLinkResolverResult } from "./wiki-link-res
+@@ -9,9 +9,14 @@ export type { FileIndexInput, FileIndexResult } from "./file-index.js";
+ export { resolveWikiLinks } from "./wiki-link-resolver.js";
+ export type { WikiLinkResolution, WikiLinkResolverResult } from "./wiki-link-resolver.js";
+ 
++export { resolveTransclusions } from "./transclusion-resolver.js";
++export type { TransclusionResolution, TransclusionResolverResult } from "./transclusion-resolver.js";
++
  export { createWorkspace } from "./workspace.js";
  export type { WorkspaceResult } from "./workspace.js";
  
@@ -37,19 +43,302 @@ index bc32002..c5432d3 100644
  export type WorkspaceFile = {
    path: string;
  };
+diff --git a/packages/workspace/src/transclusion-resolver.ts b/packages/workspace/src/transclusion-resolver.ts
+new file mode 100644
+index 0000000..d37db31
+--- /dev/null
++++ b/packages/workspace/src/transclusion-resolver.ts
+@@ -0,0 +1,257 @@
++import { parse } from "@nabla/markup";
++import type { Diagnostic, TransclusionNode, NablaDocument } from "@nabla/markup";
++import { DIAGNOSTIC_CODES } from "@nabla/markup";
++import { normalizeWorkspacePath } from "./path-utils.js";
++import { createSlug } from "./slug.js";
++import type { FileIndexEntry, HeadingIndexEntry, BlockIndexEntry } from "./index.js";
++import type { FileIndexInput } from "./file-index.js";
++
++export type TransclusionResolution = {
++  filePath: string;
++  target: string;
++  heading?: string;
++  blockId?: string;
++  resolved: boolean;
++  resolvedFilePath?: string;
++};
++
++export type TransclusionResolverResult = {
++  resolutions: TransclusionResolution[];
++  diagnostics: Diagnostic[];
++};
++
++function collectTransclusions(doc: NablaDocument): TransclusionNode[] {
++  const nodes: TransclusionNode[] = [];
++  const walk = (children: unknown[]): void => {
++    for (const node of children) {
++      const n = node as Record<string, unknown>;
++      if (n.type === "transclusion") {
++        nodes.push(node as TransclusionNode);
++      }
++      const childNodes = n.children;
++      if (Array.isArray(childNodes)) {
++        walk(childNodes);
++      }
++    }
++  };
++  walk(doc.children);
++  return nodes;
++}
++
++export function resolveTransclusions(
++  files: FileIndexInput[],
++  fileIndex: FileIndexEntry[],
++  headingIndex: HeadingIndexEntry[],
++  blockIndex: BlockIndexEntry[],
++): TransclusionResolverResult {
++  const resolutions: TransclusionResolution[] = [];
++  const diagnostics: Diagnostic[] = [];
++
++  const fileByNormalized = new Map<string, FileIndexEntry>();
++  for (const entry of fileIndex) {
++    fileByNormalized.set(entry.normalizedPath, entry);
++  }
++
++  const headingByKey = new Map<string, HeadingIndexEntry>();
++  for (const entry of headingIndex) {
++    const key = `${entry.filePath}#${entry.slug}`;
++    if (!headingByKey.has(key)) {
++      headingByKey.set(key, entry);
++    }
++  }
++
++  const blockByKey = new Map<string, BlockIndexEntry>();
++  for (const entry of blockIndex) {
++    const key = `${entry.filePath}^${entry.blockId}`;
++    if (!blockByKey.has(key)) {
++      blockByKey.set(key, entry);
++    }
++  }
++
++  for (const file of files) {
++    const sourceNormalized = normalizeWorkspacePath(file.path);
++    const doc = parse(file.source);
++    const transclusions = collectTransclusions(doc);
++
++    for (const node of transclusions) {
++      if (node.blockId) {
++        resolveBlockTransclusion(node, file, sourceNormalized, fileByNormalized, blockByKey, resolutions, diagnostics);
++      } else if (node.heading) {
++        resolveHeadingTransclusion(node, file, sourceNormalized, fileByNormalized, headingByKey, resolutions, diagnostics);
++      } else {
++        resolveNoteTransclusion(node, file, fileByNormalized, resolutions, diagnostics);
++      }
++    }
++  }
++
++  return { resolutions, diagnostics };
++}
++
++function resolveNoteTransclusion(
++  node: TransclusionNode,
++  file: FileIndexInput,
++  fileByNormalized: Map<string, FileIndexEntry>,
++  resolutions: TransclusionResolution[],
++  diagnostics: Diagnostic[],
++): void {
++  const normalizedTarget = normalizeWorkspacePath(node.target);
++  const fileEntry = fileByNormalized.get(normalizedTarget);
++
++  if (fileEntry) {
++    resolutions.push({
++      filePath: file.path,
++      target: node.target,
++      resolved: true,
++      resolvedFilePath: fileEntry.path,
++    });
++  } else {
++    diagnostics.push({
++      severity: "warning",
++      code: DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET,
++      message: `Transclusion target not found: ${node.target}`,
++      position: node.position,
++    });
++    resolutions.push({
++      filePath: file.path,
++      target: node.target,
++      resolved: false,
++    });
++  }
++}
++
++function resolveHeadingTransclusion(
++  node: TransclusionNode,
++  file: FileIndexInput,
++  sourceNormalized: string,
++  fileByNormalized: Map<string, FileIndexEntry>,
++  headingByKey: Map<string, HeadingIndexEntry>,
++  resolutions: TransclusionResolution[],
++  diagnostics: Diagnostic[],
++): void {
++  const slug = createSlug(node.heading!);
++  if (node.target) {
++    const normalizedTarget = normalizeWorkspacePath(node.target);
++    const headingKey = `${normalizedTarget}#${slug}`;
++    const headingEntry = headingByKey.get(headingKey);
++
++    if (headingEntry) {
++      resolutions.push({
++        filePath: file.path,
++        target: node.target,
++        heading: node.heading,
++        resolved: true,
++        resolvedFilePath: headingEntry.filePath,
++      });
++    } else {
++      const fileEntry = fileByNormalized.get(normalizedTarget);
++      const message = fileEntry
++        ? `Transclusion heading target not found: ${node.target}#${node.heading}`
++        : `Transclusion target not found: ${node.target}`;
++      diagnostics.push({
++        severity: "warning",
++        code: DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET,
++        message,
++        position: node.position,
++      });
++      resolutions.push({
++        filePath: file.path,
++        target: node.target,
++        heading: node.heading,
++        resolved: false,
++      });
++    }
++  } else {
++    const headingKey = `${sourceNormalized}#${slug}`;
++    const headingEntry = headingByKey.get(headingKey);
++    if (headingEntry) {
++      resolutions.push({
++        filePath: file.path,
++        target: "",
++        heading: node.heading,
++        resolved: true,
++        resolvedFilePath: file.path,
++      });
++    } else {
++      diagnostics.push({
++        severity: "warning",
++        code: DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET,
++        message: `Transclusion heading target not found: ${sourceNormalized}#${node.heading}`,
++        position: node.position,
++      });
++      resolutions.push({
++        filePath: file.path,
++        target: "",
++        heading: node.heading,
++        resolved: false,
++      });
++    }
++  }
++}
++
++function resolveBlockTransclusion(
++  node: TransclusionNode,
++  file: FileIndexInput,
++  sourceNormalized: string,
++  fileByNormalized: Map<string, FileIndexEntry>,
++  blockByKey: Map<string, BlockIndexEntry>,
++  resolutions: TransclusionResolution[],
++  diagnostics: Diagnostic[],
++): void {
++  if (node.target) {
++    const normalizedTarget = normalizeWorkspacePath(node.target);
++    const blockKey = `${normalizedTarget}^${node.blockId!}`;
++    const blockEntry = blockByKey.get(blockKey);
++
++    if (blockEntry) {
++      resolutions.push({
++        filePath: file.path,
++        target: node.target,
++        blockId: node.blockId,
++        resolved: true,
++        resolvedFilePath: blockEntry.filePath,
++      });
++    } else {
++      const fileEntry = fileByNormalized.get(normalizedTarget);
++      const message = fileEntry
++        ? `Transclusion block target not found: ${node.target}^${node.blockId}`
++        : `Transclusion target not found: ${node.target}`;
++      diagnostics.push({
++        severity: "warning",
++        code: DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET,
++        message,
++        position: node.position,
++      });
++      resolutions.push({
++        filePath: file.path,
++        target: node.target,
++        blockId: node.blockId,
++        resolved: false,
++      });
++    }
++  } else {
++    const blockKey = `${sourceNormalized}^${node.blockId!}`;
++    const blockEntry = blockByKey.get(blockKey);
++    if (blockEntry) {
++      resolutions.push({
++        filePath: file.path,
++        target: "",
++        blockId: node.blockId,
++        resolved: true,
++        resolvedFilePath: file.path,
++      });
++    } else {
++      diagnostics.push({
++        severity: "warning",
++        code: DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET,
++        message: `Transclusion block target not found: ${sourceNormalized}^${node.blockId}`,
++        position: node.position,
++      });
++      resolutions.push({
++        filePath: file.path,
++        target: "",
++        blockId: node.blockId,
++        resolved: false,
++      });
++    }
++  }
++}
 diff --git a/packages/workspace/src/workspace.ts b/packages/workspace/src/workspace.ts
-index ecf44a4..6a83699 100644
+index ecf44a4..8d92cd1 100644
 --- a/packages/workspace/src/workspace.ts
 +++ b/packages/workspace/src/workspace.ts
-@@ -3,6 +3,7 @@ import { buildFileIndex } from "./file-index.js";
+@@ -3,12 +3,16 @@ import { buildFileIndex } from "./file-index.js";
  import type { FileIndexInput, FileIndexResult } from "./file-index.js";
  import { resolveWikiLinks } from "./wiki-link-resolver.js";
  import type { WikiLinkResolverResult } from "./wiki-link-resolver.js";
 +import { buildBacklinkIndex } from "./backlink-index.js";
++import { resolveTransclusions } from "./transclusion-resolver.js";
++import type { TransclusionResolverResult } from "./transclusion-resolver.js";
  import type { Workspace, WorkspaceOptions, WorkspaceIndex } from "./index.js";
  
  export type WorkspaceResult = {
-@@ -25,7 +26,7 @@ export function createWorkspace(files: FileIndexInput[], options: WorkspaceOptio
+   workspace: Workspace;
+   fileIndex: FileIndexResult;
+   wikiLinks: WikiLinkResolverResult;
++  transclusions: TransclusionResolverResult;
+   diagnostics: Diagnostic[];
+ };
+ 
+@@ -20,18 +24,25 @@ export function createWorkspace(files: FileIndexInput[], options: WorkspaceOptio
+     fileIndexResult.headings,
+     fileIndexResult.blocks,
+   );
++  const transclusionResult = resolveTransclusions(
++    files,
++    fileIndexResult.entries,
++    fileIndexResult.headings,
++    fileIndexResult.blocks,
++  );
+ 
+   const index: WorkspaceIndex = {
      files: fileIndexResult.entries,
      headings: fileIndexResult.headings,
      blocks: fileIndexResult.blocks,
@@ -58,6 +347,14 @@ index ecf44a4..6a83699 100644
    };
  
    return {
+     workspace: { index, options },
+     fileIndex: fileIndexResult,
+     wikiLinks: wikiLinkResult,
+-    diagnostics: [...fileIndexResult.diagnostics, ...wikiLinkResult.diagnostics],
++    transclusions: transclusionResult,
++    diagnostics: [...fileIndexResult.diagnostics, ...wikiLinkResult.diagnostics, ...transclusionResult.diagnostics],
+   };
+ }
 diff --git a/packages/workspace/tests/backlink-index.test.mjs b/packages/workspace/tests/backlink-index.test.mjs
 new file mode 100644
 index 0000000..408dc23
@@ -265,3 +562,1317 @@ index 0000000..408dc23
 +  const linkDiags = result.diagnostics.filter(d => d.code === "NABLA_LINK_MISSING_TARGET");
 +  assert.equal(linkDiags.length, 1);
 +});
+diff --git a/packages/workspace/tests/transclusion-resolver.test.mjs b/packages/workspace/tests/transclusion-resolver.test.mjs
+new file mode 100644
+index 0000000..ab049e5
+--- /dev/null
++++ b/packages/workspace/tests/transclusion-resolver.test.mjs
+@@ -0,0 +1,236 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { loadTsModule } from "./helpers/load-ts-module.mjs";
++
++const fileIndexUrl = new URL("../src/file-index.ts", import.meta.url);
++const resolverUrl = new URL("../src/transclusion-resolver.ts", import.meta.url);
++
++async function loadFileIndex() {
++  return loadTsModule(fileIndexUrl);
++}
++
++async function loadResolver() {
++  return loadTsModule(resolverUrl);
++}
++
++const TRANSCLUSION_MISSING = "NABLA_TRANSCLUSION_MISSING_TARGET";
++
++test("resolves ![[note]] to existing file", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "note-a.md", source: "Content." },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(
++    [{ path: "source.md", source: "![[note-a]]\n" }],
++    index.entries,
++    index.headings,
++    index.blocks,
++  );
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, true);
++  assert.equal(result.resolutions[0].resolvedFilePath, "note-a.md");
++  assert.equal(result.resolutions[0].target, "note-a");
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("resolves ![[note#heading]] to heading slug", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [{ path: "doc.md", source: "# My Heading\nContent." }];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(
++    [{ path: "source.md", source: "![[doc#My Heading]]\n" }],
++    index.entries,
++    index.headings,
++    index.blocks,
++  );
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, true);
++  assert.equal(result.resolutions[0].heading, "My Heading");
++  assert.equal(result.resolutions[0].target, "doc");
++});
++
++test("resolves ![[note^block]] to block ID", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [{ path: "doc.md", source: "Paragraph ^block1\n" }];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(
++    [{ path: "source.md", source: "![[doc^block1]]\n" }],
++    index.entries,
++    index.headings,
++    index.blocks,
++  );
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, true);
++  assert.equal(result.resolutions[0].blockId, "block1");
++});
++
++test("resolves ![[note#^block]] compatible syntax", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [{ path: "doc.md", source: "Paragraph ^block1\n" }];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(
++    [{ path: "source.md", source: "![[doc#^block1]]\n" }],
++    index.entries,
++    index.headings,
++    index.blocks,
++  );
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, true);
++  assert.equal(result.resolutions[0].blockId, "block1");
++});
++
++test("resolves ![[#heading]] to same-file heading", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [{ path: "doc.md", source: "# My Heading\n![[#My Heading]]\n" }];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, true);
++  assert.equal(result.resolutions[0].heading, "My Heading");
++  assert.equal(result.resolutions[0].target, "");
++});
++
++test("resolves ![[^block]] to same-file block", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [{ path: "doc.md", source: "Paragraph ^myblock\n![[^myblock]]\n" }];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, true);
++  assert.equal(result.resolutions[0].blockId, "myblock");
++});
++
++test("missing transclusion target produces TRANSCLUSION_MISSING_TARGET diagnostic", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [{ path: "some-file.md", source: "![[nonexistent]]\n" }];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, false);
++  assert.equal(result.resolutions[0].target, "nonexistent");
++  assert.equal(result.diagnostics.length, 1);
++  assert.equal(result.diagnostics[0].code, TRANSCLUSION_MISSING);
++});
++
++test("missing heading on existing file produces TRANSCLUSION_MISSING_TARGET", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "exists.md", source: "Content." },
++    { path: "source.md", source: "![[exists#MissingHeading]]\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, false);
++  assert.equal(result.diagnostics.length, 1);
++  assert.equal(result.diagnostics[0].code, TRANSCLUSION_MISSING);
++});
++
++test("missing block on existing file produces TRANSCLUSION_MISSING_TARGET", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "exists.md", source: "Content." },
++    { path: "source.md", source: "![[exists^missingblock]]\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, false);
++  assert.equal(result.diagnostics.length, 1);
++  assert.equal(result.diagnostics[0].code, TRANSCLUSION_MISSING);
++});
++
++test("missing target with nonexistent file and heading produces TRANSCLUSION_MISSING_TARGET", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [{ path: "source.md", source: "![[nonexistent#Heading]]\n" }];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, false);
++  assert.equal(result.diagnostics[0].code, TRANSCLUSION_MISSING);
++});
++
++test("no transclusions produces empty result", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [{ path: "plain.md", source: "Just text.\n" }];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 0);
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("resolves multiple transclusions from one file", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "a.md", source: "# Heading A\n" },
++    { path: "b.md", source: "Content." },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(
++    [{ path: "source.md", source: "![[a#Heading A]]\n\n![[b]]\n" }],
++    index.entries,
++    index.headings,
++    index.blocks,
++  );
++
++  assert.equal(result.resolutions.length, 2);
++  assert.equal(result.resolutions[0].resolved, true);
++  assert.equal(result.resolutions[1].resolved, true);
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("resolves mixed resolved and unresolved transclusions", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "exists.md", source: "Content." },
++    { path: "source.md", source: "![[exists]]\n\n![[missing]]\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 2);
++  assert.equal(result.resolutions[0].resolved, true);
++  assert.equal(result.resolutions[0].target, "exists");
++  assert.equal(result.resolutions[1].resolved, false);
++  assert.equal(result.resolutions[1].target, "missing");
++  assert.equal(result.diagnostics.length, 1);
++  assert.equal(result.diagnostics[0].code, TRANSCLUSION_MISSING);
++});
+diff --git a/reports/audit/latest/AUDIT_INDEX.md b/reports/audit/latest/AUDIT_INDEX.md
+index d8994a7..c0d6850 100644
+--- a/reports/audit/latest/AUDIT_INDEX.md
++++ b/reports/audit/latest/AUDIT_INDEX.md
+@@ -1,8 +1,8 @@
+ # Audit Bundle
+ 
+-Reviewed range: `826f4c8..d858fb4`
+-Current branch: `phase-2-workspace-core`
+-Current HEAD at generation time: `d858fb4b238870ad9f3a86c6f067651059eb69b9`
++Reviewed range: `db7d8c8..4362c2a`
++Current branch: `p2-006-backlink-index`
++Current HEAD at generation time: `4362c2aae11a72d2bcc66057a1143e9f64fe2f81`
+ 
+ Review source of truth: use the audit bundle commit hash to read `reports/audit/latest/*`.
+ 
+diff --git a/reports/audit/latest/audit.json b/reports/audit/latest/audit.json
+index ae2ec21..53b9998 100644
+--- a/reports/audit/latest/audit.json
++++ b/reports/audit/latest/audit.json
+@@ -1,41 +1,39 @@
+ {
+-  "taskId": "P2-005",
+-  "baseCommit": "826f4c8",
+-  "headCommit": "d858fb4",
+-  "currentBranch": "phase-2-workspace-core",
+-  "timestamp": "2026-05-19T03:46:35.782Z",
+-  "currentHead": "d858fb4b238870ad9f3a86c6f067651059eb69b9",
++  "taskId": "P2-006",
++  "baseCommit": "db7d8c8",
++  "headCommit": "4362c2a",
++  "currentBranch": "p2-006-backlink-index",
++  "timestamp": "2026-05-19T03:55:06.858Z",
++  "currentHead": "4362c2aae11a72d2bcc66057a1143e9f64fe2f81",
+   "currentWorkingTreeStatus": "",
+   "changedFiles": [
+-    "packages/workspace/src/file-index.ts",
++    "packages/workspace/src/backlink-index.ts",
+     "packages/workspace/src/index.ts",
+-    "packages/workspace/src/wiki-link-resolver.ts",
+     "packages/workspace/src/workspace.ts",
+-    "packages/workspace/tests/file-index.test.mjs",
+-    "packages/workspace/tests/wiki-link-resolver.test.mjs"
++    "packages/workspace/tests/backlink-index.test.mjs"
+   ],
+   "commandsUsed": [
+     "git branch --show-current",
+     "git rev-parse HEAD",
+     "git status --short",
+-    "git diff --name-only 826f4c8..d858fb4",
+-    "git diff --stat 826f4c8..d858fb4",
+-    "git diff 826f4c8..d858fb4",
+-    "git log --oneline 826f4c8..d858fb4",
+-    "git ls-tree -r --name-only d858fb4",
++    "git diff --name-only db7d8c8..4362c2a",
++    "git diff --stat db7d8c8..4362c2a",
++    "git diff db7d8c8..4362c2a",
++    "git log --oneline db7d8c8..4362c2a",
++    "git ls-tree -r --name-only 4362c2a",
+     "git remote get-url origin"
+   ],
+   "reviewedHeadRawUrls": {
+-    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/AUDIT_INDEX.md",
+-    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/audit.json",
+-    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/git-show.patch",
+-    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/git-show-name-only.txt",
+-    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/git-status.txt",
+-    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/git-log.txt",
+-    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/git-branch.txt",
+-    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/git-show-stat.txt",
+-    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/package-json.txt",
+-    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/d858fb4/reports/audit/latest/progress-report.md"
++    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/AUDIT_INDEX.md",
++    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/audit.json",
++    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/git-show.patch",
++    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/git-show-name-only.txt",
++    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/git-status.txt",
++    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/git-log.txt",
++    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/git-branch.txt",
++    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/git-show-stat.txt",
++    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/package-json.txt",
++    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/4362c2a/reports/audit/latest/progress-report.md"
+   },
+   "auditBundleCommitKnownAfterCommit": true,
+   "reviewAnchor": "commit",
+diff --git a/reports/audit/latest/git-branch.txt b/reports/audit/latest/git-branch.txt
+index bca7aee..396c3a3 100644
+--- a/reports/audit/latest/git-branch.txt
++++ b/reports/audit/latest/git-branch.txt
+@@ -1 +1 @@
+-phase-2-workspace-core
++p2-006-backlink-index
+diff --git a/reports/audit/latest/git-log.txt b/reports/audit/latest/git-log.txt
+index fb7cee4..319f089 100644
+--- a/reports/audit/latest/git-log.txt
++++ b/reports/audit/latest/git-log.txt
+@@ -1 +1 @@
+-d858fb4 feat(workspace): add file index and wiki link resolver
++4362c2a feat(workspace): add backlink index
+diff --git a/reports/audit/latest/git-show-name-only.txt b/reports/audit/latest/git-show-name-only.txt
+index 25850cd..743ef87 100644
+--- a/reports/audit/latest/git-show-name-only.txt
++++ b/reports/audit/latest/git-show-name-only.txt
+@@ -1,6 +1,4 @@
+-packages/workspace/src/file-index.ts
++packages/workspace/src/backlink-index.ts
+ packages/workspace/src/index.ts
+-packages/workspace/src/wiki-link-resolver.ts
+ packages/workspace/src/workspace.ts
+-packages/workspace/tests/file-index.test.mjs
+-packages/workspace/tests/wiki-link-resolver.test.mjs
++packages/workspace/tests/backlink-index.test.mjs
+diff --git a/reports/audit/latest/git-show-stat.txt b/reports/audit/latest/git-show-stat.txt
+index f948011..3d933a5 100644
+--- a/reports/audit/latest/git-show-stat.txt
++++ b/reports/audit/latest/git-show-stat.txt
+@@ -1,7 +1,5 @@
+- packages/workspace/src/file-index.ts               |  42 ++++
+- packages/workspace/src/index.ts                    |   9 +
+- packages/workspace/src/wiki-link-resolver.ts       | 232 +++++++++++++++++++
+- packages/workspace/src/workspace.ts                |  37 ++++
+- packages/workspace/tests/file-index.test.mjs       | 111 ++++++++++
+- .../workspace/tests/wiki-link-resolver.test.mjs    | 246 +++++++++++++++++++++
+- 6 files changed, 677 insertions(+)
++ packages/workspace/src/backlink-index.ts         |  20 +++
++ packages/workspace/src/index.ts                  |   2 +
++ packages/workspace/src/workspace.ts              |   3 +-
++ packages/workspace/tests/backlink-index.test.mjs | 201 +++++++++++++++++++++++
++ 4 files changed, 225 insertions(+), 1 deletion(-)
+diff --git a/reports/audit/latest/git-show.patch b/reports/audit/latest/git-show.patch
+index 334e245..0ac7a70 100644
+--- a/reports/audit/latest/git-show.patch
++++ b/reports/audit/latest/git-show.patch
+@@ -1,718 +1,267 @@
+-diff --git a/packages/workspace/src/file-index.ts b/packages/workspace/src/file-index.ts
++diff --git a/packages/workspace/src/backlink-index.ts b/packages/workspace/src/backlink-index.ts
+ new file mode 100644
+-index 0000000..3c6ae66
++index 0000000..1e6ed0d
+ --- /dev/null
+-+++ b/packages/workspace/src/file-index.ts
+-@@ -0,0 +1,42 @@
+-+import { parse } from "@nabla/markup";
+-+import type { Diagnostic } from "@nabla/markup";
+-+import { normalizeWorkspacePath } from "./path-utils.js";
+-+import { buildHeadingIndex } from "./heading-index.js";
+-+import { buildBlockIndex } from "./block-index.js";
+-+import type { FileIndexEntry, HeadingIndexEntry, BlockIndexEntry } from "./index.js";
+-+
+-+export type FileIndexInput = {
+-+  path: string;
+-+  source: string;
+-+};
+-+
+-+export type FileIndexResult = {
+-+  entries: FileIndexEntry[];
+-+  headings: HeadingIndexEntry[];
+-+  blocks: BlockIndexEntry[];
+-+  diagnostics: Diagnostic[];
+-+};
+-+
+-+export function buildFileIndex(files: FileIndexInput[]): FileIndexResult {
+-+  const entries: FileIndexEntry[] = [];
+-+  const headings: HeadingIndexEntry[] = [];
+-+  const blocks: BlockIndexEntry[] = [];
+-+  const allDiagnostics: Diagnostic[] = [];
+-+
+-+  for (const file of files) {
+-+    const normalizedPath = normalizeWorkspacePath(file.path);
+-+    entries.push({ path: file.path, normalizedPath });
+-+
+-+    const doc = parse(file.source);
+-+    allDiagnostics.push(...doc.diagnostics);
+-+
+-+    const headingEntries = buildHeadingIndex(doc, normalizedPath);
+-+    headings.push(...headingEntries);
+-+
+-+    const blockResult = buildBlockIndex(doc.children, normalizedPath);
+-+    blocks.push(...blockResult.entries);
+-+    allDiagnostics.push(...blockResult.diagnostics);
+++++ b/packages/workspace/src/backlink-index.ts
++@@ -0,0 +1,20 @@
+++import type { BacklinkEntry } from "./index.js";
+++import type { WikiLinkResolution } from "./wiki-link-resolver.js";
+++
+++export function buildBacklinkIndex(resolutions: WikiLinkResolution[]): BacklinkEntry[] {
+++  const backlinks: BacklinkEntry[] = [];
+++
+++  for (const resolution of resolutions) {
+++    if (!resolution.resolved) continue;
+++
+++    const kind = resolution.blockId ? "block" : resolution.heading ? "heading" : "note";
+++
+++    backlinks.push({
+++      sourcePath: resolution.filePath,
+++      targetPath: resolution.resolvedFilePath!,
+++      kind,
+++    });
+ +  }
+ +
+-+  return { entries, headings, blocks, diagnostics: allDiagnostics };
+++  return backlinks;
+ +}
+ diff --git a/packages/workspace/src/index.ts b/packages/workspace/src/index.ts
+-index a3b02ea..bc32002 100644
++index bc32002..c5432d3 100644
+ --- a/packages/workspace/src/index.ts
+ +++ b/packages/workspace/src/index.ts
+-@@ -3,6 +3,15 @@ export const NABLA_WORKSPACE_PACKAGE = "@nabla/workspace";
+- export { buildBlockIndex } from "./block-index.js";
+- export type { BlockIndexResult } from "./block-index.js";
++@@ -12,6 +12,8 @@ export type { WikiLinkResolution, WikiLinkResolverResult } from "./wiki-link-res
++ export { createWorkspace } from "./workspace.js";
++ export type { WorkspaceResult } from "./workspace.js";
+  
+-+export { buildFileIndex } from "./file-index.js";
+-+export type { FileIndexInput, FileIndexResult } from "./file-index.js";
+-+
+-+export { resolveWikiLinks } from "./wiki-link-resolver.js";
+-+export type { WikiLinkResolution, WikiLinkResolverResult } from "./wiki-link-resolver.js";
+-+
+-+export { createWorkspace } from "./workspace.js";
+-+export type { WorkspaceResult } from "./workspace.js";
+++export { buildBacklinkIndex } from "./backlink-index.js";
+ +
+  export type WorkspaceFile = {
+    path: string;
+  };
+-diff --git a/packages/workspace/src/wiki-link-resolver.ts b/packages/workspace/src/wiki-link-resolver.ts
+-new file mode 100644
+-index 0000000..135f7e7
+---- /dev/null
+-+++ b/packages/workspace/src/wiki-link-resolver.ts
+-@@ -0,0 +1,232 @@
+-+import { parse } from "@nabla/markup";
+-+import type { Diagnostic, WikiLinkNode, NablaDocument } from "@nabla/markup";
+-+import { DIAGNOSTIC_CODES } from "@nabla/markup";
+-+import { normalizeWorkspacePath } from "./path-utils.js";
+-+import { createSlug } from "./slug.js";
+-+import type { FileIndexEntry, HeadingIndexEntry, BlockIndexEntry } from "./index.js";
+-+import type { FileIndexInput } from "./file-index.js";
+-+
+-+export type WikiLinkResolution = {
+-+  filePath: string;
+-+  target: string;
+-+  alias?: string;
+-+  heading?: string;
+-+  blockId?: string;
+-+  resolved: boolean;
+-+  resolvedFilePath?: string;
+-+};
+-+
+-+export type WikiLinkResolverResult = {
+-+  resolutions: WikiLinkResolution[];
+-+  diagnostics: Diagnostic[];
+-+};
+-+
+-+function collectWikiLinks(doc: NablaDocument): WikiLinkNode[] {
+-+  const links: WikiLinkNode[] = [];
+-+  const walk = (nodes: unknown[]): void => {
+-+    for (const node of nodes) {
+-+      const n = node as Record<string, unknown>;
+-+      if (n.type === "wikiLink") {
+-+        links.push(node as WikiLinkNode);
+-+      }
+-+      const children = n.children;
+-+      if (Array.isArray(children)) {
+-+        walk(children);
+-+      }
+-+    }
+-+  };
+-+  walk(doc.children);
+-+  return links;
+-+}
+-+
+-+export function resolveWikiLinks(
+-+  files: FileIndexInput[],
+-+  fileIndex: FileIndexEntry[],
+-+  headingIndex: HeadingIndexEntry[],
+-+  blockIndex: BlockIndexEntry[],
+-+): WikiLinkResolverResult {
+-+  const resolutions: WikiLinkResolution[] = [];
+-+  const diagnostics: Diagnostic[] = [];
+-+
+-+  const fileByNormalized = new Map<string, FileIndexEntry>();
+-+  for (const entry of fileIndex) {
+-+    fileByNormalized.set(entry.normalizedPath, entry);
+-+  }
+-+
+-+  const headingByKey = new Map<string, HeadingIndexEntry>();
+-+  for (const entry of headingIndex) {
+-+    const key = `${entry.filePath}#${entry.slug}`;
+-+    if (!headingByKey.has(key)) {
+-+      headingByKey.set(key, entry);
+-+    }
+-+  }
+-+
+-+  const blockByKey = new Map<string, BlockIndexEntry>();
+-+  for (const entry of blockIndex) {
+-+    const key = `${entry.filePath}^${entry.blockId}`;
+-+    if (!blockByKey.has(key)) {
+-+      blockByKey.set(key, entry);
+-+    }
+-+  }
+-+
+-+  for (const file of files) {
+-+    const sourceNormalized = normalizeWorkspacePath(file.path);
+-+    const doc = parse(file.source);
+-+    const links = collectWikiLinks(doc);
+-+
+-+    for (const link of links) {
+-+      if (link.blockId) {
+-+        resolveBlockLink(link, file, sourceNormalized, fileByNormalized, blockByKey, resolutions, diagnostics);
+-+      } else if (link.heading) {
+-+        resolveHeadingLink(link, file, sourceNormalized, fileByNormalized, headingByKey, resolutions, diagnostics);
+-+      } else {
+-+        resolveNoteLink(link, file, fileByNormalized, resolutions, diagnostics);
+-+      }
+-+    }
+-+  }
+-+
+-+  return { resolutions, diagnostics };
+-+}
+-+
+-+function resolveNoteLink(
+-+  link: WikiLinkNode,
+-+  file: FileIndexInput,
+-+  fileByNormalized: Map<string, FileIndexEntry>,
+-+  resolutions: WikiLinkResolution[],
+-+  diagnostics: Diagnostic[],
+-+): void {
+-+  const normalizedTarget = normalizeWorkspacePath(link.target);
+-+  const fileEntry = fileByNormalized.get(normalizedTarget);
+-+
+-+  if (fileEntry) {
+-+    resolutions.push({
+-+      filePath: file.path,
+-+      target: link.target,
+-+      alias: link.alias,
+-+      resolved: true,
+-+      resolvedFilePath: fileEntry.path,
+-+    });
+-+  } else {
+-+    diagnostics.push({
+-+      severity: "warning",
+-+      code: DIAGNOSTIC_CODES.LINK_MISSING_TARGET,
+-+      message: `Note target not found: ${link.target}`,
+-+      position: link.position,
+-+    });
+-+    resolutions.push({
+-+      filePath: file.path,
+-+      target: link.target,
+-+      alias: link.alias,
+-+      resolved: false,
+-+    });
+-+  }
+-+}
+-+
+-+function resolveHeadingLink(
+-+  link: WikiLinkNode,
+-+  file: FileIndexInput,
+-+  sourceNormalized: string,
+-+  fileByNormalized: Map<string, FileIndexEntry>,
+-+  headingByKey: Map<string, HeadingIndexEntry>,
+-+  resolutions: WikiLinkResolution[],
+-+  diagnostics: Diagnostic[],
+-+): void {
+-+  const slug = createSlug(link.heading!);
+-+  if (link.target) {
+-+    const normalizedTarget = normalizeWorkspacePath(link.target);
+-+    const headingKey = `${normalizedTarget}#${slug}`;
+-+    const headingEntry = headingByKey.get(headingKey);
+-+
+-+    if (headingEntry) {
+-+      resolutions.push({
+-+        filePath: file.path,
+-+        target: link.target,
+-+        heading: link.heading,
+-+        resolved: true,
+-+        resolvedFilePath: headingEntry.filePath,
+-+      });
+-+    } else {
+-+      const fileEntry = fileByNormalized.get(normalizedTarget);
+-+      const code = fileEntry ? DIAGNOSTIC_CODES.HEADING_MISSING_TARGET : DIAGNOSTIC_CODES.LINK_MISSING_TARGET;
+-+      const message = fileEntry
+-+        ? `Heading target not found: ${link.target}#${link.heading}`
+-+        : `Note target not found: ${link.target}`;
+-+      diagnostics.push({ severity: "warning", code, message, position: link.position });
+-+      resolutions.push({ filePath: file.path, target: link.target, heading: link.heading, resolved: false });
+-+    }
+-+  } else {
+-+    const headingKey = `${sourceNormalized}#${slug}`;
+-+    const headingEntry = headingByKey.get(headingKey);
+-+    if (headingEntry) {
+-+      resolutions.push({
+-+        filePath: file.path,
+-+        target: link.target,
+-+        heading: link.heading,
+-+        resolved: true,
+-+        resolvedFilePath: file.path,
+-+      });
+-+    } else {
+-+      diagnostics.push({
+-+        severity: "warning",
+-+        code: DIAGNOSTIC_CODES.HEADING_MISSING_TARGET,
+-+        message: `Heading target not found: ${sourceNormalized}#${link.heading}`,
+-+        position: link.position,
+-+      });
+-+      resolutions.push({ filePath: file.path, target: link.target, heading: link.heading, resolved: false });
+-+    }
+-+  }
+-+}
+-+
+-+function resolveBlockLink(
+-+  link: WikiLinkNode,
+-+  file: FileIndexInput,
+-+  sourceNormalized: string,
+-+  fileByNormalized: Map<string, FileIndexEntry>,
+-+  blockByKey: Map<string, BlockIndexEntry>,
+-+  resolutions: WikiLinkResolution[],
+-+  diagnostics: Diagnostic[],
+-+): void {
+-+  if (link.target) {
+-+    const normalizedTarget = normalizeWorkspacePath(link.target);
+-+    const blockKey = `${normalizedTarget}^${link.blockId!}`;
+-+    const blockEntry = blockByKey.get(blockKey);
+-+
+-+    if (blockEntry) {
+-+      resolutions.push({
+-+        filePath: file.path,
+-+        target: link.target,
+-+        blockId: link.blockId,
+-+        resolved: true,
+-+        resolvedFilePath: blockEntry.filePath,
+-+      });
+-+    } else {
+-+      const fileEntry = fileByNormalized.get(normalizedTarget);
+-+      const code = fileEntry ? DIAGNOSTIC_CODES.BLOCK_MISSING_TARGET : DIAGNOSTIC_CODES.LINK_MISSING_TARGET;
+-+      const message = fileEntry
+-+        ? `Block target not found: ${link.target}^${link.blockId}`
+-+        : `Note target not found: ${link.target}`;
+-+      diagnostics.push({ severity: "warning", code, message, position: link.position });
+-+      resolutions.push({ filePath: file.path, target: link.target, blockId: link.blockId, resolved: false });
+-+    }
+-+  } else {
+-+    const blockKey = `${sourceNormalized}^${link.blockId!}`;
+-+    const blockEntry = blockByKey.get(blockKey);
+-+    if (blockEntry) {
+-+      resolutions.push({
+-+        filePath: file.path,
+-+        target: link.target,
+-+        blockId: link.blockId,
+-+        resolved: true,
+-+        resolvedFilePath: file.path,
+-+      });
+-+    } else {
+-+      diagnostics.push({
+-+        severity: "warning",
+-+        code: DIAGNOSTIC_CODES.BLOCK_MISSING_TARGET,
+-+        message: `Block target not found: ${sourceNormalized}^${link.blockId}`,
+-+        position: link.position,
+-+      });
+-+      resolutions.push({ filePath: file.path, target: link.target, blockId: link.blockId, resolved: false });
+-+    }
+-+  }
+-+}
+ diff --git a/packages/workspace/src/workspace.ts b/packages/workspace/src/workspace.ts
+-new file mode 100644
+-index 0000000..ecf44a4
+---- /dev/null
++index ecf44a4..6a83699 100644
++--- a/packages/workspace/src/workspace.ts
+ +++ b/packages/workspace/src/workspace.ts
+-@@ -0,0 +1,37 @@
+-+import type { Diagnostic } from "@nabla/markup";
+-+import { buildFileIndex } from "./file-index.js";
+-+import type { FileIndexInput, FileIndexResult } from "./file-index.js";
+-+import { resolveWikiLinks } from "./wiki-link-resolver.js";
+-+import type { WikiLinkResolverResult } from "./wiki-link-resolver.js";
+-+import type { Workspace, WorkspaceOptions, WorkspaceIndex } from "./index.js";
+-+
+-+export type WorkspaceResult = {
+-+  workspace: Workspace;
+-+  fileIndex: FileIndexResult;
+-+  wikiLinks: WikiLinkResolverResult;
+-+  diagnostics: Diagnostic[];
+-+};
+-+
+-+export function createWorkspace(files: FileIndexInput[], options: WorkspaceOptions = {}): WorkspaceResult {
+-+  const fileIndexResult = buildFileIndex(files);
+-+  const wikiLinkResult = resolveWikiLinks(
+-+    files,
+-+    fileIndexResult.entries,
+-+    fileIndexResult.headings,
+-+    fileIndexResult.blocks,
+-+  );
+-+
+-+  const index: WorkspaceIndex = {
+-+    files: fileIndexResult.entries,
+-+    headings: fileIndexResult.headings,
+-+    blocks: fileIndexResult.blocks,
+-+    backlinks: [],
+-+  };
+-+
+-+  return {
+-+    workspace: { index, options },
+-+    fileIndex: fileIndexResult,
+-+    wikiLinks: wikiLinkResult,
+-+    diagnostics: [...fileIndexResult.diagnostics, ...wikiLinkResult.diagnostics],
+-+  };
+-+}
+-diff --git a/packages/workspace/tests/file-index.test.mjs b/packages/workspace/tests/file-index.test.mjs
++@@ -3,6 +3,7 @@ import { buildFileIndex } from "./file-index.js";
++ import type { FileIndexInput, FileIndexResult } from "./file-index.js";
++ import { resolveWikiLinks } from "./wiki-link-resolver.js";
++ import type { WikiLinkResolverResult } from "./wiki-link-resolver.js";
+++import { buildBacklinkIndex } from "./backlink-index.js";
++ import type { Workspace, WorkspaceOptions, WorkspaceIndex } from "./index.js";
++ 
++ export type WorkspaceResult = {
++@@ -25,7 +26,7 @@ export function createWorkspace(files: FileIndexInput[], options: WorkspaceOptio
++     files: fileIndexResult.entries,
++     headings: fileIndexResult.headings,
++     blocks: fileIndexResult.blocks,
++-    backlinks: [],
+++    backlinks: buildBacklinkIndex(wikiLinkResult.resolutions),
++   };
++ 
++   return {
++diff --git a/packages/workspace/tests/backlink-index.test.mjs b/packages/workspace/tests/backlink-index.test.mjs
+ new file mode 100644
+-index 0000000..b965531
++index 0000000..408dc23
+ --- /dev/null
+-+++ b/packages/workspace/tests/file-index.test.mjs
+-@@ -0,0 +1,111 @@
+++++ b/packages/workspace/tests/backlink-index.test.mjs
++@@ -0,0 +1,201 @@
+ +import test from "node:test";
+ +import assert from "node:assert/strict";
+ +import { loadTsModule } from "./helpers/load-ts-module.mjs";
+ +
+-+const fileIndexUrl = new URL("../src/file-index.ts", import.meta.url);
+++const backlinkIndexUrl = new URL("../src/backlink-index.ts", import.meta.url);
+ +
+-+async function load() {
+-+  return loadTsModule(fileIndexUrl);
+++async function loadModule() {
+++  return loadTsModule(backlinkIndexUrl);
+ +}
+ +
+-+test("buildFileIndex produces entries from a single file", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([{ path: "test.md", source: "# Hello\nWorld.\n" }]);
+-+
+-+  assert.equal(result.entries.length, 1);
+-+  assert.equal(result.entries[0].path, "test.md");
+-+  assert.equal(result.entries[0].normalizedPath, "test");
+-+});
+-+
+-+test("buildFileIndex produces headings per file", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([{ path: "test.md", source: "# Hello\n## World\n" }]);
+-+
+-+  assert.equal(result.headings.length, 2);
+-+  assert.equal(result.headings[0].slug, "hello");
+-+  assert.equal(result.headings[0].text, "Hello");
+-+  assert.equal(result.headings[0].depth, 1);
+-+  assert.equal(result.headings[1].slug, "world");
+-+});
+-+
+-+test("buildFileIndex produces blocks per file", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([{ path: "test.md", source: "Hello ^greeting\n" }]);
+-+
+-+  assert.equal(result.blocks.length, 1);
+-+  assert.equal(result.blocks[0].blockId, "greeting");
+-+  assert.equal(result.blocks[0].filePath, "test");
+-+});
+-+
+-+test("buildFileIndex handles multiple files", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([
+-+    { path: "a.md", source: "# File A\n" },
+-+    { path: "b.md", source: "# File B\n" },
+-+  ]);
+-+
+-+  assert.equal(result.entries.length, 2);
+-+  assert.equal(result.entries[0].normalizedPath, "a");
+-+  assert.equal(result.entries[1].normalizedPath, "b");
+-+  assert.equal(result.headings.length, 2);
+-+  assert.equal(result.headings[0].filePath, "a");
+-+  assert.equal(result.headings[1].filePath, "b");
+-+});
+++function noteResolved(filePath, target, resolvedFilePath) {
+++  return { filePath, target, resolved: true, resolvedFilePath };
+++}
+ +
+-+test("buildFileIndex handles empty file list", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([]);
+++function headingResolved(filePath, target, heading, resolvedFilePath) {
+++  return { filePath, target, heading, resolved: true, resolvedFilePath };
+++}
+ +
+-+  assert.equal(result.entries.length, 0);
+-+  assert.equal(result.headings.length, 0);
+-+  assert.equal(result.blocks.length, 0);
+-+  assert.equal(result.diagnostics.length, 0);
+-+});
+++function blockResolved(filePath, target, blockId, resolvedFilePath) {
+++  return { filePath, target, blockId, resolved: true, resolvedFilePath };
+++}
+ +
+-+test("buildFileIndex normalizes paths with ./ prefix", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([{ path: "./notes/doc.md", source: "# Title\n" }]);
+++function unresolved(filePath, target) {
+++  return { filePath, target, resolved: false };
+++}
+ +
+-+  assert.equal(result.entries[0].normalizedPath, "notes/doc");
+++test("empty resolutions produce empty backlinks", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const result = buildBacklinkIndex([]);
+++  assert.equal(result.length, 0);
+ +});
+ +
+-+test("buildFileIndex handles files without .md extension", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([{ path: "readme", source: "# Readme\n" }]);
+++test("resolved note link creates backlink with kind note", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [noteResolved("source.md", "target", "target.md")];
+++  const result = buildBacklinkIndex(resolutions);
+ +
+-+  assert.equal(result.entries[0].normalizedPath, "readme");
+-+  assert.equal(result.entries[0].path, "readme");
+++  assert.equal(result.length, 1);
+++  assert.equal(result[0].sourcePath, "source.md");
+++  assert.equal(result[0].targetPath, "target.md");
+++  assert.equal(result[0].kind, "note");
+ +});
+ +
+-+test("buildFileIndex forwards diagnostics from markup parser", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([{ path: "test.md", source: "# Hello\n![[invalid\n" }]);
+++test("resolved heading link creates backlink with kind heading", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [headingResolved("source.md", "target", "My Heading", "target.md")];
+++  const result = buildBacklinkIndex(resolutions);
+ +
+-+  assert.equal(result.entries.length, 1);
+-+  assert.equal(result.diagnostics.length, 0);
+++  assert.equal(result.length, 1);
+++  assert.equal(result[0].sourcePath, "source.md");
+++  assert.equal(result[0].targetPath, "target.md");
+++  assert.equal(result[0].kind, "heading");
+ +});
+ +
+-+test("buildFileIndex produces block index with filePath using normalized path", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([{ path: "./my-note.md", source: "Paragraph ^block1\n" }]);
+++test("resolved block link creates backlink with kind block", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [blockResolved("source.md", "target", "block1", "target.md")];
+++  const result = buildBacklinkIndex(resolutions);
+ +
+-+  assert.equal(result.blocks.length, 1);
+-+  assert.equal(result.blocks[0].filePath, "my-note");
+++  assert.equal(result.length, 1);
+++  assert.equal(result[0].sourcePath, "source.md");
+++  assert.equal(result[0].targetPath, "target.md");
+++  assert.equal(result[0].kind, "block");
+ +});
+ +
+-+test("buildFileIndex handles file with no headings or blocks", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([{ path: "plain.md", source: "Just a paragraph.\n\nAnother one.\n" }]);
+-+
+-+  assert.equal(result.entries.length, 1);
+-+  assert.equal(result.headings.length, 0);
+-+  assert.equal(result.blocks.length, 0);
+++test("unresolved links are skipped", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [unresolved("source.md", "missing")];
+++  const result = buildBacklinkIndex(resolutions);
+++  assert.equal(result.length, 0);
+ +});
+ +
+-+test("buildFileIndex populates heading index with normalized filePath", async () => {
+-+  const { buildFileIndex } = await load();
+-+  const result = buildFileIndex([{ path: "./sub/note.md", source: "# Header\n" }]);
+++test("mixed resolved and unresolved; only resolved create backlinks", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [
+++    unresolved("source.md", "missing"),
+++    noteResolved("source.md", "exists", "exists.md"),
+++  ];
+++  const result = buildBacklinkIndex(resolutions);
+ +
+-+  assert.equal(result.headings.length, 1);
+-+  assert.equal(result.headings[0].filePath, "sub/note");
+++  assert.equal(result.length, 1);
+++  assert.equal(result[0].sourcePath, "source.md");
+++  assert.equal(result[0].targetPath, "exists.md");
+++  assert.equal(result[0].kind, "note");
+ +});
+-diff --git a/packages/workspace/tests/wiki-link-resolver.test.mjs b/packages/workspace/tests/wiki-link-resolver.test.mjs
+-new file mode 100644
+-index 0000000..13cdfaa
+---- /dev/null
+-+++ b/packages/workspace/tests/wiki-link-resolver.test.mjs
+-@@ -0,0 +1,246 @@
+-+import test from "node:test";
+-+import assert from "node:assert/strict";
+-+import { loadTsModule } from "./helpers/load-ts-module.mjs";
+-+
+-+const fileIndexUrl = new URL("../src/file-index.ts", import.meta.url);
+-+const resolverUrl = new URL("../src/wiki-link-resolver.ts", import.meta.url);
+-+
+-+async function loadFileIndex() {
+-+  return loadTsModule(fileIndexUrl);
+-+}
+-+
+-+async function loadResolver() {
+-+  return loadTsModule(resolverUrl);
+-+}
+-+
+-+const LINK_MISSING = "NABLA_LINK_MISSING_TARGET";
+-+const HEADING_MISSING = "NABLA_HEADING_MISSING_TARGET";
+-+const BLOCK_MISSING = "NABLA_BLOCK_MISSING_TARGET";
+ +
+-+test("resolves [[note]] to existing file", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+-+
+-+  const files = [
+-+    { path: "note-a.md", source: "Content." },
+++test("multiple resolved links from one source", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [
+++    noteResolved("source.md", "a", "a.md"),
+++    headingResolved("source.md", "b", "Heading", "b.md"),
+++    blockResolved("source.md", "c", "block1", "c.md"),
+ +  ];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(
+-+    [{ path: "source.md", source: "Link to [[note-a]]." }],
+-+    index.entries,
+-+    index.headings,
+-+    index.blocks,
+-+  );
+-+
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, true);
+-+  assert.equal(result.resolutions[0].resolvedFilePath, "note-a.md");
+-+  assert.equal(result.resolutions[0].target, "note-a");
+-+  assert.equal(result.diagnostics.length, 0);
+++  const result = buildBacklinkIndex(resolutions);
+++
+++  assert.equal(result.length, 3);
+++  assert.equal(result[0].sourcePath, "source.md");
+++  assert.equal(result[0].targetPath, "a.md");
+++  assert.equal(result[0].kind, "note");
+++  assert.equal(result[1].sourcePath, "source.md");
+++  assert.equal(result[1].targetPath, "b.md");
+++  assert.equal(result[1].kind, "heading");
+++  assert.equal(result[2].sourcePath, "source.md");
+++  assert.equal(result[2].targetPath, "c.md");
+++  assert.equal(result[2].kind, "block");
+ +});
+ +
+-+test("resolves [[note|alias]] with alias", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+-+
+-+  const files = [{ path: "target.md", source: "Content." }];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(
+-+    [{ path: "source.md", source: "Link to [[target|See Here]]." }],
+-+    index.entries,
+-+    index.headings,
+-+    index.blocks,
+-+  );
+-+
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, true);
+-+  assert.equal(result.resolutions[0].alias, "See Here");
+-+  assert.equal(result.resolutions[0].target, "target");
+-+  assert.equal(result.resolutions[0].resolvedFilePath, "target.md");
+-+});
+++test("alias does not affect backlink target", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [
+++    {
+++      filePath: "source.md",
+++      target: "target",
+++      alias: "Display Text",
+++      resolved: true,
+++      resolvedFilePath: "target.md",
+++    },
+++  ];
+++  const result = buildBacklinkIndex(resolutions);
+ +
+-+test("resolves [[note#heading]] to heading slug", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+-+
+-+  const files = [{ path: "doc.md", source: "# My Heading\nContent." }];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(
+-+    [{ path: "source.md", source: "See [[doc#My Heading]]." }],
+-+    index.entries,
+-+    index.headings,
+-+    index.blocks,
+-+  );
+-+
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, true);
+-+  assert.equal(result.resolutions[0].heading, "My Heading");
+-+  assert.equal(result.resolutions[0].target, "doc");
+++  assert.equal(result.length, 1);
+++  assert.equal(result[0].sourcePath, "source.md");
+++  assert.equal(result[0].targetPath, "target.md");
+++  assert.equal(result[0].kind, "note");
+ +});
+ +
+-+test("resolves [[note^id]] to block ID", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+-+
+-+  const files = [{ path: "doc.md", source: "Paragraph ^block1\n" }];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(
+-+    [{ path: "source.md", source: "See [[doc^block1]]." }],
+-+    index.entries,
+-+    index.headings,
+-+    index.blocks,
+-+  );
+-+
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, true);
+-+  assert.equal(result.resolutions[0].blockId, "block1");
+-+});
+++test("same-file heading ref creates backlink to self", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [headingResolved("doc.md", "", "My Heading", "doc.md")];
+++  const result = buildBacklinkIndex(resolutions);
+ +
+-+test("resolves [[note#^id]] compatible syntax", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+-+
+-+  const files = [{ path: "doc.md", source: "Paragraph ^block1\n" }];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(
+-+    [{ path: "source.md", source: "See [[doc#^block1]]." }],
+-+    index.entries,
+-+    index.headings,
+-+    index.blocks,
+-+  );
+-+
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, true);
+-+  assert.equal(result.resolutions[0].blockId, "block1");
+++  assert.equal(result.length, 1);
+++  assert.equal(result[0].sourcePath, "doc.md");
+++  assert.equal(result[0].targetPath, "doc.md");
+++  assert.equal(result[0].kind, "heading");
+ +});
+ +
+-+test("resolves [[#heading]] to same-file heading", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+++test("same-file block ref creates backlink to self", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [blockResolved("doc.md", "", "block1", "doc.md")];
+++  const result = buildBacklinkIndex(resolutions);
+ +
+-+  // Same file: the source file that contains the wiki link should also have the heading
+-+  const files = [{ path: "doc.md", source: "# My Heading\nSee [[#My Heading]]." }];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(files, index.entries, index.headings, index.blocks);
+-+
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, true);
+-+  assert.equal(result.resolutions[0].heading, "My Heading");
+-+  assert.equal(result.resolutions[0].target, "");
+++  assert.equal(result.length, 1);
+++  assert.equal(result[0].sourcePath, "doc.md");
+++  assert.equal(result[0].targetPath, "doc.md");
+++  assert.equal(result[0].kind, "block");
+ +});
+ +
+-+test("missing note target produces LINK_MISSING_TARGET diagnostic", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+-+
+-+  const files = [{ path: "some-file.md", source: "See [[nonexistent]]." }];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(files, index.entries, index.headings, index.blocks);
+++test("backlinks from multiple sources", async () => {
+++  const { buildBacklinkIndex } = await loadModule();
+++  const resolutions = [
+++    noteResolved("source-a.md", "target", "target.md"),
+++    noteResolved("source-b.md", "target", "target.md"),
+++  ];
+++  const result = buildBacklinkIndex(resolutions);
+ +
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, false);
+-+  assert.equal(result.resolutions[0].target, "nonexistent");
+-+  assert.equal(result.diagnostics.length, 1);
+-+  assert.equal(result.diagnostics[0].code, LINK_MISSING);
+++  assert.equal(result.length, 2);
+++  assert.equal(result[0].sourcePath, "source-a.md");
+++  assert.equal(result[1].sourcePath, "source-b.md");
+++  assert.equal(result[0].targetPath, "target.md");
+++  assert.equal(result[1].targetPath, "target.md");
+ +});
+ +
+-+test("missing heading on existing file produces HEADING_MISSING_TARGET", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+++test("createWorkspace populates index.backlinks", async () => {
+++  const workspaceUrl = new URL("../src/workspace.ts", import.meta.url);
+++  const { createWorkspace } = await loadTsModule(workspaceUrl);
+ +
+ +  const files = [
+-+    { path: "exists.md", source: "Content." },
+-+    { path: "source.md", source: "See [[exists#MissingHeading]]." },
+++    { path: "target.md", source: "Content." },
+ +  ];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(files, index.entries, index.headings, index.blocks);
+++  const result = createWorkspace([{ path: "source.md", source: "See [[target]]." }, ...files]);
+ +
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, false);
+-+  assert.equal(result.diagnostics.length, 1);
+-+  assert.equal(result.diagnostics[0].code, HEADING_MISSING);
+++  assert.equal(result.workspace.index.backlinks.length, 1);
+++  assert.equal(result.workspace.index.backlinks[0].sourcePath, "source.md");
+++  assert.equal(result.workspace.index.backlinks[0].targetPath, "target.md");
+++  assert.equal(result.workspace.index.backlinks[0].kind, "note");
+ +});
+ +
+-+test("missing block on existing file produces BLOCK_MISSING_TARGET", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+++test("transclusions do not create backlinks", async () => {
+++  const workspaceUrl = new URL("../src/workspace.ts", import.meta.url);
+++  const { createWorkspace } = await loadTsModule(workspaceUrl);
+ +
+ +  const files = [
+-+    { path: "exists.md", source: "Content." },
+-+    { path: "source.md", source: "See [[exists^missingblock]]." },
+++    { path: "target.md", source: "Content." },
+ +  ];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(files, index.entries, index.headings, index.blocks);
+-+
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, false);
+-+  assert.equal(result.diagnostics.length, 1);
+-+  assert.equal(result.diagnostics[0].code, BLOCK_MISSING);
+-+});
+++  const result = createWorkspace([{ path: "source.md", source: "![[target]]." }, ...files]);
+ +
+-+test("note target with nonexistent file and heading produces LINK_MISSING_TARGET", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+-+
+-+  const files = [{ path: "source.md", source: "See [[nonexistent#Heading]]." }];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(files, index.entries, index.headings, index.blocks);
+-+
+-+  assert.equal(result.resolutions.length, 1);
+-+  assert.equal(result.resolutions[0].resolved, false);
+-+  assert.equal(result.diagnostics[0].code, LINK_MISSING);
+++  assert.equal(result.workspace.index.backlinks.length, 0);
+ +});
+ +
+-+test("no wiki links produces empty result", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+-+
+-+  const files = [{ path: "plain.md", source: "Just text.\n" }];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(files, index.entries, index.headings, index.blocks);
+++test("missing wiki links produce diagnostic but no backlink", async () => {
+++  const workspaceUrl = new URL("../src/workspace.ts", import.meta.url);
+++  const { createWorkspace } = await loadTsModule(workspaceUrl);
+ +
+-+  assert.equal(result.resolutions.length, 0);
+-+  assert.equal(result.diagnostics.length, 0);
+-+});
+++  const result = createWorkspace([{ path: "source.md", source: "See [[missing]]." }]);
+ +
+-+test("resolves multiple wiki links from one file", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+++  assert.equal(result.workspace.index.backlinks.length, 0);
+ +
+-+  const files = [
+-+    { path: "a.md", source: "# Heading A\n" },
+-+    { path: "b.md", source: "Content." },
+-+  ];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(
+-+    [{ path: "source.md", source: "Link [[a#Heading A]] and [[b]]." }],
+-+    index.entries,
+-+    index.headings,
+-+    index.blocks,
+-+  );
+-+
+-+  assert.equal(result.resolutions.length, 2);
+-+  assert.equal(result.resolutions[0].resolved, true);
+-+  assert.equal(result.resolutions[1].resolved, true);
+-+  assert.equal(result.diagnostics.length, 0);
+-+});
+-+
+-+test("resolves mixed resolved and unresolved links", async () => {
+-+  const { buildFileIndex } = await loadFileIndex();
+-+  const { resolveWikiLinks } = await loadResolver();
+-+
+-+  const files = [
+-+    { path: "exists.md", source: "Content." },
+-+    { path: "source.md", source: "See [[exists]] and [[missing]]." },
+-+  ];
+-+  const index = buildFileIndex(files);
+-+  const result = resolveWikiLinks(files, index.entries, index.headings, index.blocks);
+-+
+-+  assert.equal(result.resolutions.length, 2);
+-+  assert.equal(result.resolutions[0].resolved, true);
+-+  assert.equal(result.resolutions[0].target, "exists");
+-+  assert.equal(result.resolutions[1].resolved, false);
+-+  assert.equal(result.resolutions[1].target, "missing");
+-+  assert.equal(result.diagnostics.length, 1);
+-+  assert.equal(result.diagnostics[0].code, LINK_MISSING);
+++  const linkDiags = result.diagnostics.filter(d => d.code === "NABLA_LINK_MISSING_TARGET");
+++  assert.equal(linkDiags.length, 1);
+ +});
+diff --git a/reports/audit/latest/repo-tree.txt b/reports/audit/latest/repo-tree.txt
+index c4caedd..1484882 100644
+--- a/reports/audit/latest/repo-tree.txt
++++ b/reports/audit/latest/repo-tree.txt
+@@ -40,19 +40,23 @@ packages/markup/tests/task-states.test.mjs
+ packages/markup/tests/wiki-links.test.mjs
+ packages/markup/tsconfig.json
+ packages/workspace/package.json
++packages/workspace/src/backlink-index.ts
+ packages/workspace/src/block-index.ts
+ packages/workspace/src/file-index.ts
+ packages/workspace/src/heading-index.ts
+ packages/workspace/src/index.ts
+ packages/workspace/src/path-utils.ts
+ packages/workspace/src/slug.ts
++packages/workspace/src/transclusion-resolver.ts
+ packages/workspace/src/wiki-link-resolver.ts
+ packages/workspace/src/workspace.ts
++packages/workspace/tests/backlink-index.test.mjs
+ packages/workspace/tests/block-id.test.mjs
+ packages/workspace/tests/file-index.test.mjs
+ packages/workspace/tests/heading-slugs.test.mjs
+ packages/workspace/tests/helpers/load-ts-module.mjs
+ packages/workspace/tests/path-utils.test.mjs
++packages/workspace/tests/transclusion-resolver.test.mjs
+ packages/workspace/tests/wiki-link-resolver.test.mjs
+ packages/workspace/tsconfig.json
+ pnpm-lock.yaml

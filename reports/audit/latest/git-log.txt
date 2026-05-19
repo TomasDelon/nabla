@@ -1,1 +1,6 @@
+3a98a64 merge: integrate P2-007 transclusion resolver
+e941d26 merge: integrate P2-006 backlink index
+c671590 docs: add audit bundle for P2-006 backlink index
 4362c2a feat(workspace): add backlink index
+b011b1a docs: add audit bundle for P2-007 transclusion resolver
+67036f6 feat(workspace): add transclusion resolver
