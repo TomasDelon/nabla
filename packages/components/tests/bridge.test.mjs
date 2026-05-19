@@ -184,13 +184,14 @@ test("toComponentProps maps toggle metadata to props", async () => {
   assert.equal(typeof props.onToggleFold, "function");
 });
 
-test("toComponentProps maps folded heading metadata to props", async () => {
+test("toComponentProps maps folded heading metadata to props preserving text", async () => {
   const mod = await load();
 
   const props = mod.toComponentProps({ kind: "foldedHeading", level: 3, text: "Sub", foldState: "closed" });
 
   assert.equal(props.kind, "foldedHeading");
   assert.equal(props.level, 3);
+  assert.equal(props.text, "Sub");
   assert.equal(props.foldState, "closed");
   assert.equal(typeof props.onToggleFold, "function");
 });

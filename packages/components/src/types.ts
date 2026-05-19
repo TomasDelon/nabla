@@ -128,6 +128,7 @@ export interface ToggleProps {
 export interface FoldedHeadingProps {
   readonly kind: "foldedHeading";
   readonly level: number;
+  readonly text: string;
   readonly foldState: "open" | "closed";
   readonly children?: never;
   readonly onToggleFold: () => void;

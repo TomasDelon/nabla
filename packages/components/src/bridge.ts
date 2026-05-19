@@ -162,6 +162,7 @@ export function toComponentProps(metadata: BridgeComponentMetadata): NablaCompon
       return {
         kind: "foldedHeading",
         level: metadata.level,
+        text: metadata.text,
         foldState: metadata.foldState,
         onToggleFold: () => {},
       };
