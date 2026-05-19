@@ -1,1 +1,1 @@
-6b5af66 feat(components): add components package skeleton
+47031a4 feat(components): add rendering contract types

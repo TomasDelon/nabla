@@ -1,6 +1,3 @@
-package.json
-packages/components/package.json
 packages/components/src/index.ts
-packages/components/tsconfig.json
-pnpm-lock.yaml
+packages/components/src/types.ts
 reports/IMPLEMENTATION_PROGRESS.md

@@ -1,134 +1,234 @@
-diff --git a/package.json b/package.json
-index 7f0eb58..c6d10be 100644
---- a/package.json
-+++ b/package.json
-@@ -4,14 +4,14 @@
-   "private": true,
-   "packageManager": "pnpm@11.1.3",
-   "scripts": {
--    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json",
-+    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json",
-     "audit:bundle": "node scripts/create-audit-bundle.mjs",
-     "check:boundaries": "node scripts/check-boundaries.mjs",
-     "lint": "node scripts/report-unavailable.mjs lint --silent \"Lint tooling is not bootstrapped in P1-001\"",
-     "test": "node --test packages/markup/tests/**/*.test.mjs",
-     "test:markup": "node --test packages/markup/tests/**/*.test.mjs",
-     "test:workspace": "node -e \"const fs=require('fs');const p=require('path');const d=p.join(process.cwd(),'packages/workspace/tests');if(fs.existsSync(d)){require('child_process').execSync('node --test '+d+'/**/*.test.mjs',{cwd:process.cwd(),stdio:'inherit',shell:true})}else{console.log('test:workspace: no tests yet');process.exit(0)}\"",
--    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json",
-+    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json",
-     "validate:fixtures": "node scripts/validate-fixtures.mjs",
-     "validate:spec-version": "node scripts/validate-spec-version.mjs"
-   },
-diff --git a/packages/components/package.json b/packages/components/package.json
-new file mode 100644
-index 0000000..a57b714
---- /dev/null
-+++ b/packages/components/package.json
-@@ -0,0 +1,24 @@
-+{
-+  "name": "@nabla/components",
-+  "version": "0.0.0",
-+  "private": true,
-+  "type": "module",
-+  "main": "./dist/index.js",
-+  "types": "./dist/index.d.ts",
-+  "exports": {
-+    ".": {
-+      "types": "./dist/index.d.ts",
-+      "default": "./dist/index.js"
-+    }
-+  },
-+  "files": [
-+    "dist"
-+  ],
-+  "scripts": {
-+    "build": "tsc -p tsconfig.json",
-+    "typecheck": "tsc -p tsconfig.json --noEmit"
-+  },
-+  "dependencies": {
-+    "@nabla/markup": "workspace:*"
-+  }
-+}
 diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-new file mode 100644
-index 0000000..c541f56
---- /dev/null
+index c541f56..9cdd7fb 100644
+--- a/packages/components/src/index.ts
 +++ b/packages/components/src/index.ts
-@@ -0,0 +1 @@
-+export const NABLA_COMPONENTS_PACKAGE = "@nabla/components";
-diff --git a/packages/components/tsconfig.json b/packages/components/tsconfig.json
-new file mode 100644
-index 0000000..cf9e1b1
---- /dev/null
-+++ b/packages/components/tsconfig.json
-@@ -0,0 +1,10 @@
-+{
-+  "extends": "../../tsconfig.base.json",
-+  "compilerOptions": {
-+    "rootDir": "src",
-+    "outDir": "dist"
-+  },
-+  "include": [
-+    "src/**/*.ts"
-+  ]
-+}
-diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
-index c9c0c96..f88e7e7 100644
---- a/pnpm-lock.yaml
-+++ b/pnpm-lock.yaml
-@@ -12,6 +12,12 @@ importers:
-         specifier: ^5.6.3
-         version: 5.9.3
- 
-+  packages/components:
-+    dependencies:
-+      '@nabla/markup':
-+        specifier: workspace:*
-+        version: link:../markup
+@@ -1 +1,9 @@
+ export const NABLA_COMPONENTS_PACKAGE = "@nabla/components";
 +
-   packages/editor:
-     dependencies:
-       '@nabla/markup':
++export { NABLA_COMPONENT_RENDERING_CONTRACT } from "./types.js";
++
++export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
++export type { NablaComponentContext, NablaComponentProps, NablaComponentRegistry } from "./types.js";
++export type { TaskStateProps, WikiLinkProps, TagProps, HighlightProps, EmojiProps } from "./types.js";
++export type { FootnoteProps, CommentProps, CalloutProps, ToggleProps, FoldedHeadingProps } from "./types.js";
++export type { TaskStateValue } from "./types.js";
+diff --git a/packages/components/src/types.ts b/packages/components/src/types.ts
+new file mode 100644
+index 0000000..87fca18
+--- /dev/null
++++ b/packages/components/src/types.ts
+@@ -0,0 +1,175 @@
++/**
++ * Nabla Component Rendering Contract
++ *
++ * Components are the rendering/view layer only.
++ * Markdown/Nabla Markdown+ remains the only persistent source of truth.
++ * No hidden JSON, no stored HTML, no serialized component state as source of truth.
++ * Components must not mutate parser/serializer/workspace state.
++ */
++
++/**
++ * Discriminated union of all Nabla component kinds that Phase 4
++ * may implement. Blocked or deferred features are excluded.
++ */
++export type NablaComponentKind =
++  | "taskState"
++  | "wikiLink"
++  | "tag"
++  | "highlight"
++  | "emoji"
++  | "footnote"
++  | "comment"
++  | "callout"
++  | "toggle"
++  | "foldedHeading";
++
++/**
++ * Features explicitly BLOCKED or DEFERRED from Phase 4 scope.
++ *
++ * - "transclusion": DEFERRED. Requires stable editor-to-components bridge
++ *   and workspace resolver integration. Do not implement until explicitly tasked.
++ *
++ * - "tooltip": BLOCKED. Tooltip markup extension
++ *   (packages/markup/src/extensions/tooltips.ts) is not implemented.
++ *   Do not implement tooltip rendering until the extension exists.
++ */
++export type NablaDeferredComponentKind = "transclusion" | "tooltip";
++
++/**
++ * Rendering mode for the component context.
++ */
++export type NablaRenderMode = "reading" | "editing";
++
++/**
++ * Shared rendering context passed to all components.
++ */
++export interface NablaComponentContext {
++  readonly mode: NablaRenderMode;
++}
++
++/**
++ * Task state value mapped from the editor adapter metadata.
++ * Mirrors TaskState from @nabla/markup.
++ */
++export type TaskStateValue =
++  | "unchecked"
++  | "checked"
++  | "cancelled"
++  | "important";
++
++export interface TaskStateProps {
++  readonly kind: "taskState";
++  readonly state: TaskStateValue;
++  readonly text: string;
++  readonly onChange: (newState: TaskStateValue) => void;
++}
++
++export interface WikiLinkProps {
++  readonly kind: "wikiLink";
++  readonly target: string;
++  readonly alias?: string;
++  readonly heading?: string;
++  readonly blockId?: string;
++  readonly unresolved: boolean;
++  readonly raw: string;
++}
++
++export interface TagProps {
++  readonly kind: "tag";
++  readonly value: string;
++  readonly segments: readonly string[];
++  readonly raw: string;
++}
++
++export interface HighlightProps {
++  readonly kind: "highlight";
++  readonly text: string;
++  readonly color?: string;
++  readonly raw: string;
++}
++
++export interface EmojiProps {
++  readonly kind: "emoji";
++  readonly name: string;
++  readonly value: string;
++  readonly raw: string;
++}
++
++export interface FootnoteProps {
++  readonly kind: "footnote";
++  readonly footnoteKind: "reference" | "definition";
++  readonly id: string;
++  readonly text?: string;
++  readonly raw: string;
++}
++
++export interface CommentProps {
++  readonly kind: "comment";
++  readonly text: string;
++  readonly multiline: boolean;
++  readonly raw: string;
++}
++
++export interface CalloutProps {
++  readonly kind: "callout";
++  readonly calloutType: string;
++  readonly foldState: "open" | "closed";
++  readonly children?: never;
++  readonly onToggleFold: () => void;
++}
++
++export interface ToggleProps {
++  readonly kind: "toggle";
++  readonly foldState: "open" | "closed";
++  readonly children?: never;
++  readonly onToggleFold: () => void;
++}
++
++export interface FoldedHeadingProps {
++  readonly kind: "foldedHeading";
++  readonly level: number;
++  readonly foldState: "open" | "closed";
++  readonly children?: never;
++  readonly onToggleFold: () => void;
++}
++
++/**
++ * Discriminated union of all component props.
++ */
++export type NablaComponentProps =
++  | TaskStateProps
++  | WikiLinkProps
++  | TagProps
++  | HighlightProps
++  | EmojiProps
++  | FootnoteProps
++  | CommentProps
++  | CalloutProps
++  | ToggleProps
++  | FoldedHeadingProps;
++
++/**
++ * Component registry mapping each NablaComponentKind to its
++ * rendering function or component class.
++ *
++ * The editor-to-components bridge (P4-012) will use this registry
++ * to resolve node view implementations.
++ */
++export interface NablaComponentRegistry {
++  readonly taskState: (props: TaskStateProps) => unknown;
++  readonly wikiLink: (props: WikiLinkProps) => unknown;
++  readonly tag: (props: TagProps) => unknown;
++  readonly highlight: (props: HighlightProps) => unknown;
++  readonly emoji: (props: EmojiProps) => unknown;
++  readonly footnote: (props: FootnoteProps) => unknown;
++  readonly comment: (props: CommentProps) => unknown;
++  readonly callout: (props: CalloutProps) => unknown;
++  readonly toggle: (props: ToggleProps) => unknown;
++  readonly foldedHeading: (props: FoldedHeadingProps) => unknown;
++}
++
++/**
++ * Contract identifier for runtime wiring validation.
++ */
++export const NABLA_COMPONENT_RENDERING_CONTRACT =
++  "nabla-component-rendering-contract";
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index e9f42ff..44f22ee 100644
+index 44f22ee..07360b6 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -14,12 +14,12 @@ Phase 4 — `@nabla/components`
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
  Phase 3 (`@nabla/editor`) — ACCEPTED.
--Phase 4 (`@nabla/components`) — kickoff report and backlog extracted.
-+Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created.
+-Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created.
++Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created; rendering contract types defined.
  
  ### Repairs Applied
  
-@@ -176,6 +176,17 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted.
- - No workspace changes.
- - No editor source changes.
+@@ -187,6 +187,19 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+ - No parser/serializer or workspace changes.
+ - Only dependency: `@nabla/markup` (workspace).
  
-+### P4-001 Notes
++### P4-002 Notes
 +
-+- Created `packages/components/` with `package.json`, `tsconfig.json`, and `src/index.ts`.
-+- Package exports `NABLA_COMPONENTS_PACKAGE` constant.
-+- Updated root `package.json` build/typecheck scripts to include `packages/components/tsconfig.json`.
-+- No React dependencies added.
++- Created `packages/components/src/types.ts` with full rendering contract types.
++- Defined `NablaComponentKind` union for all 10 implementable component kinds (taskState, wikiLink, tag, highlight, emoji, footnote, comment, callout, toggle, foldedHeading).
++- Defined `NablaDeferredComponentKind` marking transclusion (DEFERRED) and tooltip (BLOCKED).
++- Defined per-kind prop interfaces: `TaskStateProps`, `WikiLinkProps`, `TagProps`, `HighlightProps`, `EmojiProps`, `FootnoteProps`, `CommentProps`, `CalloutProps`, `ToggleProps`, `FoldedHeadingProps`.
++- Defined `NablaComponentRegistry` interface for editor bridge resolution.
++- Added `NABLA_COMPONENT_RENDERING_CONTRACT` constant.
++- Re-exported all types from `packages/components/src/index.ts`.
++- No React dependency added.
 +- No visual components implemented.
-+- No editor source modified.
-+- No parser/serializer or workspace changes.
-+- Only dependency: `@nabla/markup` (workspace).
++- No editor/markup/workspace source changes.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -194,4 +205,4 @@ None.
- 
- ## Next Recommended Task
- 
--P4-001 — Components Package Skeleton — create `packages/components/` with package.json, tsconfig.json, minimal entry, and verify it builds in the monorepo.
-+P4-002 — Component Rendering Contract and Types — define TypeScript interfaces for the component rendering contract.

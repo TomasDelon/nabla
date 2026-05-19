@@ -5,6 +5,7 @@ nabla_complete_project_documentation_pack_v1_final.zip.sha256
 package.json
 packages/components/package.json
 packages/components/src/index.ts
+packages/components/src/types.ts
 packages/components/tsconfig.json
 packages/editor/fixtures/emoji-preserve/expected.md
 packages/editor/fixtures/emoji-preserve/input.md
