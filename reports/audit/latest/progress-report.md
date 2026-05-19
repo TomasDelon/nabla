@@ -6,7 +6,7 @@ Phase 2 — `@nabla/workspace`
 
 ## Task ID
 
-`P2-012` — workspace fixture shape alignment
+`P2-011A` — workspace fixture shape alignment
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 2 — `@nabla/workspace`
 
 ## Status
 
-P2-012 completed: fixture-facing workspace shape alignment.
+P2-011A completed: fixture-facing workspace shape alignment.
 
 ### Fixture Shape Alignment
 
