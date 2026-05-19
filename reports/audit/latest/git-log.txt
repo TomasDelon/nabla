@@ -1,5 +1,1 @@
-0bb2331 merge: integrate P2-011A workspace shape alignment
-e720ac2 docs: add audit bundle for P2-011A workspace shape alignment
-83db762 docs: reclassify workspace shape alignment as P2-011A
-7b9eaf5 docs: add audit bundle for P2-012 workspace shape alignment
-2ed92d6 feat(workspace): align workspace fixture output shape
+f6ec0c2 docs: add Phase 2 validation report
