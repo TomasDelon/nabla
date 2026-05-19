@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-002` — App Dev Server and Minimal Shell
+`P5-003` — Sample Document Source Loading
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -448,6 +448,16 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - No document loading/rendering/editor integration.
 - No Phase 1–4 source package changes.
 
+### P5-003 Notes
+
+- Created `packages/app/src/sample-document.ts` with sample Nabla Markdown+ source including headings, task states, wiki links, tags, highlights, emoji shortcodes, footnotes, comments, callout markers, toggle markers, and folded heading markers.
+- Updated `packages/app/src/main.tsx` to load `SAMPLE_DOCUMENT_SOURCE` into React state and display it in a read-only `<textarea>`.
+- Updated `packages/app/src/app.css` with source view styles.
+- Added `packages/app/tests/sample-document.test.mjs` with 12 tests verifying source contains all expected syntax markers.
+- No parsing/render pipeline implemented.
+- No editor/component/workspace integration.
+- No dependencies added.
+
 ### P5-002 Notes
 
 - Created `packages/app/index.html`, `packages/app/vite.config.ts`, `packages/app/src/main.tsx`, `packages/app/src/app.css`.
@@ -476,4 +486,4 @@ None.
 
 ## Next Recommended Task
 
-P5-003 — Sample Document Source Loading — implement hardcoded sample document loading into the app state.
+P5-004 — Markdown/Nabla Render Pipeline Integration — wire the loaded source through @nabla/markup parser and display parsed output.

@@ -1,9 +1,5 @@
-package.json
-packages/app/index.html
-packages/app/package.json
 packages/app/src/app.css
 packages/app/src/main.tsx
-packages/app/tsconfig.json
-packages/app/vite.config.ts
-pnpm-lock.yaml
+packages/app/src/sample-document.ts
+packages/app/tests/sample-document.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

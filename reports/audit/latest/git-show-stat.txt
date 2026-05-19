@@ -1,10 +1,6 @@
- package.json                       |  1 +
- packages/app/index.html            | 12 +++++++
- packages/app/package.json          | 13 ++++++--
- packages/app/src/app.css           | 64 ++++++++++++++++++++++++++++++++++++++
- packages/app/src/main.tsx          | 29 +++++++++++++++++
- packages/app/tsconfig.json         |  7 +++--
- packages/app/vite.config.ts        |  6 ++++
- pnpm-lock.yaml                     | 19 +++++++++++
- reports/IMPLEMENTATION_PROGRESS.md | 16 ++++++++--
- 9 files changed, 160 insertions(+), 7 deletions(-)
+ packages/app/src/app.css                    | 29 ++++++++++
+ packages/app/src/main.tsx                   | 18 +++++++
+ packages/app/src/sample-document.ts         | 69 ++++++++++++++++++++++++
+ packages/app/tests/sample-document.test.mjs | 84 +++++++++++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md          | 16 ++++--
+ 5 files changed, 213 insertions(+), 3 deletions(-)

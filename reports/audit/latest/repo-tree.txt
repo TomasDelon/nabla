@@ -8,6 +8,8 @@ packages/app/package.json
 packages/app/src/app.css
 packages/app/src/index.ts
 packages/app/src/main.tsx
+packages/app/src/sample-document.ts
+packages/app/tests/sample-document.test.mjs
 packages/app/tsconfig.json
 packages/app/vite.config.ts
 packages/components/fixtures/bridge-folded-heading-text/expected.json

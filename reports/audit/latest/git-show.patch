@@ -1,234 +1,252 @@
-diff --git a/package.json b/package.json
-index a7bea82..77099bd 100644
---- a/package.json
-+++ b/package.json
-@@ -4,6 +4,7 @@
-   "private": true,
-   "packageManager": "pnpm@11.1.3",
-   "scripts": {
-+    "dev:app": "pnpm --dir packages/app dev",
-     "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json packages/app/tsconfig.json",
-     "audit:bundle": "node scripts/create-audit-bundle.mjs",
-     "check:boundaries": "node scripts/check-boundaries.mjs",
-diff --git a/packages/app/index.html b/packages/app/index.html
-new file mode 100644
-index 0000000..152a9f6
---- /dev/null
-+++ b/packages/app/index.html
-@@ -0,0 +1,12 @@
-+<!DOCTYPE html>
-+<html lang="en">
-+  <head>
-+    <meta charset="UTF-8" />
-+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-+    <title>Nabla</title>
-+  </head>
-+  <body>
-+    <div id="root"></div>
-+    <script type="module" src="/src/main.tsx"></script>
-+  </body>
-+</html>
-diff --git a/packages/app/package.json b/packages/app/package.json
-index 1f34f44..b176aff 100644
---- a/packages/app/package.json
-+++ b/packages/app/package.json
-@@ -16,9 +16,18 @@
-   ],
-   "scripts": {
-     "build": "tsc -p tsconfig.json",
--    "typecheck": "tsc -p tsconfig.json --noEmit"
-+    "typecheck": "tsc -p tsconfig.json --noEmit",
-+    "dev": "vite --host 127.0.0.1"
-   },
-   "dependencies": {
--    "@nabla/markup": "workspace:*"
-+    "@nabla/markup": "workspace:*",
-+    "react": "^18.3.1",
-+    "react-dom": "^18.3.1",
-+    "@types/react": "^18.3.0",
-+    "@types/react-dom": "^18.3.0"
-+  },
-+  "devDependencies": {
-+    "@vitejs/plugin-react": "^4.3.0",
-+    "vite": "^5.4.0"
-   }
- }
 diff --git a/packages/app/src/app.css b/packages/app/src/app.css
-new file mode 100644
-index 0000000..9d23a56
---- /dev/null
+index 9d23a56..c35b0a2 100644
+--- a/packages/app/src/app.css
 +++ b/packages/app/src/app.css
-@@ -0,0 +1,64 @@
-+* {
-+  margin: 0;
-+  padding: 0;
-+  box-sizing: border-box;
+@@ -62,3 +62,32 @@ body {
+   text-align: center;
+   font-style: italic;
+ }
++
++.sample-section {
++  display: flex;
++  flex-direction: column;
++  gap: 0.5rem;
 +}
 +
-+body {
-+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-+  color: #1a1a1a;
-+  background: #ffffff;
-+  line-height: 1.6;
++.section-title {
++  font-size: 1.125rem;
++  font-weight: 600;
 +}
 +
-+.app {
-+  max-width: 640px;
-+  margin: 0 auto;
-+  padding: 2rem;
-+}
-+
-+.app-header {
-+  margin-bottom: 2rem;
-+}
-+
-+.app-title {
-+  font-size: 1.5rem;
-+  font-weight: 700;
-+  margin-bottom: 0.25rem;
-+}
-+
-+.app-subtitle {
++.section-note {
 +  color: #6b7280;
 +  font-size: 0.875rem;
 +}
 +
-+.app-main {
-+  display: flex;
-+  flex-direction: column;
-+  gap: 1.5rem;
-+}
-+
-+.status-card {
++.source-view {
++  width: 100%;
++  padding: 0.75rem;
++  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
++  font-size: 0.8125rem;
++  line-height: 1.5;
 +  background: #f9fafb;
 +  border: 1px solid #e5e7eb;
 +  border-radius: 0.375rem;
-+  padding: 1rem;
-+}
-+
-+.status-card__title {
-+  font-size: 1.125rem;
-+  font-weight: 600;
-+  margin-bottom: 0.5rem;
-+}
-+
-+.status-card__note {
-+  color: #6b7280;
-+  font-size: 0.875rem;
-+}
-+
-+.app-reminder {
-+  font-size: 0.75rem;
-+  color: #6b7280;
-+  text-align: center;
-+  font-style: italic;
++  color: #1a1a1a;
++  resize: vertical;
 +}
 diff --git a/packages/app/src/main.tsx b/packages/app/src/main.tsx
-new file mode 100644
-index 0000000..012e956
---- /dev/null
+index 012e956..6d03683 100644
+--- a/packages/app/src/main.tsx
 +++ b/packages/app/src/main.tsx
-@@ -0,0 +1,29 @@
-+import { createRoot } from "react-dom/client";
-+import "./app.css";
-+
-+function App() {
-+  return (
-+    <div className="app">
-+      <header className="app-header">
-+        <h1 className="app-title">Nabla</h1>
-+        <p className="app-subtitle">Markdown-first visual editor</p>
-+      </header>
-+      <main className="app-main">
-+        <div className="status-card">
-+          <h2 className="status-card__title">Phase 5 app shell running</h2>
-+          <p className="status-card__note">
-+            This is not loading documents yet.
-+          </p>
-+        </div>
-+        <p className="app-reminder">
-+          Markdown/Nabla Markdown+ remains the source of truth.
-+        </p>
-+      </main>
-+    </div>
-+  );
-+}
-+
-+const root = document.getElementById("root");
-+if (root) {
-+  createRoot(root).render(<App />);
-+}
-diff --git a/packages/app/tsconfig.json b/packages/app/tsconfig.json
-index cf9e1b1..6d2a23a 100644
---- a/packages/app/tsconfig.json
-+++ b/packages/app/tsconfig.json
-@@ -2,9 +2,12 @@
-   "extends": "../../tsconfig.base.json",
-   "compilerOptions": {
-     "rootDir": "src",
--    "outDir": "dist"
-+    "outDir": "dist",
-+    "jsx": "react-jsx",
-+    "jsxImportSource": "react"
-   },
-   "include": [
--    "src/**/*.ts"
-+    "src/**/*.ts",
-+    "src/**/*.tsx"
-   ]
- }
-diff --git a/packages/app/vite.config.ts b/packages/app/vite.config.ts
-new file mode 100644
-index 0000000..081c8d9
---- /dev/null
-+++ b/packages/app/vite.config.ts
-@@ -0,0 +1,6 @@
-+import { defineConfig } from "vite";
-+import react from "@vitejs/plugin-react";
-+
-+export default defineConfig({
-+  plugins: [react()],
-+});
-diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
-index 7b9a27c..2607d48 100644
---- a/pnpm-lock.yaml
-+++ b/pnpm-lock.yaml
-@@ -17,6 +17,25 @@ importers:
-       '@nabla/markup':
-         specifier: workspace:*
-         version: link:../markup
-+      '@types/react':
-+        specifier: ^18.3.0
-+        version: 18.3.28
-+      '@types/react-dom':
-+        specifier: ^18.3.0
-+        version: 18.3.7(@types/react@18.3.28)
-+      react:
-+        specifier: ^18.3.1
-+        version: 18.3.1
-+      react-dom:
-+        specifier: ^18.3.1
-+        version: 18.3.1(react@18.3.1)
-+    devDependencies:
-+      '@vitejs/plugin-react':
-+        specifier: ^4.3.0
-+        version: 4.7.0(vite@5.4.21)
-+      vite:
-+        specifier: ^5.4.0
-+        version: 5.4.21
+@@ -1,7 +1,11 @@
+ import { createRoot } from "react-dom/client";
++import { useState } from "react";
++import { SAMPLE_DOCUMENT_SOURCE } from "./sample-document.js";
+ import "./app.css";
  
-   packages/components:
-     dependencies:
+ function App() {
++  const [source] = useState(SAMPLE_DOCUMENT_SOURCE);
++
+   return (
+     <div className="app">
+       <header className="app-header">
+@@ -15,6 +19,20 @@ function App() {
+             This is not loading documents yet.
+           </p>
+         </div>
++
++        <div className="sample-section">
++          <h2 className="section-title">Sample source loaded</h2>
++          <p className="section-note">
++            Parsing/rendering starts in P5-004.
++          </p>
++          <textarea
++            className="source-view"
++            readOnly
++            value={source}
++            rows={20}
++          />
++        </div>
++
+         <p className="app-reminder">
+           Markdown/Nabla Markdown+ remains the source of truth.
+         </p>
+diff --git a/packages/app/src/sample-document.ts b/packages/app/src/sample-document.ts
+new file mode 100644
+index 0000000..2dcda1a
+--- /dev/null
++++ b/packages/app/src/sample-document.ts
+@@ -0,0 +1,69 @@
++export const SAMPLE_DOCUMENT_SOURCE = `# Nabla Sample Document
++
++This is a sample document that demonstrates accepted Nabla Markdown+ syntax surfaces.
++
++## Text Formatting
++
++This text has a ==highlight== and a =={#ff0}color highlight==.
++
++Here is an emoji shortcode: :check:
++
++## Task States
++
++- [ ] Unchecked task
++- [x] Checked task
++- [-] Cancelled task
++- [!] Important task
++
++## Wiki Links
++
++A resolved link: [[ResolvedPage|Resolved Link]].
++
++An unresolved link: [[MissingPage]].
++
++## Tags and Highlights
++
++A simple tag: #mytag.
++
++A nested tag: #nested/tag.
++
++## Footnotes
++
++Here is a footnote reference[^1].
++
++[^1]: This is the footnote definition.
++
++## Comments
++
++%%This is a private comment.%%
++
++## Callout
++
++[!note]> This is a note callout.
++
++## Toggle
++
++]> This is a toggle with content.
++
++## Folded Heading
++
++#> This is a folded heading.
++
++## Standard Markdown
++
++A paragraph with **bold** and *italic* text.
++
++- List item one
++- List item two
++
++1. Ordered item one
++2. Ordered item two
++
++> A blockquote.
++
++\`\`\`
++A code block.
++\`\`\`
++
++---
++`;
+diff --git a/packages/app/tests/sample-document.test.mjs b/packages/app/tests/sample-document.test.mjs
+new file mode 100644
+index 0000000..5437adb
+--- /dev/null
++++ b/packages/app/tests/sample-document.test.mjs
+@@ -0,0 +1,84 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++async function load() {
++  return import(new URL("../dist/sample-document.js", import.meta.url));
++}
++
++test("SAMPLE_DOCUMENT_SOURCE is a non-empty string", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.SAMPLE_DOCUMENT_SOURCE, "string");
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.length > 0);
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains heading marker", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("# Nabla Sample Document"));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains task state markers", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [ ]"));
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [x]"));
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [-]"));
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [!]"));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains wiki link syntax", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("[[ResolvedPage|Resolved Link]]"));
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("[[MissingPage]]"));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains tag syntax", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("#mytag"));
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("#nested/tag"));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains highlight syntax", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("==highlight=="));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains emoji shortcode", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes(":check:"));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains footnote syntax", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("[^1]"));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains comment syntax", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("%%"));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains callout marker", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("[!note]>"));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains toggle marker", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("]>"));
++});
++
++test("SAMPLE_DOCUMENT_SOURCE contains folded heading marker", async () => {
++  const mod = await load();
++
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("#>"));
++});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index b7141c0..ea3fb36 100644
+index ea3fb36..aadfe92 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
  
  ## Last Task
  
--`P5-001` — App Package Skeleton
-+`P5-002` — App Dev Server and Minimal Shell
+-`P5-002` — App Dev Server and Minimal Shell
++`P5-003` — Sample Document Source Loading
  
  ## Branch
  
@@ -236,8 +254,8 @@ index b7141c0..ea3fb36 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -245,22 +263,22 @@ index b7141c0..ea3fb36 100644
  - No document loading/rendering/editor integration.
  - No Phase 1–4 source package changes.
  
-+### P5-002 Notes
++### P5-003 Notes
 +
-+- Created `packages/app/index.html`, `packages/app/vite.config.ts`, `packages/app/src/main.tsx`, `packages/app/src/app.css`.
-+- App shell renders: title "Nabla", subtitle "Markdown-first visual editor", status card "Phase 5 app shell running", source-of-truth reminder.
-+- Updated `packages/app/package.json` with React/Vite dependencies and dev/build scripts.
-+- Updated root `package.json` with `dev:app` script.
-+- Dependencies added: `react`, `react-dom`, `@types/react`, `@types/react-dom`, `vite`, `@vitejs/plugin-react`.
-+- No document loading, render pipeline, editor integration, component integration, or workspace integration.
-+- No Phase 1–4 source package changes.
++- Created `packages/app/src/sample-document.ts` with sample Nabla Markdown+ source including headings, task states, wiki links, tags, highlights, emoji shortcodes, footnotes, comments, callout markers, toggle markers, and folded heading markers.
++- Updated `packages/app/src/main.tsx` to load `SAMPLE_DOCUMENT_SOURCE` into React state and display it in a read-only `<textarea>`.
++- Updated `packages/app/src/app.css` with source view styles.
++- Added `packages/app/tests/sample-document.test.mjs` with 12 tests verifying source contains all expected syntax markers.
++- No parsing/render pipeline implemented.
++- No editor/component/workspace integration.
++- No dependencies added.
 +
- ## Verification Summary
+ ### P5-002 Notes
  
- - `pnpm test` — PASS
-@@ -466,4 +476,4 @@ None.
+ - Created `packages/app/index.html`, `packages/app/vite.config.ts`, `packages/app/src/main.tsx`, `packages/app/src/app.css`.
+@@ -476,4 +486,4 @@ None.
  
  ## Next Recommended Task
  
--P5-002 — App Dev Server and Minimal Shell — set up Vite dev server and minimal HTML/React shell.
-+P5-003 — Sample Document Source Loading — implement hardcoded sample document loading into the app state.
+-P5-003 — Sample Document Source Loading — implement hardcoded sample document loading into the app state.
++P5-004 — Markdown/Nabla Render Pipeline Integration — wire the loaded source through @nabla/markup parser and display parsed output.
