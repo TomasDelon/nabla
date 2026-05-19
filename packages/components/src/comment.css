@@ -3,6 +3,7 @@
   font-size: var(--nabla-font-size-md);
   line-height: var(--nabla-line-height);
   color: var(--nabla-color-text-muted);
+  font-style: italic;
   opacity: 0.6;
   user-select: none;
 }

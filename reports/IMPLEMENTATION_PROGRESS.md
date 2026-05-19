@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-008A` — Components Visual Playground
+`P4-008B` — Playground Visual Polish Pass
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -283,6 +283,24 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No new visual components implemented.
 - No editor/markup/workspace source changes.
 - Dependencies added: `vite`, `@vitejs/plugin-react`, `react-dom`, `@types/react-dom`.
+
+### P4-008B Notes
+
+- Polish pass for the components playground only.
+- Added `ExampleRow` component with card-style rows (border, background, padding).
+- Added `playground/src/playground.css` for all playground-specific styling.
+- Converted inline styles to CSS classes for sections, rows, and layout.
+- Labels now sit above components with clear spacing (`margin-bottom` on label, card padding).
+- Footnote reference example: added space before reference, and added `margin-left: 0.1em` to `.nabla-footnote-reference` generic CSS.
+- Tag pill: increased top/bottom padding from 1px to 2px for better pill shape visibility.
+- Highlight default: increased background opacity from 40% (#ffff0066) to 50% (#ffff0080) for better readability.
+- Comment: added `font-style: italic` for a more muted, comment-like appearance.
+- No new visual components implemented.
+- No component behavior or API changed.
+- No editor/markup/workspace source changes.
+- No app/Phase 5 work started.
+- No parser/serializer changes.
+- No dependencies added.
 
 ## Verification Summary
 

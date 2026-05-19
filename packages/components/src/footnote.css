@@ -4,6 +4,7 @@
   cursor: pointer;
   vertical-align: super;
   line-height: 1;
+  margin-left: 0.1em;
   user-select: none;
 }
 
