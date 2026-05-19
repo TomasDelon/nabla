@@ -1,9 +1,11 @@
- packages/editor/src/editor.ts             |  29 ++++-
- packages/editor/src/index.ts              |   9 ++
- packages/editor/src/nodes/wiki-link.ts    | 173 ++++++++++++++++++++++++++++++
- packages/editor/tests/editor.test.mjs     |   9 +-
- packages/editor/tests/public-api.test.mjs |  11 ++
- packages/editor/tests/task-state.test.mjs |   3 +-
- packages/editor/tests/wiki-link.test.mjs  | 140 ++++++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md        |  17 ++-
- 8 files changed, 382 insertions(+), 9 deletions(-)
+ packages/editor/src/editor.ts                |  18 +++++
+ packages/editor/src/index.ts                 |  14 ++++
+ packages/editor/src/nodes/highlight.ts       |  68 ++++++++++++++++++
+ packages/editor/src/nodes/tag.ts             | 103 +++++++++++++++++++++++++++
+ packages/editor/tests/editor.test.mjs        |   6 +-
+ packages/editor/tests/public-api.test.mjs    |  13 ++++
+ packages/editor/tests/tag-highlight.test.mjs | 100 ++++++++++++++++++++++++++
+ packages/editor/tests/task-state.test.mjs    |   4 +-
+ packages/editor/tests/wiki-link.test.mjs     |   4 +-
+ reports/IMPLEMENTATION_PROGRESS.md           |  16 +++--
+ 10 files changed, 339 insertions(+), 7 deletions(-)

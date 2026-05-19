@@ -1,8 +1,10 @@
 packages/editor/src/editor.ts
 packages/editor/src/index.ts
-packages/editor/src/nodes/wiki-link.ts
+packages/editor/src/nodes/highlight.ts
+packages/editor/src/nodes/tag.ts
 packages/editor/tests/editor.test.mjs
 packages/editor/tests/public-api.test.mjs
+packages/editor/tests/tag-highlight.test.mjs
 packages/editor/tests/task-state.test.mjs
 packages/editor/tests/wiki-link.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

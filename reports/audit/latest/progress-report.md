@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-008` — Wiki Link Node View
+`P3-009` — Tags and Highlights Node Views
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, and wiki-link helpers created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, and tag/highlight helpers created.
 
 ### Repairs Applied
 
@@ -90,6 +90,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No other Nabla node views added.
 - No dependencies added.
 
+### P3-009 Notes
+
+- Added tag and highlight support only in `packages/editor/src/nodes/tag.ts` and `packages/editor/src/nodes/highlight.ts` plus editor integration helpers.
+- Supported tag syntax: `#tag` and nested tags like `#nested/tag`.
+- Supported highlight syntax: `==text==` and color highlights in the existing markup form `=={#ff0}text==`.
+- No other Nabla node views added.
+- No dependencies added.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -108,4 +116,4 @@ None.
 
 ## Next Recommended Task
 
-P3-009 (tags/highlights) — extend editor-specific behavior to the next accepted Nabla syntax surface without adding unrelated node views.
+P3-010 (emoji shortcodes) — extend editor-specific behavior to emoji shortcode handling without broadening into unrelated Nabla nodes.

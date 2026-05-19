@@ -1,1 +1,1 @@
-a644f7a feat(editor): add wiki link helpers
+7baee52 feat(editor): add tag and highlight helpers
