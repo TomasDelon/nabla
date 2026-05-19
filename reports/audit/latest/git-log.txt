@@ -1,1 +1,2 @@
-92dd589 feat(app): add editor source editing MVP
+36d34ed fix(app): wire editor integration into app runtime
+9399eff docs: fix P5-005 test count in progress report
