@@ -1,2 +1,6 @@
+packages/workspace/src/block-index.ts
+packages/workspace/src/index.ts
+packages/workspace/src/workspace.ts
 packages/workspace/tests/workspace-fixtures.test.mjs
+packages/workspace/tests/workspace-shape.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

@@ -1,3 +1,7 @@
- .../workspace/tests/workspace-fixtures.test.mjs    | 234 +++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md                 |  76 ++++---
- 2 files changed, 283 insertions(+), 27 deletions(-)
+ packages/workspace/src/block-index.ts              |   2 +-
+ packages/workspace/src/index.ts                    |  41 ++++++++
+ packages/workspace/src/workspace.ts                | 111 ++++++++++++++++++++-
+ .../workspace/tests/workspace-fixtures.test.mjs    |  49 +++++++--
+ packages/workspace/tests/workspace-shape.test.mjs  |  75 ++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md                 |  84 +++++++++-------
+ 6 files changed, 312 insertions(+), 50 deletions(-)

@@ -1,1 +1,1 @@
-cee7823 test(workspace): add workspace fixture regression coverage
+2ed92d6 feat(workspace): align workspace fixture output shape

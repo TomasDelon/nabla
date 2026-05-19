@@ -63,6 +63,7 @@ packages/workspace/tests/transclusion-depth.test.mjs
 packages/workspace/tests/transclusion-resolver.test.mjs
 packages/workspace/tests/wiki-link-resolver.test.mjs
 packages/workspace/tests/workspace-fixtures.test.mjs
+packages/workspace/tests/workspace-shape.test.mjs
 packages/workspace/tsconfig.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
