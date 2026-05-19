@@ -1,2 +1,36 @@
 83d868d docs: add audit bundle for P4-015 Phase 4 validation
 ba2309d docs: add Phase 4 validation report
+6955c2c docs: add audit bundle for P4-014 component fixtures
+34a19e5 test(components): add component fixture regression coverage
+af2a438 docs: add audit bundle for P4-013 API consistency
+3bb3931 test(components): add API consistency coverage
+d43a63b docs: add audit bundle for P4-012 editor component bridge
+151bb2f feat(components): add editor component bridge
+d8ceeb3 docs: add audit bundle for P4-011 folded heading component
+d466c76 feat(components): add folded heading component
+bca42bb docs: add audit bundle for P4-010 toggle component
+125345b feat(components): add toggle component
+7c0c510 docs: add audit bundle for P4-009 callout component
+a469732 feat(components): add callout component
+61de9e6 docs: add audit bundle for P4-008B playground polish
+16affc0 chore(components): polish visual playground
+db61265 docs: add audit bundle for P4-008A components playground
+e4efb31 chore(components): add visual playground
+44a3e64 docs: add audit bundle for P4-008 footnotes and comments
+51f3fdf feat(components): add footnote and comment components
+d771bca docs: add audit bundle for P4-007 emoji component
+c66a967 feat(components): add emoji component
+f197261 docs: add audit bundle for P4-006 tags and highlights
+41d70c1 feat(components): add tag and highlight components
+e23a4c4 docs: add audit bundle for P4-005 wiki link component
+168cbc6 feat(components): add wiki link component
+cc9a4e6 docs: add audit bundle for P4-004 task state component
+638f09f feat(components): add task state component
+ddfceb0 docs: add audit bundle for P4-003 design tokens
+8c39cfc feat(components): add design tokens
+55dcde7 docs: add audit bundle for P4-002 component contracts
+47031a4 feat(components): add rendering contract types
+dd45269 docs: add audit bundle for P4-001 components package skeleton
+6b5af66 feat(components): add components package skeleton
+16438d7 docs: add audit bundle for P4-000 Phase 4 kickoff
+1127bed docs: add Phase 4 kickoff and backlog
