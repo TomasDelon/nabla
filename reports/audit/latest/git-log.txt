@@ -1,1 +1,1 @@
-41d70c1 feat(components): add tag and highlight components
+c66a967 feat(components): add emoji component

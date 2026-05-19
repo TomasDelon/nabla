@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-006` — Tag and Highlight Visual Components
+`P4-007` — Emoji Visual Component
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -247,6 +247,17 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No dependencies added.
 - No editor/markup/workspace source changes.
 
+### P4-007 Notes
+
+- Created `packages/components/src/emoji.tsx` with `Emoji` component and `getEmojiDisplay` helper.
+- Created `packages/components/src/emoji.css` — minimal styling using `--nabla-*` tokens.
+- Known shortcodes render emoji glyph; unknown shortcodes render literal raw text with muted color.
+- Created tests: `tests/emoji.test.mjs` (3 tests); updated `tests/public-api.test.mjs`.
+- Public API consistency: `Emoji` and `getEmojiDisplay` exported; no future components leak.
+- No emoji picker UI implemented.
+- No dependencies added.
+- No editor/markup/workspace source changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -265,4 +276,4 @@ None.
 
 ## Next Recommended Task
 
-P4-007 — Emoji Visual Component — implement a React component for emoji shortcodes.
+P4-008 — Footnote and Comment Visual Components — implement React components for footnotes and comments.

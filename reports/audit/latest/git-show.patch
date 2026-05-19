@@ -1,251 +1,166 @@
-diff --git a/packages/components/src/highlight.css b/packages/components/src/highlight.css
+diff --git a/packages/components/src/emoji.css b/packages/components/src/emoji.css
 new file mode 100644
-index 0000000..36df679
+index 0000000..6b4e2ac
 --- /dev/null
-+++ b/packages/components/src/highlight.css
++++ b/packages/components/src/emoji.css
 @@ -0,0 +1,9 @@
-+.nabla-highlight {
-+  background-color: #ffff0066;
-+  color: inherit;
-+  padding: 0 0.125rem;
-+  border-radius: var(--nabla-radius-sm);
++.nabla-emoji {
 +  font-family: var(--nabla-font-family);
 +  font-size: var(--nabla-font-size-md);
 +  line-height: var(--nabla-line-height);
 +}
-diff --git a/packages/components/src/highlight.tsx b/packages/components/src/highlight.tsx
++
++.nabla-emoji--unknown {
++  color: var(--nabla-color-text-muted);
++}
+diff --git a/packages/components/src/emoji.tsx b/packages/components/src/emoji.tsx
 new file mode 100644
-index 0000000..2aca2d7
+index 0000000..0694d2f
 --- /dev/null
-+++ b/packages/components/src/highlight.tsx
-@@ -0,0 +1,40 @@
-+export interface HighlightStyle {
-+  readonly text: string;
-+  readonly color: string | undefined;
-+  readonly backgroundColor: string;
++++ b/packages/components/src/emoji.tsx
+@@ -0,0 +1,43 @@
++export interface EmojiDisplay {
++  readonly name: string;
++  readonly value: string;
++  readonly raw: string;
++  readonly isKnown: boolean;
 +}
 +
-+export function getHighlightStyle(props: {
-+  readonly text: string;
-+  readonly color?: string;
-+}): HighlightStyle {
++export function getEmojiDisplay(props: {
++  readonly name: string;
++  readonly value: string;
++  readonly raw: string;
++}): EmojiDisplay {
 +  return {
-+    text: props.text,
-+    color: props.color,
-+    backgroundColor: props.color ?? "#ffff0066",
++    name: props.name,
++    value: props.value,
++    raw: props.raw,
++    isKnown: props.value !== props.raw,
 +  };
 +}
 +
-+export interface HighlightProps {
-+  readonly text: string;
-+  readonly color?: string;
++export interface EmojiProps {
++  readonly name: string;
++  readonly value: string;
 +  readonly raw: string;
 +}
 +
-+export function Highlight({ text, color }: HighlightProps) {
-+  const style = getHighlightStyle({ text, color });
++export function Emoji({ name, value, raw }: EmojiProps) {
++  const display = getEmojiDisplay({ name, value, raw });
++
++  if (display.isKnown) {
++    return (
++      <span className="nabla-emoji" title={`:${name}:`}>
++        {display.value}
++      </span>
++    );
++  }
 +
 +  return (
-+    <mark
-+      className="nabla-highlight"
-+      data-has-color={color ? "" : undefined}
-+      style={
-+        color
-+          ? { backgroundColor: color, color: "#1a1a1a" }
-+          : undefined
-+      }
-+    >
-+      {style.text}
-+    </mark>
++    <span className="nabla-emoji nabla-emoji--unknown" title={`Unknown shortcode`}>
++      {display.raw}
++    </span>
 +  );
 +}
 diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-index f728e2e..ac3f674 100644
+index ac3f674..a11b8f8 100644
 --- a/packages/components/src/index.ts
 +++ b/packages/components/src/index.ts
-@@ -14,6 +14,10 @@ export {
+@@ -18,6 +18,8 @@ export { Tag, getTagDisplay } from "./tag.js";
  
- export { WikiLink, getWikiLinkDisplay } from "./wiki-link.js";
+ export { Highlight, getHighlightStyle } from "./highlight.js";
  
-+export { Tag, getTagDisplay } from "./tag.js";
-+
-+export { Highlight, getHighlightStyle } from "./highlight.js";
++export { Emoji, getEmojiDisplay } from "./emoji.js";
 +
  export type { NablaComponentTheme } from "./theme.js";
  
  export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
-@@ -23,3 +27,5 @@ export type { FootnoteProps, CommentProps, CalloutProps, ToggleProps, FoldedHead
- export type { TaskStateCheckboxProps } from "./task-state.js";
- export type { TaskStateValue } from "./types.js";
+@@ -29,3 +31,4 @@ export type { TaskStateValue } from "./types.js";
  export type { WikiLinkDisplay } from "./wiki-link.js";
-+export type { TagDisplay } from "./tag.js";
-+export type { HighlightStyle } from "./highlight.js";
-diff --git a/packages/components/src/tag.css b/packages/components/src/tag.css
+ export type { TagDisplay } from "./tag.js";
+ export type { HighlightStyle } from "./highlight.js";
++export type { EmojiDisplay } from "./emoji.js";
+diff --git a/packages/components/tests/emoji.test.mjs b/packages/components/tests/emoji.test.mjs
 new file mode 100644
-index 0000000..f4a6c7a
+index 0000000..edc6fed
 --- /dev/null
-+++ b/packages/components/src/tag.css
-@@ -0,0 +1,12 @@
-+.nabla-tag {
-+  display: inline-block;
-+  padding: 0.0625rem var(--nabla-spacing-sm);
-+  font-family: var(--nabla-font-family);
-+  font-size: var(--nabla-font-size-sm);
-+  line-height: var(--nabla-line-height);
-+  color: var(--nabla-color-primary);
-+  background-color: var(--nabla-color-primary-muted);
-+  border-radius: var(--nabla-radius-full);
-+  white-space: nowrap;
-+  user-select: none;
-+}
-diff --git a/packages/components/src/tag.tsx b/packages/components/src/tag.tsx
-new file mode 100644
-index 0000000..a88dd3b
---- /dev/null
-+++ b/packages/components/src/tag.tsx
-@@ -0,0 +1,32 @@
-+export interface TagDisplay {
-+  readonly value: string;
-+  readonly segments: readonly string[];
-+  readonly displayText: string;
++++ b/packages/components/tests/emoji.test.mjs
+@@ -0,0 +1,42 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++async function load() {
++  return import(new URL("../dist/emoji.js", import.meta.url));
 +}
 +
-+export function getTagDisplay(props: {
-+  readonly value: string;
-+  readonly segments: readonly string[];
-+}): TagDisplay {
-+  return {
-+    value: props.value,
-+    segments: props.segments,
-+    displayText: `#${props.value}`,
-+  };
-+}
-+
-+export interface TagProps {
-+  readonly value: string;
-+  readonly segments: readonly string[];
-+  readonly raw: string;
-+}
-+
-+export function Tag({ value, segments }: TagProps) {
-+  const display = getTagDisplay({ value, segments });
-+
-+  return (
-+    <span className="nabla-tag" title={display.value}>
-+      {display.displayText}
-+    </span>
-+  );
-+}
-diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
-index 894c170..d9ad856 100644
---- a/packages/components/tests/public-api.test.mjs
-+++ b/packages/components/tests/public-api.test.mjs
-@@ -25,12 +25,19 @@ test("WikiLink is exported from public API", async () => {
-   assert.equal(typeof mod.getWikiLinkDisplay, "function");
- });
- 
-+test("Tag and Highlight are exported from public API", async () => {
++test("getEmojiDisplay marks known shortcode when value differs from raw", async () => {
 +  const mod = await load();
 +
-+  assert.equal(typeof mod.Tag, "function");
-+  assert.equal(typeof mod.getTagDisplay, "function");
-+  assert.equal(typeof mod.Highlight, "function");
-+  assert.equal(typeof mod.getHighlightStyle, "function");
++  const result = mod.getEmojiDisplay({
++    name: "check",
++    value: "✅",
++    raw: ":check:",
++  });
++
++  assert.equal(result.name, "check");
++  assert.equal(result.value, "✅");
++  assert.equal(result.raw, ":check:");
++  assert.equal(result.isKnown, true);
++});
++
++test("getEmojiDisplay marks unknown shortcode when value equals raw", async () => {
++  const mod = await load();
++
++  const result = mod.getEmojiDisplay({
++    name: "unknown",
++    value: ":unknown:",
++    raw: ":unknown:",
++  });
++
++  assert.equal(result.name, "unknown");
++  assert.equal(result.value, ":unknown:");
++  assert.equal(result.raw, ":unknown:");
++  assert.equal(result.isKnown, false);
++});
++
++test("Emoji is a function", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.Emoji, "function");
++});
+diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
+index d9ad856..9da9a7c 100644
+--- a/packages/components/tests/public-api.test.mjs
++++ b/packages/components/tests/public-api.test.mjs
+@@ -34,11 +34,17 @@ test("Tag and Highlight are exported from public API", async () => {
+   assert.equal(typeof mod.getHighlightStyle, "function");
+ });
+ 
++test("Emoji is exported from public API", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.Emoji, "function");
++  assert.equal(typeof mod.getEmojiDisplay, "function");
 +});
 +
  test("no forbidden visual components are exported", async () => {
    const mod = await load();
    const keys = Object.keys(mod);
  
--  assert.equal(keys.includes("Tag"), false);
--  assert.equal(keys.includes("Highlight"), false);
-   assert.equal(keys.includes("Emoji"), false);
+-  assert.equal(keys.includes("Emoji"), false);
    assert.equal(keys.includes("Footnote"), false);
    assert.equal(keys.includes("Comment"), false);
-diff --git a/packages/components/tests/tag-highlight.test.mjs b/packages/components/tests/tag-highlight.test.mjs
-new file mode 100644
-index 0000000..21d2524
---- /dev/null
-+++ b/packages/components/tests/tag-highlight.test.mjs
-@@ -0,0 +1,68 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+
-+async function loadTag() {
-+  return import(new URL("../dist/tag.js", import.meta.url));
-+}
-+
-+async function loadHighlight() {
-+  return import(new URL("../dist/highlight.js", import.meta.url));
-+}
-+
-+test("getTagDisplay returns value and segments", async () => {
-+  const mod = await loadTag();
-+
-+  const result = mod.getTagDisplay({
-+    value: "mytag",
-+    segments: ["mytag"],
-+  });
-+
-+  assert.equal(result.value, "mytag");
-+  assert.deepEqual(result.segments, ["mytag"]);
-+  assert.equal(result.displayText, "#mytag");
-+});
-+
-+test("getTagDisplay preserves nested tag segments", async () => {
-+  const mod = await loadTag();
-+
-+  const result = mod.getTagDisplay({
-+    value: "nested/tag",
-+    segments: ["nested", "tag"],
-+  });
-+
-+  assert.equal(result.value, "nested/tag");
-+  assert.deepEqual(result.segments, ["nested", "tag"]);
-+  assert.equal(result.displayText, "#nested/tag");
-+});
-+
-+test("Tag is a function", async () => {
-+  const mod = await loadTag();
-+
-+  assert.equal(typeof mod.Tag, "function");
-+});
-+
-+test("getHighlightStyle returns default background for simple highlight", async () => {
-+  const mod = await loadHighlight();
-+
-+  const result = mod.getHighlightStyle({ text: "hello" });
-+
-+  assert.equal(result.text, "hello");
-+  assert.equal(result.color, undefined);
-+  assert.equal(result.backgroundColor, "#ffff0066");
-+});
-+
-+test("getHighlightStyle preserves color", async () => {
-+  const mod = await loadHighlight();
-+
-+  const result = mod.getHighlightStyle({ text: "colored", color: "#ff0" });
-+
-+  assert.equal(result.text, "colored");
-+  assert.equal(result.color, "#ff0");
-+  assert.equal(result.backgroundColor, "#ff0");
-+});
-+
-+test("Highlight is a function", async () => {
-+  const mod = await loadHighlight();
-+
-+  assert.equal(typeof mod.Highlight, "function");
-+});
+   assert.equal(keys.includes("Callout"), false);
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 56e7177..619a891 100644
+index 619a891..61590cc 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-005` — Wiki Link Visual Component
-+`P4-006` — Tag and Highlight Visual Components
+-`P4-006` — Tag and Highlight Visual Components
++`P4-007` — Emoji Visual Component
  
  ## Branch
  
@@ -253,33 +168,32 @@ index 56e7177..619a891 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -235,6 +235,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+@@ -247,6 +247,17 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
  - No dependencies added.
  - No editor/markup/workspace source changes.
  
-+### P4-006 Notes
++### P4-007 Notes
 +
-+- Created `packages/components/src/tag.tsx` with `Tag` component and `getTagDisplay` helper.
-+- Created `packages/components/src/tag.css` — pill-style rendering using `--nabla-*` tokens.
-+- Created `packages/components/src/highlight.tsx` with `Highlight` component and `getHighlightStyle` helper.
-+- Created `packages/components/src/highlight.css` — default yellow highlight; color highlights use inline `style` with provided hex color.
-+- Created tests: `tests/tag-highlight.test.mjs` (6 tests); updated `tests/public-api.test.mjs`.
-+- Public API consistency: `Tag`, `Highlight`, and helpers exported; no future components leak.
-+- No color picker or tag suggestion UI implemented.
++- Created `packages/components/src/emoji.tsx` with `Emoji` component and `getEmojiDisplay` helper.
++- Created `packages/components/src/emoji.css` — minimal styling using `--nabla-*` tokens.
++- Known shortcodes render emoji glyph; unknown shortcodes render literal raw text with muted color.
++- Created tests: `tests/emoji.test.mjs` (3 tests); updated `tests/public-api.test.mjs`.
++- Public API consistency: `Emoji` and `getEmojiDisplay` exported; no future components leak.
++- No emoji picker UI implemented.
 +- No dependencies added.
 +- No editor/markup/workspace source changes.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -253,4 +265,4 @@ None.
+@@ -265,4 +276,4 @@ None.
  
  ## Next Recommended Task
  
--P4-006 — Tag and Highlight Visual Components — implement React components for tags and highlights.
-+P4-007 — Emoji Visual Component — implement a React component for emoji shortcodes.
+-P4-007 — Emoji Visual Component — implement a React component for emoji shortcodes.
++P4-008 — Footnote and Comment Visual Components — implement React components for footnotes and comments.

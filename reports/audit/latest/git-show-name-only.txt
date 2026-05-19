@@ -1,8 +1,6 @@
-packages/components/src/highlight.css
-packages/components/src/highlight.tsx
+packages/components/src/emoji.css
+packages/components/src/emoji.tsx
 packages/components/src/index.ts
-packages/components/src/tag.css
-packages/components/src/tag.tsx
+packages/components/tests/emoji.test.mjs
 packages/components/tests/public-api.test.mjs
-packages/components/tests/tag-highlight.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

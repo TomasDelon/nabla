@@ -1,9 +1,7 @@
- packages/components/src/highlight.css            |  9 ++++
- packages/components/src/highlight.tsx            | 40 ++++++++++++++
- packages/components/src/index.ts                 |  6 +++
- packages/components/src/tag.css                  | 12 +++++
- packages/components/src/tag.tsx                  | 32 +++++++++++
- packages/components/tests/public-api.test.mjs    | 11 +++-
- packages/components/tests/tag-highlight.test.mjs | 68 ++++++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md               | 18 +++++--
- 8 files changed, 191 insertions(+), 5 deletions(-)
+ packages/components/src/emoji.css             |  9 ++++++
+ packages/components/src/emoji.tsx             | 43 +++++++++++++++++++++++++++
+ packages/components/src/index.ts              |  3 ++
+ packages/components/tests/emoji.test.mjs      | 42 ++++++++++++++++++++++++++
+ packages/components/tests/public-api.test.mjs |  8 ++++-
+ reports/IMPLEMENTATION_PROGRESS.md            | 17 +++++++++--
+ 6 files changed, 118 insertions(+), 4 deletions(-)
