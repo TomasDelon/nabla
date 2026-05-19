@@ -7,6 +7,7 @@ import { Highlight } from "../../src/highlight.tsx";
 import { Emoji } from "../../src/emoji.tsx";
 import { FootnoteReference, FootnoteDefinition } from "../../src/footnote.tsx";
 import { Comment } from "../../src/comment.tsx";
+import { Callout } from "../../src/callout.tsx";
 
 import "../../src/tokens.css";
 import "../../src/task-state.css";
@@ -16,6 +17,7 @@ import "../../src/highlight.css";
 import "../../src/emoji.css";
 import "../../src/footnote.css";
 import "../../src/comment.css";
+import "../../src/callout.css";
 import "./playground.css";
 
 type TaskState = "unchecked" | "checked" | "cancelled" | "important";
@@ -48,6 +50,18 @@ function App() {
       next[index] = getNextTaskState(prev[index]);
       return next;
     });
+  }
+
+  const [calloutFoldStates, setCalloutFoldStates] = useState<Record<string, "open" | "closed">>({
+    note: "open",
+    warning: "closed",
+  });
+
+  function toggleCallout(key: string) {
+    setCalloutFoldStates((prev) => ({
+      ...prev,
+      [key]: prev[key] === "open" ? "closed" : "open",
+    }));
   }
 
   return (
@@ -127,6 +141,19 @@ function App() {
         </ExampleRow>
         <ExampleRow label="Multiline comment">
           <Comment text="line 1\nline 2" multiline={true} raw="%%line 1\nline 2%%" mode="editing" />
+        </ExampleRow>
+      </Section>
+
+      <Section title="Callout">
+        <ExampleRow label="Note callout (open)">
+          <Callout calloutType="note" foldState={calloutFoldStates.note} onToggleFold={() => toggleCallout("note")}>
+            <p style={{ margin: 0 }}>This is a note callout with visible body content.</p>
+          </Callout>
+        </ExampleRow>
+        <ExampleRow label="Warning callout (closed)">
+          <Callout calloutType="warning" foldState={calloutFoldStates.warning} onToggleFold={() => toggleCallout("warning")}>
+            <p style={{ margin: 0 }}>This warning body is hidden when closed.</p>
+          </Callout>
         </ExampleRow>
       </Section>
     </div>
