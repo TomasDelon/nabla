@@ -8,6 +8,7 @@ import { Emoji } from "../../src/emoji.tsx";
 import { FootnoteReference, FootnoteDefinition } from "../../src/footnote.tsx";
 import { Comment } from "../../src/comment.tsx";
 import { Callout } from "../../src/callout.tsx";
+import { Toggle } from "../../src/toggle.tsx";
 
 import "../../src/tokens.css";
 import "../../src/task-state.css";
@@ -18,6 +19,7 @@ import "../../src/emoji.css";
 import "../../src/footnote.css";
 import "../../src/comment.css";
 import "../../src/callout.css";
+import "../../src/toggle.css";
 import "./playground.css";
 
 type TaskState = "unchecked" | "checked" | "cancelled" | "important";
@@ -59,6 +61,18 @@ function App() {
 
   function toggleCallout(key: string) {
     setCalloutFoldStates((prev) => ({
+      ...prev,
+      [key]: prev[key] === "open" ? "closed" : "open",
+    }));
+  }
+
+  const [toggleFoldStates, setToggleFoldStates] = useState<Record<string, "open" | "closed">>({
+    first: "open",
+    second: "closed",
+  });
+
+  function handleToggle(key: string) {
+    setToggleFoldStates((prev) => ({
       ...prev,
       [key]: prev[key] === "open" ? "closed" : "open",
     }));
@@ -154,6 +168,19 @@ function App() {
           <Callout calloutType="warning" foldState={calloutFoldStates.warning} onToggleFold={() => toggleCallout("warning")}>
             <p style={{ margin: 0 }}>This warning body is hidden when closed.</p>
           </Callout>
+        </ExampleRow>
+      </Section>
+
+      <Section title="Toggle">
+        <ExampleRow label="Open toggle">
+          <Toggle foldState={toggleFoldStates.first} onToggleFold={() => handleToggle("first")}>
+            <p style={{ margin: 0 }}>This toggle body is visible when open.</p>
+          </Toggle>
+        </ExampleRow>
+        <ExampleRow label="Closed toggle">
+          <Toggle foldState={toggleFoldStates.second} onToggleFold={() => handleToggle("second")}>
+            <p style={{ margin: 0 }}>This toggle body is hidden when closed.</p>
+          </Toggle>
         </ExampleRow>
       </Section>
     </div>

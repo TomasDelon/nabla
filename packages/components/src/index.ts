@@ -30,6 +30,8 @@ export { Comment, getCommentDisplay } from "./comment.js";
 
 export { Callout, getCalloutDisplay } from "./callout.js";
 
+export { Toggle, getToggleDisplay } from "./toggle.js";
+
 export type { NablaComponentTheme } from "./theme.js";
 
 export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
@@ -45,3 +47,4 @@ export type { EmojiDisplay } from "./emoji.js";
 export type { FootnoteDisplay } from "./footnote.js";
 export type { CommentDisplay } from "./comment.js";
 export type { CalloutDisplay } from "./callout.js";
+export type { ToggleDisplay } from "./toggle.js";

@@ -58,11 +58,17 @@ test("Callout is exported from public API", async () => {
   assert.equal(typeof mod.getCalloutDisplay, "function");
 });
 
+test("Toggle is exported from public API", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.Toggle, "function");
+  assert.equal(typeof mod.getToggleDisplay, "function");
+});
+
 test("no forbidden visual components are exported", async () => {
   const mod = await load();
   const keys = Object.keys(mod);
 
-  assert.equal(keys.includes("Toggle"), false);
   assert.equal(keys.includes("FoldedHeading"), false);
 });
 
