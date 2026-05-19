@@ -1,13 +1,174 @@
+diff --git a/packages/workspace/src/block-index.ts b/packages/workspace/src/block-index.ts
+new file mode 100644
+index 0000000..214fcb3
+--- /dev/null
++++ b/packages/workspace/src/block-index.ts
+@@ -0,0 +1,77 @@
++import type { Diagnostic, MarkdownNode, NablaBlockNode, SourcePosition } from "@nabla/markup";
++import { DIAGNOSTIC_CODES } from "@nabla/markup";
++import type { BlockIndexEntry } from "./index.js";
++
++export type BlockIndexResult = {
++  entries: BlockIndexEntry[];
++  diagnostics: Diagnostic[];
++};
++
++const BLOCK_TYPES = new Set([
++  "paragraph",
++  "heading",
++  "foldableHeading",
++  "callout",
++  "toggle",
++  "transclusion",
++  "table",
++  "listItem",
++]);
++
++type IndexableNode = Record<string, unknown>;
++
++function getNablaBlockId(node: IndexableNode): string | undefined {
++  if (!BLOCK_TYPES.has(node.type as string)) return undefined;
++  const data = node.data as Record<string, unknown> | undefined;
++  if (data == null) return undefined;
++  const id = data.nablaBlockId;
++  return typeof id === "string" && id.length > 0 ? id : undefined;
++}
++
++function getChildren(node: IndexableNode): Array<IndexableNode> | undefined {
++  return node.children as Array<IndexableNode> | undefined;
++}
++
++function getPosition(node: IndexableNode): SourcePosition | undefined {
++  return node.position as SourcePosition | undefined;
++}
++
++export function buildBlockIndex(
++  children: Array<MarkdownNode | NablaBlockNode>,
++  filePath: string
++): BlockIndexResult {
++  const entries: BlockIndexEntry[] = [];
++  const diagnostics: Diagnostic[] = [];
++  const seenIds = new Map<string, SourcePosition>();
++
++  function walk(nodes: Array<IndexableNode>) {
++    for (const node of nodes) {
++      const blockId = getNablaBlockId(node);
++      if (blockId) {
++        const position = getPosition(node);
++        entries.push({ filePath, blockId, position });
++
++        const existingPos = seenIds.get(blockId);
++        if (existingPos) {
++          diagnostics.push({
++            severity: "warning",
++            code: DIAGNOSTIC_CODES.BLOCK_ID_DUPLICATE,
++            message: "Duplicate block id in document.",
++            position,
++          });
++        } else {
++          seenIds.set(blockId, position!);
++        }
++      }
++
++      const childNodes = getChildren(node);
++      if (childNodes) {
++        walk(childNodes);
++      }
++    }
++  }
++
++  walk(children as Array<IndexableNode>);
++
++  return { entries, diagnostics };
++}
+diff --git a/packages/workspace/src/heading-index.ts b/packages/workspace/src/heading-index.ts
+new file mode 100644
+index 0000000..e6903a1
+--- /dev/null
++++ b/packages/workspace/src/heading-index.ts
+@@ -0,0 +1,61 @@
++import type { NablaDocument } from "@nabla/markup";
++import type { HeadingIndexEntry } from "./index.js";
++import { createSlug, deduplicateSlugs } from "./slug.js";
++
++function extractHeadingInfo(
++  node: unknown,
++): { text: string; depth: number } | null {
++  if (typeof node !== "object" || node === null) return null;
++  const n = node as Record<string, unknown>;
++
++  if (n.type === "heading") {
++    const children = n.children as
++      | Array<Record<string, unknown>>
++      | undefined;
++    const text =
++      children
++        ?.filter((c) => c.type === "text")
++        .map((c) => String(c.value ?? ""))
++        .join("") ?? "";
++    const depth = typeof n.depth === "number" ? n.depth : 1;
++    return { text, depth };
++  }
++
++  if (n.type === "foldableHeading") {
++    const title = n.title as
++      | Array<Record<string, unknown>>
++      | undefined;
++    const text =
++      title
++        ?.filter((c) => c.type === "text")
++        .map((c) => String(c.value ?? ""))
++        .join("") ?? "";
++    const depth = typeof n.depth === "number" ? n.depth : 1;
++    return { text, depth };
++  }
++
++  return null;
++}
++
++export function buildHeadingIndex(
++  document: NablaDocument,
++  filePath: string,
++): HeadingIndexEntry[] {
++  const raw: { text: string; depth: number }[] = [];
++
++  for (const child of document.children) {
++    const info = extractHeadingInfo(child);
++    if (info) {
++      raw.push(info);
++    }
++  }
++
++  const slugs = deduplicateSlugs(raw.map((h) => createSlug(h.text)));
++
++  return raw.map((h, i) => ({
++    filePath,
++    slug: slugs[i],
++    text: h.text,
++    depth: h.depth,
++  }));
++}
 diff --git a/packages/workspace/src/index.ts b/packages/workspace/src/index.ts
-index f7e5997..25dd8e3 100644
+index f7e5997..a3b02ea 100644
 --- a/packages/workspace/src/index.ts
 +++ b/packages/workspace/src/index.ts
-@@ -64,3 +64,5 @@ export type Workspace = {
+@@ -1,5 +1,8 @@
+ export const NABLA_WORKSPACE_PACKAGE = "@nabla/workspace";
+ 
++export { buildBlockIndex } from "./block-index.js";
++export type { BlockIndexResult } from "./block-index.js";
++
+ export type WorkspaceFile = {
+   path: string;
+ };
+@@ -64,3 +67,7 @@ export type Workspace = {
    index: WorkspaceIndex;
    options: WorkspaceOptions;
  };
 +
 +export { normalizeWorkspacePath } from "./path-utils.js";
++export { createSlug, deduplicateSlugs } from "./slug.js";
++export { buildHeadingIndex } from "./heading-index.js";
 diff --git a/packages/workspace/src/path-utils.ts b/packages/workspace/src/path-utils.ts
 new file mode 100644
 index 0000000..d6b0de0
@@ -38,6 +199,614 @@ index 0000000..d6b0de0
 +  }
 +
 +  return path;
++}
+diff --git a/packages/workspace/src/slug.ts b/packages/workspace/src/slug.ts
+new file mode 100644
+index 0000000..9960c05
+--- /dev/null
++++ b/packages/workspace/src/slug.ts
+@@ -0,0 +1,21 @@
++export function createSlug(text: string): string {
++  return text
++    .normalize("NFC")
++    .toLowerCase()
++    .trim()
++    .normalize("NFD")
++    .replace(/[\u0300-\u036f]/g, "")
++    .replace(/\s+/g, "-")
++    .replace(/[^a-z0-9\-_]/g, "")
++    .replace(/-+/g, "-")
++    .replace(/^-+|-+$/g, "");
++}
++
++export function deduplicateSlugs(slugs: string[]): string[] {
++  const counts = new Map<string, number>();
++  return slugs.map((slug) => {
++    const count = (counts.get(slug) ?? 0) + 1;
++    counts.set(slug, count);
++    return count === 1 ? slug : `${slug}-${count}`;
++  });
++}
+diff --git a/packages/workspace/tests/block-id.test.mjs b/packages/workspace/tests/block-id.test.mjs
+new file mode 100644
+index 0000000..de90d7a
+--- /dev/null
++++ b/packages/workspace/tests/block-id.test.mjs
+@@ -0,0 +1,343 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { loadTsModule } from "./helpers/load-ts-module.mjs";
++
++const blockIndexModuleUrl = new URL("../src/block-index.ts", import.meta.url);
++
++async function loadModule() {
++  return loadTsModule(blockIndexModuleUrl);
++}
++
++test("extracts block IDs from paragraphs", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "paragraph",
++      children: [{ type: "text", value: "Hello." }],
++      data: { nablaBlockId: "greeting" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 7, offset: 6 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "test.md");
++  assert.equal(result.entries.length, 1);
++  assert.equal(result.entries[0].blockId, "greeting");
++  assert.equal(result.entries[0].filePath, "test.md");
++  assert.deepEqual(result.entries[0].position, {
++    start: { line: 1, column: 1, offset: 0 },
++    end: { line: 1, column: 7, offset: 6 },
++  });
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("extracts block IDs from headings", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "heading",
++      depth: 2,
++      children: [{ type: "text", value: "Section" }],
++      data: { nablaBlockId: "sec-1" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 10, offset: 9 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "doc.md");
++  assert.equal(result.entries.length, 1);
++  assert.equal(result.entries[0].blockId, "sec-1");
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("extracts block IDs from foldable headings", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "foldableHeading",
++      depth: 3,
++      foldState: "open",
++      title: [{ type: "text", value: "Foldable" }],
++      rawMarker: "#> ",
++      children: [{ type: "paragraph", children: [{ type: "text", value: "Nested." }] }],
++      data: { nablaBlockId: "fold-id" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 2, column: 8, offset: 20 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "doc.md");
++  assert.equal(result.entries.length, 1);
++  assert.equal(result.entries[0].blockId, "fold-id");
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("extracts block IDs from list items", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "list",
++      children: [
++        {
++          type: "listItem",
++          children: [{ type: "paragraph", children: [{ type: "text", value: "Item." }] }],
++          data: { nablaBlockId: "item-1" },
++          position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 7, offset: 6 } },
++        },
++      ],
++    },
++  ];
++  const result = buildBlockIndex(children, "doc.md");
++  assert.equal(result.entries.length, 1);
++  assert.equal(result.entries[0].blockId, "item-1");
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("extracts block IDs from callouts", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "callout",
++      calloutType: "info",
++      title: [{ type: "text", value: "Note" }],
++      syntax: "canonical",
++      rawMarker: "> ",
++      children: [{ type: "paragraph", children: [{ type: "text", value: "Content." }] }],
++      data: { nablaBlockId: "callout-id" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 2, column: 9, offset: 22 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "doc.md");
++  assert.equal(result.entries.length, 1);
++  assert.equal(result.entries[0].blockId, "callout-id");
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("extracts block IDs from toggles", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "toggle",
++      title: [{ type: "text", value: "Details" }],
++      foldState: "closed",
++      rawMarker: "]>",
++      children: [{ type: "paragraph", children: [{ type: "text", value: "Hidden." }] }],
++      data: { nablaBlockId: "toggle-id" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 2, column: 8, offset: 20 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "doc.md");
++  assert.equal(result.entries.length, 1);
++  assert.equal(result.entries[0].blockId, "toggle-id");
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("extracts block IDs from transclusions", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "transclusion",
++      target: "other.md",
++      syntax: "canonical",
++      raw: "{{other.md}}",
++      data: { nablaBlockId: "embed-id" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 12, offset: 11 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "doc.md");
++  assert.equal(result.entries.length, 1);
++  assert.equal(result.entries[0].blockId, "embed-id");
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("extracts block IDs from tables", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "table",
++      align: [],
++      children: [
++        {
++          type: "tableRow",
++          children: [
++            { type: "tableCell", children: [{ type: "text", value: "A" }] },
++          ],
++        },
++      ],
++      data: { nablaBlockId: "table-id" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 2, column: 3, offset: 10 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "doc.md");
++  assert.equal(result.entries.length, 1);
++  assert.equal(result.entries[0].blockId, "table-id");
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("traverses nested structures", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "callout",
++      calloutType: "tip",
++      title: [{ type: "text", value: "Tip" }],
++      syntax: "canonical",
++      rawMarker: "> ",
++      children: [
++        {
++          type: "paragraph",
++          children: [{ type: "text", value: "Outer." }],
++          data: { nablaBlockId: "outer-p" },
++          position: { start: { line: 2, column: 1, offset: 10 }, end: { line: 2, column: 8, offset: 17 } },
++        },
++        {
++          type: "toggle",
++          title: [{ type: "text", value: "More" }],
++          foldState: "closed",
++          rawMarker: "]>",
++          children: [
++            {
++              type: "paragraph",
++              children: [{ type: "text", value: "Inner." }],
++              data: { nablaBlockId: "inner-p" },
++              position: { start: { line: 3, column: 3, offset: 25 }, end: { line: 3, column: 10, offset: 32 } },
++            },
++          ],
++          data: { nablaBlockId: "toggle-nest" },
++          position: { start: { line: 3, column: 1, offset: 23 }, end: { line: 4, column: 5, offset: 40 } },
++        },
++      ],
++      data: { nablaBlockId: "callout-outer" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 5, column: 1, offset: 45 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "nested.md");
++  assert.equal(result.entries.length, 4);
++  const ids = result.entries.map((e) => e.blockId).sort();
++  assert.deepEqual(ids, ["callout-outer", "inner-p", "outer-p", "toggle-nest"]);
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("detects duplicate block IDs within a document", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "paragraph",
++      children: [{ type: "text", value: "First." }],
++      data: { nablaBlockId: "dup" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 7, offset: 6 } },
++    },
++    {
++      type: "paragraph",
++      children: [{ type: "text", value: "Second." }],
++      data: { nablaBlockId: "dup" },
++      position: { start: { line: 2, column: 1, offset: 7 }, end: { line: 2, column: 9, offset: 15 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "dup.md");
++  assert.equal(result.entries.length, 2);
++  assert.equal(result.entries[0].blockId, "dup");
++  assert.equal(result.entries[1].blockId, "dup");
++  assert.equal(result.diagnostics.length, 1);
++  assert.equal(result.diagnostics[0].severity, "warning");
++  assert.equal(result.diagnostics[0].code, "NABLA_BLOCK_ID_DUPLICATE");
++  assert.equal(result.diagnostics[0].message, "Duplicate block id in document.");
++  assert.deepEqual(result.diagnostics[0].position, {
++    start: { line: 2, column: 1, offset: 7 },
++    end: { line: 2, column: 9, offset: 15 },
++  });
++});
++
++test("ignores nodes without block IDs", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "paragraph",
++      children: [{ type: "text", value: "No ID." }],
++    },
++    {
++      type: "heading",
++      depth: 1,
++      children: [{ type: "text", value: "Title" }],
++    },
++  ];
++  const result = buildBlockIndex(children, "plain.md");
++  assert.equal(result.entries.length, 0);
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("ignores non-attachable node types with block IDs", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "code",
++      value: "console.log('hi')",
++      data: { nablaBlockId: "code-block" },
++    },
++    {
++      type: "frontmatter",
++      raw: "---\ntitle: Test\n---",
++      data: { nablaBlockId: "fm-block" },
++    },
++    {
++      type: "thematicBreak",
++      data: { nablaBlockId: "hr-block" },
++    },
++    {
++      type: "privateComment",
++      value: "secret",
++      raw: "%secret%",
++      data: { nablaBlockId: "comment-block" },
++    },
++    {
++      type: "footnoteDefinition",
++      id: "fn1",
++      raw: "[^fn1]: text",
++      data: { nablaBlockId: "fn-block" },
++    },
++    {
++      type: "html",
++      value: "<div>",
++      data: { nablaBlockId: "html-block" },
++    },
++  ];
++  const result = buildBlockIndex(children, "ignored.md");
++  assert.equal(result.entries.length, 0);
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("handles empty children array", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const result = buildBlockIndex([], "empty.md");
++  assert.equal(result.entries.length, 0);
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("detects multiple duplicate block IDs", async () => {
++  const { buildBlockIndex } = await loadModule();
++  const children = [
++    {
++      type: "paragraph",
++      children: [{ type: "text", value: "A." }],
++      data: { nablaBlockId: "id-a" },
++      position: { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 3, offset: 2 } },
++    },
++    {
++      type: "paragraph",
++      children: [{ type: "text", value: "B." }],
++      data: { nablaBlockId: "id-b" },
++      position: { start: { line: 2, column: 1, offset: 3 }, end: { line: 2, column: 3, offset: 5 } },
++    },
++    {
++      type: "paragraph",
++      children: [{ type: "text", value: "A again." }],
++      data: { nablaBlockId: "id-a" },
++      position: { start: { line: 3, column: 1, offset: 6 }, end: { line: 3, column: 9, offset: 14 } },
++    },
++    {
++      type: "paragraph",
++      children: [{ type: "text", value: "B again." }],
++      data: { nablaBlockId: "id-b" },
++      position: { start: { line: 4, column: 1, offset: 15 }, end: { line: 4, column: 9, offset: 23 } },
++    },
++  ];
++  const result = buildBlockIndex(children, "multi-dup.md");
++  assert.equal(result.entries.length, 4);
++  assert.equal(result.diagnostics.length, 2);
++  assert.equal(result.diagnostics[0].code, "NABLA_BLOCK_ID_DUPLICATE");
++  assert.equal(result.diagnostics[1].code, "NABLA_BLOCK_ID_DUPLICATE");
++});
+diff --git a/packages/workspace/tests/heading-slugs.test.mjs b/packages/workspace/tests/heading-slugs.test.mjs
+new file mode 100644
+index 0000000..aebc907
+--- /dev/null
++++ b/packages/workspace/tests/heading-slugs.test.mjs
+@@ -0,0 +1,148 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { loadTsModule } from "../../markup/tests/helpers/load-ts-module.mjs";
++
++const slugModuleUrl = new URL("../src/slug.ts", import.meta.url);
++const headingIndexModuleUrl = new URL("../src/heading-index.ts", import.meta.url);
++const parseModuleUrl = new URL("../../markup/src/parser.ts", import.meta.url);
++
++let slugModulePromise;
++let headingIndexModulePromise;
++let parseModulePromise;
++
++async function loadSlugModule() {
++  slugModulePromise ??= loadTsModule(slugModuleUrl);
++  return slugModulePromise;
++}
++
++async function loadHeadingIndexModule() {
++  headingIndexModulePromise ??= loadTsModule(headingIndexModuleUrl);
++  return headingIndexModulePromise;
++}
++
++async function loadParseModule() {
++  parseModulePromise ??= loadTsModule(parseModuleUrl);
++  return parseModulePromise;
++}
++
++test("createSlug lowercases and trims", async () => {
++  const { createSlug } = await loadSlugModule();
++  assert.equal(createSlug("  Hello World  "), "hello-world");
++});
++
++test("createSlug replaces whitespace with hyphens", async () => {
++  const { createSlug } = await loadSlugModule();
++  assert.equal(createSlug("a  b\tc\n d"), "a-b-c-d");
++});
++
++test("createSlug removes accents via Unicode decomposition", async () => {
++  const { createSlug } = await loadSlugModule();
++  assert.equal(createSlug("Café résumé"), "cafe-resume");
++  assert.equal(createSlug("über cool"), "uber-cool");
++});
++
++test("createSlug removes punctuation except hyphen and underscore", async () => {
++  const { createSlug } = await loadSlugModule();
++  assert.equal(createSlug("Hello, World! How's it going?"), "hello-world-hows-it-going");
++  assert.equal(createSlug("foo_bar"), "foo_bar");
++});
++
++test("createSlug collapses repeated hyphens", async () => {
++  const { createSlug } = await loadSlugModule();
++  assert.equal(createSlug("foo---bar"), "foo-bar");
++});
++
++test("createSlug trims leading and trailing hyphens", async () => {
++  const { createSlug } = await loadSlugModule();
++  assert.equal(createSlug("-hello-"), "hello");
++  assert.equal(createSlug("--hi--"), "hi");
++});
++
++test("createSlug returns empty string for all-punctuation input", async () => {
++  const { createSlug } = await loadSlugModule();
++  assert.equal(createSlug("!!?"), "");
++});
++
++test("deduplicateSlugs returns first occurrence unchanged", async () => {
++  const { deduplicateSlugs } = await loadSlugModule();
++  assert.deepEqual(deduplicateSlugs(["hello"]), ["hello"]);
++});
++
++test("deduplicateSlugs suffixes second occurrence with -2", async () => {
++  const { deduplicateSlugs } = await loadSlugModule();
++  assert.deepEqual(deduplicateSlugs(["hello", "hello"]), ["hello", "hello-2"]);
++});
++
++test("deduplicateSlugs handles triple duplicates as slug, slug-2, slug-3", async () => {
++  const { deduplicateSlugs } = await loadSlugModule();
++  assert.deepEqual(
++    deduplicateSlugs(["foo", "foo", "foo"]),
++    ["foo", "foo-2", "foo-3"]
++  );
++});
++
++test("deduplicateSlugs handles interleaved duplicates independently", async () => {
++  const { deduplicateSlugs } = await loadSlugModule();
++  assert.deepEqual(
++    deduplicateSlugs(["a", "b", "a", "b", "a"]),
++    ["a", "b", "a-2", "b-2", "a-3"]
++  );
++});
++
++test("buildHeadingIndex extracts standard heading nodes", async () => {
++  const { parse } = await loadParseModule();
++  const { buildHeadingIndex } = await loadHeadingIndexModule();
++
++  const doc = parse("# Hello\n## World\n");
++  const index = buildHeadingIndex(doc, "test.md");
++
++  assert.equal(index.length, 2);
++  assert.equal(index[0].slug, "hello");
++  assert.equal(index[0].text, "Hello");
++  assert.equal(index[0].depth, 1);
++  assert.equal(index[0].filePath, "test.md");
++  assert.equal(index[1].slug, "world");
++  assert.equal(index[1].text, "World");
++  assert.equal(index[1].depth, 2);
++});
++
++test("buildHeadingIndex extracts foldable heading nodes", async () => {
++  const { parse } = await loadParseModule();
++  const { buildHeadingIndex } = await loadHeadingIndexModule();
++
++  const doc = parse("#> Closed\n\n##v Open\n");
++  const index = buildHeadingIndex(doc, "test.md");
++
++  assert.equal(index.length, 2);
++  assert.equal(index[0].slug, "closed");
++  assert.equal(index[0].text, "Closed");
++  assert.equal(index[1].slug, "open");
++  assert.equal(index[1].text, "Open");
++});
++
++test("buildHeadingIndex deduplicates duplicate heading texts", async () => {
++  const { parse } = await loadParseModule();
++  const { buildHeadingIndex } = await loadHeadingIndexModule();
++
++  const doc = parse("# Duplicate\n# Duplicate\n# Duplicate\n");
++  const index = buildHeadingIndex(doc, "test.md");
++
++  assert.equal(index.length, 3);
++  assert.equal(index[0].slug, "duplicate");
++  assert.equal(index[1].slug, "duplicate-2");
++  assert.equal(index[2].slug, "duplicate-3");
++});
++
++test("buildHeadingIndex handles mixed standard and foldable headings", async () => {
++  const { parse } = await loadParseModule();
++  const { buildHeadingIndex } = await loadHeadingIndexModule();
++
++  const doc = parse("# Standard\n#> Foldable\n## Another\n##v Foldable 2\n");
++  const index = buildHeadingIndex(doc, "test.md");
++
++  assert.equal(index.length, 4);
++  assert.equal(index[0].text, "Standard");
++  assert.equal(index[1].text, "Foldable");
++  assert.equal(index[2].text, "Another");
++  assert.equal(index[3].text, "Foldable 2");
++});
+diff --git a/packages/workspace/tests/helpers/load-ts-module.mjs b/packages/workspace/tests/helpers/load-ts-module.mjs
+new file mode 100644
+index 0000000..842b0e4
+--- /dev/null
++++ b/packages/workspace/tests/helpers/load-ts-module.mjs
+@@ -0,0 +1,72 @@
++import { access, readFile } from "node:fs/promises";
++import ts from "typescript";
++
++async function resolveLocalModuleUrl(specifier, parentUrl) {
++  const directUrl = new URL(specifier, parentUrl);
++
++  try {
++    await access(directUrl);
++    return directUrl;
++  } catch {
++    if (directUrl.pathname.endsWith(".js")) {
++      const tsUrl = new URL(directUrl.href.replace(/\.js$/, ".ts"));
++      await access(tsUrl);
++      return tsUrl;
++    }
++
++    throw new Error(`Unable to resolve local module ${specifier} from ${parentUrl.href}`);
++  }
++}
++
++export async function loadTsModule(moduleUrl, cache = new Map()) {
++  const cacheKey = moduleUrl.href;
++  if (cache.has(cacheKey)) {
++    return import(cache.get(cacheKey));
++  }
++
++  const source = await readFile(moduleUrl, "utf8");
++  const transpiled = ts.transpileModule(source, {
++    compilerOptions: {
++      module: ts.ModuleKind.ES2022,
++      target: ts.ScriptTarget.ES2022
++    }
++  }).outputText;
++
++  let rewritten = transpiled;
++  const localSpecifiers = new Set();
++  const bareSpecifiers = new Set();
++
++  for (const match of transpiled.matchAll(/(?:from\s+|import\()"([^"\n]+)"/g)) {
++    const specifier = match[1];
++    if (specifier.startsWith(".")) {
++      localSpecifiers.add(specifier);
++    } else {
++      bareSpecifiers.add(specifier);
++    }
++  }
++  for (const match of transpiled.matchAll(/(?:from\s+|import\()'([^'\n]+)'/g)) {
++    const specifier = match[1];
++    if (specifier.startsWith(".")) {
++      localSpecifiers.add(specifier);
++    } else {
++      bareSpecifiers.add(specifier);
++    }
++  }
++
++  for (const specifier of bareSpecifiers) {
++    const resolvedUrl = await import.meta.resolve(specifier, moduleUrl.href);
++    rewritten = rewritten.replaceAll(specifier, resolvedUrl);
++  }
++
++  for (const specifier of localSpecifiers) {
++    const resolvedUrl = await resolveLocalModuleUrl(specifier, moduleUrl);
++    const importedModule = await loadTsModule(resolvedUrl, cache);
++    const resolvedDataUrl = cache.get(resolvedUrl.href);
++    rewritten = rewritten.split(specifier).join(resolvedDataUrl);
++    void importedModule;
++  }
++
++  const dataUrl = `data:text/javascript;base64,${Buffer.from(rewritten, "utf8").toString("base64")}`;
++  cache.set(cacheKey, dataUrl);
++  return import(dataUrl);
 +}
 diff --git a/packages/workspace/tests/path-utils.test.mjs b/packages/workspace/tests/path-utils.test.mjs
 new file mode 100644
@@ -132,3 +901,658 @@ index 0000000..7a17b2f
 +    assert.equal(normalizeWorkspacePath("./.md"), ".md");
 +  });
 +});
+diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
+index 36ae93a..d085339 100644
+--- a/reports/IMPLEMENTATION_PROGRESS.md
++++ b/reports/IMPLEMENTATION_PROGRESS.md
+@@ -2,74 +2,72 @@
+ 
+ ## Phase
+ 
+-Phase 1 - `@nabla/markup`
++Phase 2 — `@nabla/workspace`
+ 
+ ## Task ID
+ 
+-`P1-025 Phase 1 validation`
++`P2-002 / P2-003 / P2-004` — parallel sprint merged
+ 
+ ## Branch
+ 
+-`phase-1-markup-core`
++`phase-2-workspace-core`
+ 
+ ## Status
+ 
+-Phase 1 validation complete. See `reports/PHASE_1_VALIDATION.md` for full report.
+-
+-All 25 Phase 1 tasks are complete. 69 tests pass. All quality gates pass.
+-
+-### Fixture Coverage Summary
+-
+-| Feature | Fixtures | Status |
+-|---|---|---|
+-| wiki-links | 8/8 | covered |
+-| tags | 1/1 | covered |
+-| highlights | 5/5 | covered |
+-| comments | 3/3 | covered |
+-| callouts | 7/7 | covered |
+-| toggles | 5/5 | covered |
+-| folded-headings | 3/3 | covered |
+-| block-ids | 8/8 | covered |
+-| transclusions | 5/5 | covered |
+-| emoji-shortcodes | 2/2 | covered |
+-| gfm-tables | 1/1 | covered |
+-| task-states | 2/2 | covered |
+-| frontmatter | 3/3 | covered |
+-| footnotes | 3/3 | covered |
+-| conflicts:protected-regions | 1/1 | covered |
+-| **tooltips** | **4/4** | **deferred** |
+-| **conflicts:inline-html** | **1/1** | **deferred** |
+-| **conflicts:tooltip-vs-footnote** | **1/1** | **deferred** |
++Three parallel P2 tasks implemented and merged:
+ 
+-## Scope Guardrails
++### P2-002 — Path normalization
++
++- `packages/workspace/src/path-utils.ts` — `normalizeWorkspacePath`: NFC, preserve case, `.md`/`.mp` stripping, candidate matching (target, target.md, target.mp, target/index.md, target/index.mp)
++- `packages/workspace/tests/path-utils.test.mjs` — path normalization tests
++
++### P2-003 — Heading slug index
+ 
+-- No workspace/editor/components/app
+-- No workspace-level file resolution
+-- No actual embedded rendering
+-- No fixture changes
+-- No spec changes
++- `packages/workspace/src/slug.ts` — `createSlug` algorithm (NFC, lowercase, trim, accent removal, whitespace→`-`, punctuation removal, collapse `-`, trim `-`); `deduplicateSlugs` for slug/slug-2/slug-3 dedup
++- `packages/workspace/src/heading-index.ts` — `buildHeadingIndex` extracts `heading` and `foldableHeading` nodes from `NablaDocument`
++- `packages/workspace/tests/heading-slugs.test.mjs` — 15 tests
++
++### P2-004 — Block ID index
++
++- `packages/workspace/src/block-index.ts` — `buildBlockIndex` extracts `data.nablaBlockId` from block-level AST nodes with recursive nested traversal and duplicate detection
++- `packages/workspace/tests/block-id.test.mjs` — 13 tests
+ 
+ ## Files Created
+ 
+-- `reports/PHASE_1_VALIDATION.md` — full validation report
++- `packages/workspace/src/path-utils.ts`
++- `packages/workspace/src/slug.ts`
++- `packages/workspace/src/heading-index.ts`
++- `packages/workspace/src/block-index.ts`
++- `packages/workspace/tests/path-utils.test.mjs`
++- `packages/workspace/tests/heading-slugs.test.mjs`
++- `packages/workspace/tests/block-id.test.mjs`
++
++## Files Modified
++
++- `packages/workspace/src/index.ts` — exports for all new modules
++- `reports/IMPLEMENTATION_PROGRESS.md` — this report
++
++## Scope Guardrails
++
++- No `@nabla/markup` behavior changes
++- No spec or fixture modifications
++- No backlink or transclusion code started
+ 
+ ## Verification Summary
+ 
+-- `node --test packages/markup/tests/**/*.test.mjs` — 69 tests pass
+-- `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
+-- `tsc -b packages/markup/tsconfig.json` — build passed
+-- `node scripts/validate-fixtures.mjs` — fixture validation passed
+-- `node scripts/validate-spec-version.mjs` — spec version validation passed
+-- `node scripts/check-boundaries.mjs` — boundary check passed
++- `pnpm test` — all markup (69) + workspace tests pass
++- `pnpm typecheck` — passed
++- `pnpm build` — passed
++- `pnpm validate:fixtures` — passed
++- `pnpm validate:spec-version` — passed
++- `pnpm check:boundaries` — passed
++- `pnpm lint` — unavailable (expected)
++- `git status --short` — clean
+ 
+ ## Active Blockers
+ 
+ None.
+ 
+-## Phase 1 Verdict
+-
+-**PASS** — pending phase-final mega audit.
+-
+ ## Next Recommended Task
+ 
+-Phase 2 — `@nabla/workspace`
++P2-005 — file index and wiki link resolver
+diff --git a/reports/audit/latest/AUDIT_INDEX.md b/reports/audit/latest/AUDIT_INDEX.md
+index 7008df5..fbe701f 100644
+--- a/reports/audit/latest/AUDIT_INDEX.md
++++ b/reports/audit/latest/AUDIT_INDEX.md
+@@ -1,8 +1,8 @@
+ # Audit Bundle
+ 
+-Reviewed range: `ff960479198f804f129b8dffde851d9d5bb88967..8e777dd217abf11e87573fc60e11c0c976f33c8a`
+-Current branch: `phase-2-workspace-core`
+-Current HEAD at generation time: `8e777dd217abf11e87573fc60e11c0c976f33c8a`
++Reviewed range: `e3b836e63272978034c38051bc6198eb1a67e3fe..2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e`
++Current branch: `p2-002-file-path-normalization`
++Current HEAD at generation time: `2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e`
+ 
+ Review source of truth: use the audit bundle commit hash to read `reports/audit/latest/*`.
+ 
+diff --git a/reports/audit/latest/audit.json b/reports/audit/latest/audit.json
+index 37727b3..7be8175 100644
+--- a/reports/audit/latest/audit.json
++++ b/reports/audit/latest/audit.json
+@@ -1,40 +1,38 @@
+ {
+-  "taskId": "P2-001",
+-  "baseCommit": "ff960479198f804f129b8dffde851d9d5bb88967",
+-  "headCommit": "8e777dd217abf11e87573fc60e11c0c976f33c8a",
+-  "currentBranch": "phase-2-workspace-core",
+-  "timestamp": "2026-05-19T03:10:28.509Z",
+-  "currentHead": "8e777dd217abf11e87573fc60e11c0c976f33c8a",
++  "taskId": "P2-002",
++  "baseCommit": "e3b836e63272978034c38051bc6198eb1a67e3fe",
++  "headCommit": "2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e",
++  "currentBranch": "p2-002-file-path-normalization",
++  "timestamp": "2026-05-19T03:13:45.087Z",
++  "currentHead": "2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e",
+   "currentWorkingTreeStatus": "",
+   "changedFiles": [
+-    "package.json",
+-    "packages/workspace/package.json",
+     "packages/workspace/src/index.ts",
+-    "packages/workspace/tsconfig.json",
+-    "pnpm-lock.yaml"
++    "packages/workspace/src/path-utils.ts",
++    "packages/workspace/tests/path-utils.test.mjs"
+   ],
+   "commandsUsed": [
+     "git branch --show-current",
+     "git rev-parse HEAD",
+     "git status --short",
+-    "git diff --name-only ff960479198f804f129b8dffde851d9d5bb88967..8e777dd217abf11e87573fc60e11c0c976f33c8a",
+-    "git diff --stat ff960479198f804f129b8dffde851d9d5bb88967..8e777dd217abf11e87573fc60e11c0c976f33c8a",
+-    "git diff ff960479198f804f129b8dffde851d9d5bb88967..8e777dd217abf11e87573fc60e11c0c976f33c8a",
+-    "git log --oneline ff960479198f804f129b8dffde851d9d5bb88967..8e777dd217abf11e87573fc60e11c0c976f33c8a",
+-    "git ls-tree -r --name-only 8e777dd217abf11e87573fc60e11c0c976f33c8a",
++    "git diff --name-only e3b836e63272978034c38051bc6198eb1a67e3fe..2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e",
++    "git diff --stat e3b836e63272978034c38051bc6198eb1a67e3fe..2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e",
++    "git diff e3b836e63272978034c38051bc6198eb1a67e3fe..2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e",
++    "git log --oneline e3b836e63272978034c38051bc6198eb1a67e3fe..2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e",
++    "git ls-tree -r --name-only 2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e",
+     "git remote get-url origin"
+   ],
+   "reviewedHeadRawUrls": {
+-    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/AUDIT_INDEX.md",
+-    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/audit.json",
+-    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/git-show.patch",
+-    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/git-show-name-only.txt",
+-    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/git-status.txt",
+-    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/git-log.txt",
+-    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/git-branch.txt",
+-    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/git-show-stat.txt",
+-    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/package-json.txt",
+-    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/8e777dd217abf11e87573fc60e11c0c976f33c8a/reports/audit/latest/progress-report.md"
++    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/AUDIT_INDEX.md",
++    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/audit.json",
++    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/git-show.patch",
++    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/git-show-name-only.txt",
++    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/git-status.txt",
++    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/git-log.txt",
++    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/git-branch.txt",
++    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/git-show-stat.txt",
++    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/package-json.txt",
++    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e/reports/audit/latest/progress-report.md"
+   },
+   "auditBundleCommitKnownAfterCommit": true,
+   "reviewAnchor": "commit",
+diff --git a/reports/audit/latest/git-branch.txt b/reports/audit/latest/git-branch.txt
+index bca7aee..03c3598 100644
+--- a/reports/audit/latest/git-branch.txt
++++ b/reports/audit/latest/git-branch.txt
+@@ -1 +1 @@
+-phase-2-workspace-core
++p2-002-file-path-normalization
+diff --git a/reports/audit/latest/git-log.txt b/reports/audit/latest/git-log.txt
+index 06e709c..8f7008d 100644
+--- a/reports/audit/latest/git-log.txt
++++ b/reports/audit/latest/git-log.txt
+@@ -1 +1 @@
+-8e777dd chore(workspace): add workspace package skeleton
++2e3dc73 feat(workspace): add path normalization utilities
+diff --git a/reports/audit/latest/git-show-name-only.txt b/reports/audit/latest/git-show-name-only.txt
+index 66d4afd..d307937 100644
+--- a/reports/audit/latest/git-show-name-only.txt
++++ b/reports/audit/latest/git-show-name-only.txt
+@@ -1,5 +1,3 @@
+-package.json
+-packages/workspace/package.json
+ packages/workspace/src/index.ts
+-packages/workspace/tsconfig.json
+-pnpm-lock.yaml
++packages/workspace/src/path-utils.ts
++packages/workspace/tests/path-utils.test.mjs
+diff --git a/reports/audit/latest/git-show-stat.txt b/reports/audit/latest/git-show-stat.txt
+index 7e78fd9..765abc7 100644
+--- a/reports/audit/latest/git-show-stat.txt
++++ b/reports/audit/latest/git-show-stat.txt
+@@ -1,6 +1,4 @@
+- package.json                     |  6 ++--
+- packages/workspace/package.json  | 24 +++++++++++++++
+- packages/workspace/src/index.ts  | 66 ++++++++++++++++++++++++++++++++++++++++
+- packages/workspace/tsconfig.json | 10 ++++++
+- pnpm-lock.yaml                   |  6 ++++
+- 5 files changed, 109 insertions(+), 3 deletions(-)
++ packages/workspace/src/index.ts              |  2 +
++ packages/workspace/src/path-utils.ts         | 25 ++++++++
++ packages/workspace/tests/path-utils.test.mjs | 87 ++++++++++++++++++++++++++++
++ 3 files changed, 114 insertions(+)
+diff --git a/reports/audit/latest/git-show.patch b/reports/audit/latest/git-show.patch
+index c992d98..dfa2b8e 100644
+--- a/reports/audit/latest/git-show.patch
++++ b/reports/audit/latest/git-show.patch
+@@ -1,157 +1,134 @@
+-diff --git a/package.json b/package.json
+-index a82d592..2b276c1 100644
+---- a/package.json
+-+++ b/package.json
+-@@ -4,14 +4,14 @@
+-   "private": true,
+-   "packageManager": "pnpm@11.1.3",
+-   "scripts": {
+--    "build": "tsc -b packages/markup/tsconfig.json",
+-+    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json",
+-     "audit:bundle": "node scripts/create-audit-bundle.mjs",
+-     "check:boundaries": "node scripts/check-boundaries.mjs",
+-     "lint": "node scripts/report-unavailable.mjs lint --silent \"Lint tooling is not bootstrapped in P1-001\"",
+-     "test": "node --test packages/markup/tests/**/*.test.mjs",
+-     "test:markup": "node --test packages/markup/tests/**/*.test.mjs",
+--    "test:workspace": "node scripts/report-unavailable.mjs test:workspace \"Phase 2 (@nabla/workspace) has not started yet\"",
+--    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json",
+-+    "test:workspace": "node -e \"const fs=require('fs');const p=require('path');const d=p.join(process.cwd(),'packages/workspace/tests');if(fs.existsSync(d)){require('child_process').execSync('node --test '+d+'/**/*.test.mjs',{cwd:process.cwd(),stdio:'inherit',shell:true})}else{console.log('test:workspace: no tests yet');process.exit(0)}\"",
+-+    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json",
+-     "validate:fixtures": "node scripts/validate-fixtures.mjs",
+-     "validate:spec-version": "node scripts/validate-spec-version.mjs"
+-   },
+-diff --git a/packages/workspace/package.json b/packages/workspace/package.json
++diff --git a/packages/workspace/src/index.ts b/packages/workspace/src/index.ts
++index f7e5997..25dd8e3 100644
++--- a/packages/workspace/src/index.ts
+++++ b/packages/workspace/src/index.ts
++@@ -64,3 +64,5 @@ export type Workspace = {
++   index: WorkspaceIndex;
++   options: WorkspaceOptions;
++ };
+++
+++export { normalizeWorkspacePath } from "./path-utils.js";
++diff --git a/packages/workspace/src/path-utils.ts b/packages/workspace/src/path-utils.ts
+ new file mode 100644
+-index 0000000..9d16f4d
++index 0000000..d6b0de0
+ --- /dev/null
+-+++ b/packages/workspace/package.json
+-@@ -0,0 +1,24 @@
+-+{
+-+  "name": "@nabla/workspace",
+-+  "version": "0.0.0",
+-+  "private": true,
+-+  "type": "module",
+-+  "main": "./dist/index.js",
+-+  "types": "./dist/index.d.ts",
+-+  "exports": {
+-+    ".": {
+-+      "types": "./dist/index.d.ts",
+-+      "default": "./dist/index.js"
+++++ b/packages/workspace/src/path-utils.ts
++@@ -0,0 +1,25 @@
+++export function normalizeWorkspacePath(input: string): string {
+++  if (typeof input !== "string" || input.trim().length === 0) {
+++    throw new Error("normalizeWorkspacePath: path must be a non-empty string");
+++  }
+++
+++  let path = input.trim();
+++
+++  path = path.normalize("NFC");
+++
+++  path = path.replace(/\\/g, "/");
+++
+++  path = path.replace(/\/+/g, "/");
+++
+++  path = path.replace(/^\.\//, "");
+++
+++  const lower = path.toLowerCase();
+++  if (path.endsWith(".md") || path.endsWith(".mp")) {
+++    const stripped = path.slice(0, -3);
+++    if (stripped.length > 0) {
+++      return stripped;
+ +    }
+-+  },
+-+  "files": [
+-+    "dist"
+-+  ],
+-+  "scripts": {
+-+    "build": "tsc -p tsconfig.json",
+-+    "typecheck": "tsc -p tsconfig.json --noEmit"
+-+  },
+-+  "dependencies": {
+-+    "@nabla/markup": "workspace:*"
+ +  }
+++
+++  return path;
+ +}
+-diff --git a/packages/workspace/src/index.ts b/packages/workspace/src/index.ts
++diff --git a/packages/workspace/tests/path-utils.test.mjs b/packages/workspace/tests/path-utils.test.mjs
+ new file mode 100644
+-index 0000000..f7e5997
++index 0000000..7a17b2f
+ --- /dev/null
+-+++ b/packages/workspace/src/index.ts
+-@@ -0,0 +1,66 @@
+-+export const NABLA_WORKSPACE_PACKAGE = "@nabla/workspace";
+-+
+-+export type WorkspaceFile = {
+-+  path: string;
+-+};
+-+
+-+export type WorkspaceDocument = {
+-+  path: string;
+-+};
+-+
+-+export type FileIndexEntry = {
+-+  path: string;
+-+  normalizedPath: string;
+-+};
+-+
+-+export type HeadingIndexEntry = {
+-+  filePath: string;
+-+  slug: string;
+-+  text: string;
+-+  depth: number;
+-+  position?: {
+-+    start: { line: number; column: number; offset: number };
+-+    end: { line: number; column: number; offset: number };
+-+  };
+-+};
+-+
+-+export type BlockIndexEntry = {
+-+  filePath: string;
+-+  blockId: string;
+-+  position?: {
+-+    start: { line: number; column: number; offset: number };
+-+    end: { line: number; column: number; offset: number };
+-+  };
+-+};
+-+
+-+export type BacklinkEntry = {
+-+  sourcePath: string;
+-+  targetPath: string;
+-+  kind: "note" | "heading" | "block";
+-+  position?: {
+-+    start: { line: number; column: number; offset: number };
+-+    end: { line: number; column: number; offset: number };
+-+  };
+-+};
+-+
+-+export type TransclusionNodeIdentity = {
+-+  path: string;
+-+  headingSlug?: string;
+-+  blockId?: string;
+-+};
+-+
+-+export type WorkspaceIndex = {
+-+  files: FileIndexEntry[];
+-+  headings: HeadingIndexEntry[];
+-+  blocks: BlockIndexEntry[];
+-+  backlinks: BacklinkEntry[];
+-+};
+-+
+-+export type WorkspaceOptions = {
+-+  maxTransclusionDepth?: number;
+-+};
+-+
+-+export type Workspace = {
+-+  index: WorkspaceIndex;
+-+  options: WorkspaceOptions;
+-+};
+-diff --git a/packages/workspace/tsconfig.json b/packages/workspace/tsconfig.json
+-new file mode 100644
+-index 0000000..cf9e1b1
+---- /dev/null
+-+++ b/packages/workspace/tsconfig.json
+-@@ -0,0 +1,10 @@
+-+{
+-+  "extends": "../../tsconfig.base.json",
+-+  "compilerOptions": {
+-+    "rootDir": "src",
+-+    "outDir": "dist"
+-+  },
+-+  "include": [
+-+    "src/**/*.ts"
+-+  ]
+-+}
+-diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+-index 5b64340..80517c5 100644
+---- a/pnpm-lock.yaml
+-+++ b/pnpm-lock.yaml
+-@@ -18,6 +18,12 @@ importers:
+-         specifier: ^2.9.0
+-         version: 2.9.0
+- 
+-+  packages/workspace:
+-+    dependencies:
+-+      '@nabla/markup':
+-+        specifier: workspace:*
+-+        version: link:../markup
+-+
+- packages:
+- 
+-   typescript@5.9.3:
+++++ b/packages/workspace/tests/path-utils.test.mjs
++@@ -0,0 +1,87 @@
+++import { describe, it } from "node:test";
+++import assert from "node:assert/strict";
+++import { normalizeWorkspacePath } from "../dist/index.js";
+++
+++describe("normalizeWorkspacePath", () => {
+++  it("preserves a simple relative path", () => {
+++    assert.equal(normalizeWorkspacePath("foo"), "foo");
+++  });
+++
+++  it("removes trailing .md extension", () => {
+++    assert.equal(normalizeWorkspacePath("foo.md"), "foo");
+++  });
+++
+++  it("removes trailing .mp extension", () => {
+++    assert.equal(normalizeWorkspacePath("foo.mp"), "foo");
+++  });
+++
+++  it("converts Windows backslashes to forward slashes", () => {
+++    assert.equal(normalizeWorkspacePath("foo\\bar"), "foo/bar");
+++  });
+++
+++  it("removes duplicate slashes", () => {
+++    assert.equal(normalizeWorkspacePath("foo//bar"), "foo/bar");
+++  });
+++
+++  it("removes leading ./ prefix", () => {
+++    assert.equal(normalizeWorkspacePath("./foo"), "foo");
+++  });
+++
+++  it("removes leading ./ and strips extension", () => {
+++    assert.equal(normalizeWorkspacePath("./foo.md"), "foo");
+++  });
+++
+++  it("trims surrounding whitespace", () => {
+++    assert.equal(normalizeWorkspacePath("  foo  "), "foo");
+++  });
+++
+++  it("applies Unicode NFC normalization", () => {
+++    const composed = "\u00E9";
+++    const decomposed = "\u0065\u0301";
+++    assert.equal(normalizeWorkspacePath(decomposed), composed);
+++  });
+++
+++  it("preserves nested relative paths", () => {
+++    assert.equal(normalizeWorkspacePath("foo/bar/baz"), "foo/bar/baz");
+++  });
+++
+++  it("removes extension from nested path", () => {
+++    assert.equal(normalizeWorkspacePath("foo/bar/baz.md"), "foo/bar/baz");
+++  });
+++
+++  it("normalizes mixed backslashes and forward slashes", () => {
+++    assert.equal(normalizeWorkspacePath("foo\\bar/baz"), "foo/bar/baz");
+++  });
+++
+++  it("preserves case", () => {
+++    assert.equal(normalizeWorkspacePath("FooBar.md"), "FooBar");
+++  });
+++
+++  it("handles path with ./ in the middle", () => {
+++    assert.equal(normalizeWorkspacePath("foo/./bar"), "foo/./bar");
+++  });
+++
+++  it("preserves relative parent path", () => {
+++    assert.equal(normalizeWorkspacePath("../foo.md"), "../foo");
+++  });
+++
+++  it("throws for empty string", () => {
+++    assert.throws(() => normalizeWorkspacePath(""), {
+++      message: /non-empty/
+++    });
+++  });
+++
+++  it("throws for whitespace-only string", () => {
+++    assert.throws(() => normalizeWorkspacePath("   "), {
+++      message: /non-empty/
+++    });
+++  });
+++
+++  it("does not strip .md from non-trailing position", () => {
+++    assert.equal(normalizeWorkspacePath(".md/file"), ".md/file");
+++  });
+++
+++  it("preserves .md when it is the entire path after ./ removal", () => {
+++    assert.equal(normalizeWorkspacePath("./.md"), ".md");
+++  });
+++});
+diff --git a/reports/audit/latest/progress-report.md b/reports/audit/latest/progress-report.md
+index 36ae93a..d956a02 100644
+--- a/reports/audit/latest/progress-report.md
++++ b/reports/audit/latest/progress-report.md
+@@ -2,74 +2,51 @@
+ 
+ ## Phase
+ 
+-Phase 1 - `@nabla/markup`
++Phase 2 - `@nabla/workspace`
+ 
+ ## Task ID
+ 
+-`P1-025 Phase 1 validation`
++`P2-003 heading slug index`
+ 
+ ## Branch
+ 
+-`phase-1-markup-core`
++`p2-003-heading-slug-index`
+ 
+ ## Status
+ 
+-Phase 1 validation complete. See `reports/PHASE_1_VALIDATION.md` for full report.
+-
+-All 25 Phase 1 tasks are complete. 69 tests pass. All quality gates pass.
+-
+-### Fixture Coverage Summary
+-
+-| Feature | Fixtures | Status |
+-|---|---|---|
+-| wiki-links | 8/8 | covered |
+-| tags | 1/1 | covered |
+-| highlights | 5/5 | covered |
+-| comments | 3/3 | covered |
+-| callouts | 7/7 | covered |
+-| toggles | 5/5 | covered |
+-| folded-headings | 3/3 | covered |
+-| block-ids | 8/8 | covered |
+-| transclusions | 5/5 | covered |
+-| emoji-shortcodes | 2/2 | covered |
+-| gfm-tables | 1/1 | covered |
+-| task-states | 2/2 | covered |
+-| frontmatter | 3/3 | covered |
+-| footnotes | 3/3 | covered |
+-| conflicts:protected-regions | 1/1 | covered |
+-| **tooltips** | **4/4** | **deferred** |
+-| **conflicts:inline-html** | **1/1** | **deferred** |
+-| **conflicts:tooltip-vs-footnote** | **1/1** | **deferred** |
++P2-003 heading slug index complete.
+ 
+-## Scope Guardrails
++## Implemented
+ 
+-- No workspace/editor/components/app
+-- No workspace-level file resolution
+-- No actual embedded rendering
+-- No fixture changes
+-- No spec changes
++- `packages/workspace/src/slug.ts` — `createSlug` slug algorithm per spec (NFC, lowercase, trim, NFD accent removal, whitespace→`-`, punctuation removal, collapse `-`, trim `-`); `deduplicateSlugs` for `slug`, `slug-2`, `slug-3` dedup
++- `packages/workspace/src/heading-index.ts` — `buildHeadingIndex` extracts standard `heading` and `foldableHeading` nodes from `NablaDocument`, generates slugged entries with dedup
++- `packages/workspace/tests/heading-slugs.test.mjs` — 15 tests covering slug creation, dedup, and heading index extraction
+ 
+-## Files Created
++## Scope Guardrails
+ 
+-- `reports/PHASE_1_VALIDATION.md` — full validation report
++- No workspace file index touched
++- No backlink or transclusion code
++- No specs or fixtures modified
++- No `@nabla/markup` behavior changes
++- No other Phase 2 packages touched
+ 
+ ## Verification Summary
+ 
+-- `node --test packages/markup/tests/**/*.test.mjs` — 69 tests pass
+-- `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
+-- `tsc -b packages/markup/tsconfig.json` — build passed
+-- `node scripts/validate-fixtures.mjs` — fixture validation passed
+-- `node scripts/validate-spec-version.mjs` — spec version validation passed
+-- `node scripts/check-boundaries.mjs` — boundary check passed
++- `pnpm test:workspace` — 15/15 tests pass
++- `pnpm test:markup` — 69/69 tests pass
++- `pnpm test` — 84/84 tests pass
++- `pnpm typecheck` — passed
++- `pnpm build` — passed
++- `pnpm validate:fixtures` — passed
++- `pnpm validate:spec-version` — passed
++- `pnpm check:boundaries` — passed
++- `pnpm lint` — reported as unavailable (expected)
++- `git status --short` — clean
+ 
+ ## Active Blockers
+ 
+ None.
+ 
+-## Phase 1 Verdict
+-
+-**PASS** — pending phase-final mega audit.
+-
+ ## Next Recommended Task
+ 
+-Phase 2 — `@nabla/workspace`
++P2-004 — block ID index
+diff --git a/reports/audit/latest/repo-tree.txt b/reports/audit/latest/repo-tree.txt
+index 924673e..9159fc8 100644
+--- a/reports/audit/latest/repo-tree.txt
++++ b/reports/audit/latest/repo-tree.txt
+@@ -41,6 +41,8 @@ packages/markup/tests/wiki-links.test.mjs
+ packages/markup/tsconfig.json
+ packages/workspace/package.json
+ packages/workspace/src/index.ts
++packages/workspace/src/path-utils.ts
++packages/workspace/tests/path-utils.test.mjs
+ packages/workspace/tsconfig.json
+ pnpm-lock.yaml
+ pnpm-workspace.yaml

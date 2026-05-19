@@ -40,8 +40,14 @@ packages/markup/tests/task-states.test.mjs
 packages/markup/tests/wiki-links.test.mjs
 packages/markup/tsconfig.json
 packages/workspace/package.json
+packages/workspace/src/block-index.ts
+packages/workspace/src/heading-index.ts
 packages/workspace/src/index.ts
 packages/workspace/src/path-utils.ts
+packages/workspace/src/slug.ts
+packages/workspace/tests/block-id.test.mjs
+packages/workspace/tests/heading-slugs.test.mjs
+packages/workspace/tests/helpers/load-ts-module.mjs
 packages/workspace/tests/path-utils.test.mjs
 packages/workspace/tsconfig.json
 pnpm-lock.yaml

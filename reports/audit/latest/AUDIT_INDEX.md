@@ -1,8 +1,8 @@
 # Audit Bundle
 
-Reviewed range: `e3b836e63272978034c38051bc6198eb1a67e3fe..2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e`
-Current branch: `p2-002-file-path-normalization`
-Current HEAD at generation time: `2e3dc73fac6da23c1e4c1711ce6a8d5122062f1e`
+Reviewed range: `e3b836e63272978034c38051bc6198eb1a67e3fe..7721b7d353e84b2be9ee127c450f910d09a665db`
+Current branch: `phase-2-workspace-core`
+Current HEAD at generation time: `7721b7d353e84b2be9ee127c450f910d09a665db`
 
 Review source of truth: use the audit bundle commit hash to read `reports/audit/latest/*`.
 
