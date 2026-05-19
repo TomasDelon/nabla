@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-008` — Footnote and Comment Visual Components
+`P4-008A` — Components Visual Playground
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -270,6 +270,19 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No footnote panel UI implemented.
 - No dependencies added.
 - No editor/markup/workspace source changes.
+
+### P4-008A Notes
+
+- Created `packages/components/playground/` with Vite + React setup.
+- Includes `playground/index.html`, `playground/vite.config.ts`, `playground/src/main.tsx`.
+- `pnpm dev` starts the playground server at `http://127.0.0.1:5173`.
+- Displays all 8 accepted components: TaskStateCheckbox (4 states), WikiLink (resolved, unresolved, heading, block), Tag (simple, nested), Highlight (simple, color), Emoji (known, unknown), Footnote (reference, definition), Comment (editing, reading, multiline).
+- Imports component CSS and tokens CSS for proper visual styling.
+- Not an app — explicitly marked as development playground.
+- No app shell, routing, persistence, or editor/workspace integration.
+- No new visual components implemented.
+- No editor/markup/workspace source changes.
+- Dependencies added: `vite`, `@vitejs/plugin-react`, `react-dom`, `@types/react-dom`.
 
 ## Verification Summary
 
