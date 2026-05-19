@@ -1,33 +1,3 @@
- .../editor/fixtures/emoji-preserve/expected.md     |  1 +
- packages/editor/fixtures/emoji-preserve/input.md   |  1 +
- .../editor/fixtures/emoji-preserve/operation.json  |  1 +
- .../fixtures/export-loss-controlled/expected.md    |  1 +
- .../fixtures/export-loss-controlled/input.md       |  1 +
- .../fixtures/export-loss-controlled/operation.json |  1 +
- .../fixtures/fold-callout-toggle/expected.md       |  1 +
- .../editor/fixtures/fold-callout-toggle/input.md   |  1 +
- .../fixtures/fold-callout-toggle/operation.json    |  1 +
- .../fixtures/fold-heading-toggle/expected.md       |  1 +
- .../editor/fixtures/fold-heading-toggle/input.md   |  1 +
- .../fixtures/fold-heading-toggle/operation.json    |  1 +
- .../editor/fixtures/fold-toggle-toggle/expected.md |  1 +
- .../editor/fixtures/fold-toggle-toggle/input.md    |  1 +
- .../fixtures/fold-toggle-toggle/operation.json     |  1 +
- .../fixtures/footnote-comment-preserve/expected.md |  5 ++
- .../fixtures/footnote-comment-preserve/input.md    |  5 ++
- .../footnote-comment-preserve/operation.json       |  1 +
- .../fixtures/protected-region-preserve/expected.md |  1 +
- .../fixtures/protected-region-preserve/input.md    |  1 +
- .../protected-region-preserve/operation.json       |  1 +
- .../fixtures/tag-highlight-preserve/expected.md    |  1 +
- .../fixtures/tag-highlight-preserve/input.md       |  1 +
- .../fixtures/tag-highlight-preserve/operation.json |  1 +
- .../editor/fixtures/task-state-toggle/expected.md  |  1 +
- .../editor/fixtures/task-state-toggle/input.md     |  1 +
- .../fixtures/task-state-toggle/operation.json      |  1 +
- .../editor/fixtures/wiki-link-preserve/expected.md |  1 +
- .../editor/fixtures/wiki-link-preserve/input.md    |  1 +
- .../fixtures/wiki-link-preserve/operation.json     |  1 +
- packages/editor/tests/editor-fixtures.test.mjs     | 90 ++++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md                 | 21 ++++-
- 32 files changed, 145 insertions(+), 4 deletions(-)
+ reports/IMPLEMENTATION_PROGRESS.md |  20 ++++-
+ reports/PHASE_3_VALIDATION.md      | 145 +++++++++++++++++++++++++++++++++++++
+ 2 files changed, 161 insertions(+), 4 deletions(-)

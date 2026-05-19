@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-014` — Editor Fixture/Regression Plan
+`P3-015` — Phase 3 Validation Report
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, API consistency validation, and editor fixture/regression tests.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, API consistency validation, editor fixture/regression tests, and Phase 3 validation report.
 
 ### Repairs Applied
 
@@ -149,6 +149,18 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No parser/serializer changes.
 - No workspace changes.
 
+### P3-015 Notes
+
+- Created Phase 3 validation report in `reports/PHASE_3_VALIDATION.md`.
+- Documents completion status of all 15 Phase 3 tasks (P3-000 through P3-014).
+- Quality gate results: all pass.
+- Test coverage summary covering editor API consistency, fixture regression, and all accepted syntax surfaces.
+- Deferred scope documented: visual callout, toggle, folded heading, transclusion, tooltip, components, app.
+- Explicit confirmations: no parser/serializer changes, no workspace changes, no Phase 4 started, source-of-truth invariant preserved.
+- Phase verdict: PASS WITH DEFERRED SCOPE.
+- No source files changed.
+- No dependencies added.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -167,4 +179,4 @@ None.
 
 ## Next Recommended Task
 
-P3-015 — Phase 3 Validation Report — document the completion status of all Phase 3 tasks, quality gate results, deferred scope, and a phase verdict.
+External audit/approval for Phase 3 closure. Do not start Phase 4 until external audit accepts P3-015.
