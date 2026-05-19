@@ -1,115 +1,201 @@
 diff --git a/packages/editor/src/index.ts b/packages/editor/src/index.ts
-index e6e82a9..4ab2943 100644
+index 4ab2943..93ea9c5 100644
 --- a/packages/editor/src/index.ts
 +++ b/packages/editor/src/index.ts
-@@ -1 +1,15 @@
- export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
+@@ -5,6 +5,8 @@ export {
+   NABLA_EDITOR_SOURCE_OF_TRUTH,
+ } from "./model.js";
+ 
++export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
 +
-+export {
-+  NABLA_EDITOR_CANONICAL_SAVE_PATH,
-+  NABLA_EDITOR_SOURCE_OF_TRUTH,
-+} from "./model.js";
+ export type {
+   EditorAdapter,
+   EditorDiagnostic,
+@@ -13,3 +15,8 @@ export type {
+   EditorSource,
+   EditorState,
+ } from "./model.js";
 +
 +export type {
-+  EditorAdapter,
-+  EditorDiagnostic,
-+  EditorLoadResult,
-+  EditorSaveResult,
-+  EditorSource,
-+  EditorState,
-+} from "./model.js";
-diff --git a/packages/editor/src/model.ts b/packages/editor/src/model.ts
++  CanonicalizeOptions,
++  CanonicalizeResult,
++} from "./save-pipeline.js";
+diff --git a/packages/editor/src/save-pipeline.ts b/packages/editor/src/save-pipeline.ts
 new file mode 100644
-index 0000000..71a5139
+index 0000000..dd21c01
 --- /dev/null
-+++ b/packages/editor/src/model.ts
-@@ -0,0 +1,58 @@
-+export const NABLA_EDITOR_SOURCE_OF_TRUTH = "markdown";
++++ b/packages/editor/src/save-pipeline.ts
+@@ -0,0 +1,62 @@
++import { DIAGNOSTIC_CODES, parse, serialize } from "@nabla/markup";
 +
-+export const NABLA_EDITOR_CANONICAL_SAVE_PATH =
-+  "editor state -> Markdown string -> @nabla/markup parser -> @nabla/markup serializer -> saved Markdown source";
++import type { Diagnostic } from "@nabla/markup";
++import type { EditorDiagnostic } from "./model.js";
 +
-+/**
-+ * Markdown/Nabla Markdown+ source is the only persistent source of truth.
-+ * Editor state is ephemeral and must always originate from source text.
-+ */
-+export interface EditorSource {
-+  readonly markdown: string;
++export const NABLA_EDITOR_EXPORT_LOSS = DIAGNOSTIC_CODES.EDITOR_EXPORT_LOSS;
++
++export interface CanonicalizeOptions {
++  readonly preservation?: {
++    readonly message?: string;
++    verify(canonicalMd: string): boolean;
++  };
 +}
 +
-+/**
-+ * Ephemeral editor document state. Runtime implementations are deferred.
-+ * Hidden JSON, stored HTML, and serialized editor state are forbidden.
-+ */
-+export interface EditorState {
-+  readonly document: unknown;
-+}
-+
-+export interface EditorDiagnostic {
-+  readonly code: string;
-+  readonly message: string;
-+  readonly severity: "error" | "warning";
-+  readonly phase: "load" | "save";
-+}
-+
-+export interface EditorLoadResult {
-+  readonly source: EditorSource;
-+  readonly state: EditorState;
++export interface CanonicalizeResult {
++  readonly canonicalMd: string;
 +  readonly diagnostics: readonly EditorDiagnostic[];
 +}
 +
-+/**
-+ * Adapters first export a Markdown string from editor state, then the save
-+ * pipeline reparses and reserializes it before writing the final source.
-+ */
-+export interface EditorSaveResult {
-+  readonly markdown: string;
-+  readonly diagnostics: readonly EditorDiagnostic[];
++function toEditorDiagnostic(diagnostic: Diagnostic): EditorDiagnostic {
++  return {
++    code: diagnostic.code,
++    message: diagnostic.message,
++    severity: diagnostic.severity === "info" ? "warning" : diagnostic.severity,
++    phase: "save",
++  };
 +}
 +
-+/**
-+ * Type-level boundary for future editor runtimes.
-+ *
-+ * Canonical save path:
-+ * editor state -> Markdown string -> @nabla/markup parser ->
-+ * @nabla/markup serializer -> saved Markdown source
-+ *
-+ * Markdown/Nabla Markdown+ remains the only persistent source of truth.
-+ * Hidden JSON, stored HTML, and serialized editor state are forbidden.
-+ * Runtime editor behavior is intentionally deferred to later tasks.
-+ */
-+export interface EditorAdapter {
-+  loadSource(source: string): EditorLoadResult;
-+  saveState(state: EditorState): EditorSaveResult;
++function createExportLossDiagnostic(message?: string): EditorDiagnostic {
++  return {
++    code: NABLA_EDITOR_EXPORT_LOSS,
++    message:
++      message ??
++      "Editor export preservation contract failed during canonical save.",
++    severity: "error",
++    phase: "save",
++  };
++}
++
++export function canonicalize(
++  exportedMd: string,
++  options: CanonicalizeOptions = {},
++): CanonicalizeResult {
++  const parsed = parse(exportedMd);
++  const canonicalMd = serialize(parsed);
++  const diagnostics = parsed.diagnostics.map(toEditorDiagnostic);
++
++  if (options.preservation && !options.preservation.verify(canonicalMd)) {
++    return {
++      canonicalMd,
++      diagnostics: [
++        ...diagnostics,
++        createExportLossDiagnostic(options.preservation.message),
++      ],
++    };
++  }
++
++  return {
++    canonicalMd,
++    diagnostics,
++  };
 +}
 diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
-index 925b795..3f630fc 100644
+index 3f630fc..55cd133 100644
 --- a/packages/editor/tests/public-api.test.mjs
 +++ b/packages/editor/tests/public-api.test.mjs
-@@ -12,3 +12,13 @@ test("NABLA_EDITOR_PACKAGE constant is exported", async () => {
-   const mod = await load();
-   assert.equal(mod.NABLA_EDITOR_PACKAGE, "@nabla/editor");
+@@ -22,3 +22,10 @@ test("editor model runtime constants are exported", async () => {
+     "editor state -> Markdown string -> @nabla/markup parser -> @nabla/markup serializer -> saved Markdown source",
+   );
  });
 +
-+test("editor model runtime constants are exported", async () => {
++test("save pipeline runtime exports are wired", async () => {
 +  const mod = await load();
 +
-+  assert.equal(mod.NABLA_EDITOR_SOURCE_OF_TRUTH, "markdown");
++  assert.equal(typeof mod.canonicalize, "function");
++  assert.equal(mod.NABLA_EDITOR_EXPORT_LOSS, "NABLA_EDITOR_EXPORT_LOSS");
++});
+diff --git a/packages/editor/tests/save-pipeline.test.mjs b/packages/editor/tests/save-pipeline.test.mjs
+new file mode 100644
+index 0000000..d13782f
+--- /dev/null
++++ b/packages/editor/tests/save-pipeline.test.mjs
+@@ -0,0 +1,77 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import { loadTsModule } from "../../workspace/tests/helpers/load-ts-module.mjs";
++
++const savePipelineUrl = new URL("../src/save-pipeline.ts", import.meta.url);
++
++async function load() {
++  return loadTsModule(savePipelineUrl);
++}
++
++test("known-good Markdown canonicalizes without export-loss diagnostics", async () => {
++  const mod = await load();
++  const input = "# Title\n\nParagraph text.\n";
++
++  const result = mod.canonicalize(input);
++
++  assert.equal(result.canonicalMd, "# Title\nParagraph text.\n");
 +  assert.equal(
-+    mod.NABLA_EDITOR_CANONICAL_SAVE_PATH,
-+    "editor state -> Markdown string -> @nabla/markup parser -> @nabla/markup serializer -> saved Markdown source",
++    result.diagnostics.some(
++      (diagnostic) => diagnostic.code === mod.NABLA_EDITOR_EXPORT_LOSS,
++    ),
++    false,
++  );
++});
++
++test("parser diagnostics are forwarded as editor save diagnostics", async () => {
++  const mod = await load();
++  const result = mod.canonicalize("Before ![[note]] after\n");
++
++  assert.equal(
++    result.diagnostics.some(
++      (diagnostic) =>
++        diagnostic.code === "NABLA_TRANSCLUSION_INLINE_UNSUPPORTED" &&
++        diagnostic.phase === "save",
++    ),
++    true,
++  );
++});
++
++test("explicit preservation contract failures emit export-loss diagnostics", async () => {
++  const mod = await load();
++  const result = mod.canonicalize("Paragraph text.\n", {
++    preservation: {
++      message: "Preservation contract failed.",
++      verify: () => false,
++    },
++  });
++
++  assert.equal(
++    result.diagnostics.some(
++      (diagnostic) =>
++        diagnostic.code === mod.NABLA_EDITOR_EXPORT_LOSS &&
++        diagnostic.message === "Preservation contract failed.",
++    ),
++    true,
++  );
++});
++
++test("valid edit divergence is not treated as export loss", async () => {
++  const mod = await load();
++  const first = mod.canonicalize("Alpha\n");
++  const second = mod.canonicalize("Beta\n");
++
++  assert.equal(
++    first.diagnostics.some(
++      (diagnostic) => diagnostic.code === mod.NABLA_EDITOR_EXPORT_LOSS,
++    ),
++    false,
++  );
++  assert.equal(
++    second.diagnostics.some(
++      (diagnostic) => diagnostic.code === mod.NABLA_EDITOR_EXPORT_LOSS,
++    ),
++    false,
 +  );
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index b8c6f8d..265eb86 100644
+index 265eb86..f997a04 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
  
  ## Last Task
  
--`P3-001` — Editor Package Skeleton
-+`P3-002` — Editor Document Model Boundary
+-`P3-002` — Editor Document Model Boundary
++`P3-003` — Editor Source-of-Truth Synchronization Contract
  
  ## Branch
  
@@ -117,33 +203,34 @@ index b8c6f8d..265eb86 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — editor package skeleton created.
-+Phase 3 (`@nabla/editor`) — editor package skeleton and adapter model contracts created.
+-Phase 3 (`@nabla/editor`) — editor package skeleton and adapter model contracts created.
++Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, and save canonicalization contract created.
  
  ### Repairs Applied
  
-@@ -34,6 +34,13 @@ Phase 3 (`@nabla/editor`) — editor package skeleton created.
- - No editor behavior implemented.
- - Minimal package skeleton created: `packages/editor/` with package.json, tsconfig.json, src/index.ts, and test.
+@@ -41,6 +41,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton and adapter model contract
+ - No runtime editor behavior implemented.
+ - Save-pipeline runtime work remains deferred; this task defines contracts only.
  
-+### P3-002 Notes
++### P3-003 Notes
 +
-+- Added type-level editor adapter contracts in `packages/editor/src/model.ts`.
++- Added `packages/editor/src/save-pipeline.ts` with editor-exported Markdown canonicalization through `@nabla/markup` parse/serialize APIs.
++- Export-loss semantics are controlled and explicit; canonical output is not compared against original source as a generic loss detector.
++- Parser diagnostics are forwarded as editor save diagnostics.
 +- No Milkdown or ProseMirror dependencies added.
-+- No runtime editor behavior implemented.
-+- Save-pipeline runtime work remains deferred; this task defines contracts only.
++- No editor frontend/runtime behavior implemented beyond raw string canonicalization.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -52,4 +59,4 @@ None.
+@@ -59,4 +67,4 @@ None.
  
  ## Next Recommended Task
  
--P3-002 (editor adapter contracts) — define adapter interfaces in `@nabla/editor`.
-+P3-003 (save pipeline contract wiring) — implement canonical editor export validation around the new model boundary.
+-P3-003 (save pipeline contract wiring) — implement canonical editor export validation around the new model boundary.
++P3-004 (document-level save pipeline integration) — build on the canonicalization contract without expanding into editor frontend work.

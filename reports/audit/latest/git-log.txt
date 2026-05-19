@@ -1,1 +1,1 @@
-7157c9c feat(editor): add editor adapter model contracts
+8b2f842 feat(editor): add save pipeline canonicalization

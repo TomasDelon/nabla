@@ -1,5 +1,6 @@
- packages/editor/src/index.ts              | 14 ++++++++
- packages/editor/src/model.ts              | 58 +++++++++++++++++++++++++++++++
- packages/editor/tests/public-api.test.mjs | 10 ++++++
- reports/IMPLEMENTATION_PROGRESS.md        | 15 +++++---
- 4 files changed, 93 insertions(+), 4 deletions(-)
+ packages/editor/src/index.ts                 |  7 +++
+ packages/editor/src/save-pipeline.ts         | 62 ++++++++++++++++++++++
+ packages/editor/tests/public-api.test.mjs    |  7 +++
+ packages/editor/tests/save-pipeline.test.mjs | 77 ++++++++++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md           | 16 ++++--
+ 5 files changed, 165 insertions(+), 4 deletions(-)
