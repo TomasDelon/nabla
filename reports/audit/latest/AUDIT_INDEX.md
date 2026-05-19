@@ -1,8 +1,8 @@
 # Audit Bundle
 
-Reviewed range: `9634d33..db4375b`
+Reviewed range: `e91805c..e6e01bf`
 Current branch: `phase-1-markup-core`
-Current HEAD at generation time: `db4375b4ada41492e7529b1dad501b4c787eb36f`
+Current HEAD at generation time: `e6e01bf4a25aa1e6a1b6ec0092e49627680331a6`
 
 Start with this order:
 1. `audit.json` for task, branch, reviewed range, current HEAD, working tree status, and raw URLs.

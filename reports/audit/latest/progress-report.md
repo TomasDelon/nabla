@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-023 GFM table alignment`
+`P1-024 full fixture regression`
 
 ## Branch
 
@@ -14,13 +14,34 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-GFM table alignment AST verified against the checked-in fixture contract (P1-023).
+Full parser fixture regression coverage enforced for all Phase 1 implemented features.
 
-The `gfm-tables/alignment` fixture covers left (`:---`), center (`:---:`), and right (`---:`) alignment in a single 3-column table. The `align` property on the table AST node correctly stores `["left", "center", "right"]`. Serialization round-trips the alignment separators correctly.
+69 tests pass (68 from P1-023 + 1 new `conflicts/protected-regions` fixture).
 
-Additionally, a table block ID bug was fixed: `buildTableNode` was missing the `nablaBlockIdOwnLine` propagation, and the serializer silently dropped block IDs on tables when `isOwnLine` was falsy.
+### Fixture Coverage Summary
 
-All 68 tests pass (66 for P1-022 + 1 GFM table alignment fixture + 1 table block ID fixture).
+| Feature | Fixtures | Status |
+|---|---|---|
+| wiki-links | 8/8 | covered |
+| tags | 1/1 | covered |
+| highlights | 5/5 | covered |
+| comments | 3/3 | covered |
+| callouts | 7/7 | covered |
+| toggles | 5/5 | covered |
+| folded-headings | 3/3 | covered |
+| block-ids | 8/8 | covered |
+| transclusions | 5/5 | covered |
+| emoji-shortcodes | 2/2 | covered |
+| gfm-tables | 1/1 | covered |
+| task-states | 2/2 | covered |
+| frontmatter | 3/3 | covered |
+| footnotes | 3/3 | covered |
+| conflicts:protected-regions | 1/1 | covered |
+| **tooltips** | **4/4** | **deferred** — tooltips not in Phase 1 backlog, no `tooltips.ts` extension |
+| **conflicts:inline-html** | **1/1** | **deferred** — requires HTML block-level parsing, not implemented in custom parser |
+| **conflicts:tooltip-vs-footnote** | **1/1** | **deferred** — requires tooltip implementation |
+
+No fixtures were modified. No specs were modified. No parser/serializer feature code was changed.
 
 ## Scope Guardrails
 
@@ -29,18 +50,20 @@ All 68 tests pass (66 for P1-022 + 1 GFM table alignment fixture + 1 table block
 - No actual embedded rendering
 - No fixture changes
 - No spec changes
+- No parser/serializer feature changes
 
 ## Files Modified
 
-- `packages/markup/src/parser.ts` — passed `nablaBlockIdOwnLine` 5th argument to `buildTableNode`
-- `packages/markup/src/serializer.ts` — fixed fallthrough to append block ID inline when `isOwnLine` is falsy on tables
+- `packages/markup/tests/wiki-links.test.mjs` — added `conflictFixtureIds` array and fixture test for `conflicts/protected-regions`
 
 ## Verification Summary
 
-- `node --test packages/markup/tests/**/*.test.mjs` — 68 tests pass
+- `node --test packages/markup/tests/**/*.test.mjs` — 69 tests pass
 - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
 - `tsc -b packages/markup/tsconfig.json` — build passed
-- `node scripts/create-audit-bundle.mjs --task P1-023 --base 47a9236 --head HEAD` — audit bundle written
+- `node scripts/validate-fixtures.mjs` — fixture validation passed
+- `node scripts/validate-spec-version.mjs` — spec version validation passed
+- `node scripts/check-boundaries.mjs` — boundary check passed
 
 ## Active Blockers
 
@@ -48,4 +71,4 @@ None.
 
 ## Next Recommended Task
 
-P1-024 full fixture regression
+P1-025 Phase 1 validation

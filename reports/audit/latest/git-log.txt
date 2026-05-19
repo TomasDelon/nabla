@@ -1,2 +1,1 @@
-db4375b feat(markup): implement GFM table alignment parsing
-47a9236 docs: update implementation progress for P1-022 emoji shortcodes
+e6e01bf test(markup): add full fixture regression coverage
