@@ -1,39 +1,37 @@
 {
-  "taskId": "DOCS-001",
-  "baseCommit": "3cf6ee7",
-  "headCommit": "51eafb5",
+  "taskId": "INFRA-003",
+  "baseCommit": "322be77",
+  "headCommit": "8e9224b",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-19T00:27:46.727Z",
-  "currentHead": "51eafb52f030d18d3e60b375180a6c12aafc1fb4",
-  "currentWorkingTreeStatus": "",
+  "timestamp": "2026-05-19T00:32:10.015Z",
+  "currentHead": "8e9224bd49dd17be8d599849c6d1d7223a1fea72",
+  "currentWorkingTreeStatus": " M reports/audit/latest/AUDIT_INDEX.md\n M reports/audit/latest/audit.json\n M reports/audit/latest/git-log.txt\n M reports/audit/latest/git-show-name-only.txt\n M reports/audit/latest/git-show-stat.txt\n M reports/audit/latest/git-show.patch\n M reports/audit/latest/git-status.txt",
   "changedFiles": [
-    "README.md",
-    "reports/WORKFLOW.md",
-    "reports/decisions/IDR-0001-audit-bundle-workflow.md",
-    "reports/decisions/IDR-0002-future-streaming-markup-rendering.md",
-    "reports/decisions/IDR-0003-phase-final-mega-audit.md"
+    "scripts/create-audit-bundle.mjs"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 3cf6ee7..51eafb5",
-    "git diff --stat 3cf6ee7..51eafb5",
-    "git diff 3cf6ee7..51eafb5",
-    "git log --oneline 3cf6ee7..51eafb5",
-    "git ls-tree -r --name-only 51eafb5",
+    "git diff --name-only 322be77..8e9224b",
+    "git diff --stat 322be77..8e9224b",
+    "git diff 322be77..8e9224b",
+    "git log --oneline 322be77..8e9224b",
+    "git ls-tree -r --name-only 8e9224b",
     "git remote get-url origin"
   ],
   "rawUrls": {
-    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/AUDIT_INDEX.md",
-    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/audit.json",
-    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-show.patch",
-    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-show-name-only.txt",
-    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-status.txt",
-    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-log.txt",
-    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-branch.txt",
-    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/git-show-stat.txt",
-    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/package-json.txt",
-    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/phase-1-markup-core/reports/audit/latest/progress-report.md"
-  }
+    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/AUDIT_INDEX.md",
+    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/audit.json",
+    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/git-show.patch",
+    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/git-show-name-only.txt",
+    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/git-status.txt",
+    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/git-log.txt",
+    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/git-branch.txt",
+    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/git-show-stat.txt",
+    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/package-json.txt",
+    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/8e9224b/reports/audit/latest/progress-report.md"
+  },
+  "reviewAnchor": "commit",
+  "reviewInstruction": "Use the audit bundle commit hash, not branch raw URLs, as source of truth."
 }

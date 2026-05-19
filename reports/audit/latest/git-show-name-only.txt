@@ -1,5 +1,1 @@
-README.md
-reports/WORKFLOW.md
-reports/decisions/IDR-0001-audit-bundle-workflow.md
-reports/decisions/IDR-0002-future-streaming-markup-rendering.md
-reports/decisions/IDR-0003-phase-final-mega-audit.md
+scripts/create-audit-bundle.mjs
