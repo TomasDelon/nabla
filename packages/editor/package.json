@@ -19,6 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@nabla/markup": "workspace:*"
+    "@nabla/markup": "workspace:*",
+    "prosemirror-markdown": "^1.13.0",
+    "prosemirror-state": "^1.4.3"
   }
 }

@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-003` — Editor Source-of-Truth Synchronization Contract
+`P3-004` — Editor Command/Transaction Skeleton
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, and save canonicalization contract created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, and plain Markdown editor skeleton created.
 
 ### Repairs Applied
 
@@ -49,6 +49,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No Milkdown or ProseMirror dependencies added.
 - No editor frontend/runtime behavior implemented beyond raw string canonicalization.
 
+### P3-004 Notes
+
+- Corrected wording drift: accepted backlog `P3-004` is `Editor Command/Transaction Skeleton`.
+- Added plain Markdown editor skeleton in `packages/editor/src/editor.ts` using `prosemirror-markdown` and `prosemirror-state`.
+- Added dependencies: `prosemirror-markdown`, `prosemirror-state`.
+- Plain Markdown only; no Nabla-specific node views, node specs, marks, or frontend integration.
+- Runtime strategy is Node-safe for basic load/export tests.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -67,4 +75,4 @@ None.
 
 ## Next Recommended Task
 
-P3-004 (document-level save pipeline integration) — build on the canonicalization contract without expanding into editor frontend work.
+P3-005 (editor schema boundary expansion) — extend the plain editor skeleton toward richer document support while keeping Nabla-specific behavior scoped.

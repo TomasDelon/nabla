@@ -1,11 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { loadTsModule } from "../../workspace/tests/helpers/load-ts-module.mjs";
-
-const indexUrl = new URL("../src/index.ts", import.meta.url);
 
 async function load() {
-  return loadTsModule(indexUrl);
+  return import(new URL("../dist/index.js", import.meta.url));
 }
 
 test("NABLA_EDITOR_PACKAGE constant is exported", async () => {
@@ -28,4 +25,12 @@ test("save pipeline runtime exports are wired", async () => {
 
   assert.equal(typeof mod.canonicalize, "function");
   assert.equal(mod.NABLA_EDITOR_EXPORT_LOSS, "NABLA_EDITOR_EXPORT_LOSS");
+});
+
+test("editor runtime exports are wired", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.createEditor, "function");
+  assert.equal(typeof mod.loadSource, "function");
+  assert.equal(typeof mod.getSource, "function");
 });
