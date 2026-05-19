@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-012` — Editor-to-Components Bridge
+`P4-013` — API Consistency Audit
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -379,6 +379,25 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No parser/serializer/workspace changes.
 - Transclusion and tooltip remain deferred/blocked.
 
+### P4-013 Notes
+
+- Performed API consistency audit across `@nabla/components`.
+- Fixed gap: `FoldedHeadingProps` in `types.ts` was missing `text: string` — added it.
+- Fixed bridge: `toComponentProps` for foldedHeading now passes `text: metadata.text`.
+- Created `packages/components/tests/api-consistency.test.mjs` with 24 tests covering:
+  - Export completeness for all 11 visual components and 10 pure helpers
+  - Bridge API exports (6 functions/constants)
+  - Forbidden exports (no TooltipRenderer, TransclusionRenderer)
+  - Folded heading text preservation through the bridge
+  - Source-of-truth invariant (no html, innerHTML, editorState, jsonState, serializedState in any component props)
+  - Blocked/deferred scope verified via bridge
+- All 103 component tests pass (79 existing + 24 new).
+- No new visual components added.
+- No component visual behavior changed.
+- No dependencies added.
+- No editor/markup/workspace source changes.
+- No app/Phase 5 work started.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -397,4 +416,4 @@ None.
 
 ## Next Recommended Task
 
-P4-013 — API Consistency Audit — verify consistent public API surface across all Phase 4 packages.
+P4-014 — Components Fixture/Regression Plan — create component-level rendering tests for all visual components.

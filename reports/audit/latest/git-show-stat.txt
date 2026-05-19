@@ -1,6 +1,6 @@
- packages/components/src/bridge.ts             | 191 ++++++++++++++++++++
- packages/components/src/index.ts              |  10 ++
- packages/components/tests/bridge.test.mjs     | 245 ++++++++++++++++++++++++++
- packages/components/tests/public-api.test.mjs |  11 ++
- reports/IMPLEMENTATION_PROGRESS.md            |  27 ++-
- 5 files changed, 481 insertions(+), 3 deletions(-)
+ packages/components/src/bridge.ts                  |   1 +
+ packages/components/src/types.ts                   |   1 +
+ packages/components/tests/api-consistency.test.mjs | 293 +++++++++++++++++++++
+ packages/components/tests/bridge.test.mjs          |   3 +-
+ reports/IMPLEMENTATION_PROGRESS.md                 |  25 +-
+ 5 files changed, 319 insertions(+), 4 deletions(-)

@@ -1,1 +1,1 @@
-151bb2f feat(components): add editor component bridge
+3bb3931 test(components): add API consistency coverage

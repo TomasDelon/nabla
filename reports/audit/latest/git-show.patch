@@ -1,508 +1,356 @@
 diff --git a/packages/components/src/bridge.ts b/packages/components/src/bridge.ts
-new file mode 100644
-index 0000000..bd97c73
---- /dev/null
+index bd97c73..451e35b 100644
+--- a/packages/components/src/bridge.ts
 +++ b/packages/components/src/bridge.ts
-@@ -0,0 +1,191 @@
-+import type {
-+  NablaComponentKind,
-+  NablaComponentProps,
-+  TaskStateValue,
-+} from "./types.js";
-+
-+export interface BridgeTaskStateMeta {
-+  readonly kind: "taskState";
-+  readonly state: TaskStateValue;
-+  readonly text: string;
-+}
-+
-+export interface BridgeWikiLinkMeta {
-+  readonly kind: "wikiLink";
-+  readonly target: string;
-+  readonly alias?: string;
-+  readonly heading?: string;
-+  readonly blockId?: string;
-+  readonly unresolved: boolean;
-+  readonly raw: string;
-+}
-+
-+export interface BridgeTagMeta {
-+  readonly kind: "tag";
-+  readonly value: string;
-+  readonly segments: readonly string[];
-+  readonly raw: string;
-+}
-+
-+export interface BridgeHighlightMeta {
-+  readonly kind: "highlight";
-+  readonly text: string;
-+  readonly color?: string;
-+  readonly raw: string;
-+}
-+
-+export interface BridgeEmojiMeta {
-+  readonly kind: "emoji";
-+  readonly name: string;
-+  readonly value: string;
-+  readonly raw: string;
-+}
-+
-+export interface BridgeFootnoteMeta {
-+  readonly kind: "footnote";
-+  readonly footnoteKind: "reference" | "definition";
-+  readonly id: string;
-+  readonly text?: string;
-+  readonly raw: string;
-+}
-+
-+export interface BridgeCommentMeta {
-+  readonly kind: "comment";
-+  readonly text: string;
-+  readonly multiline: boolean;
-+  readonly raw: string;
-+}
-+
-+export interface BridgeCalloutMeta {
-+  readonly kind: "callout";
-+  readonly calloutType: string;
-+  readonly foldState: "open" | "closed";
-+}
-+
-+export interface BridgeToggleMeta {
-+  readonly kind: "toggle";
-+  readonly foldState: "open" | "closed";
-+}
-+
-+export interface BridgeFoldedHeadingMeta {
-+  readonly kind: "foldedHeading";
-+  readonly level: number;
-+  readonly text: string;
-+  readonly foldState: "open" | "closed";
-+}
-+
-+export type BridgeComponentMetadata =
-+  | BridgeTaskStateMeta
-+  | BridgeWikiLinkMeta
-+  | BridgeTagMeta
-+  | BridgeHighlightMeta
-+  | BridgeEmojiMeta
-+  | BridgeFootnoteMeta
-+  | BridgeCommentMeta
-+  | BridgeCalloutMeta
-+  | BridgeToggleMeta
-+  | BridgeFoldedHeadingMeta;
-+
-+export function toComponentKind(metadata: BridgeComponentMetadata): NablaComponentKind {
-+  return metadata.kind;
-+}
-+
-+export function toComponentProps(metadata: BridgeComponentMetadata): NablaComponentProps {
-+  switch (metadata.kind) {
-+    case "taskState":
-+      return {
-+        kind: "taskState",
-+        state: metadata.state,
+@@ -162,6 +162,7 @@ export function toComponentProps(metadata: BridgeComponentMetadata): NablaCompon
+       return {
+         kind: "foldedHeading",
+         level: metadata.level,
 +        text: metadata.text,
-+        onChange: () => {},
-+      };
-+    case "wikiLink":
-+      return {
-+        kind: "wikiLink",
-+        target: metadata.target,
-+        alias: metadata.alias,
-+        heading: metadata.heading,
-+        blockId: metadata.blockId,
-+        unresolved: metadata.unresolved,
-+        raw: metadata.raw,
-+      };
-+    case "tag":
-+      return {
-+        kind: "tag",
-+        value: metadata.value,
-+        segments: metadata.segments,
-+        raw: metadata.raw,
-+      };
-+    case "highlight":
-+      return {
-+        kind: "highlight",
-+        text: metadata.text,
-+        color: metadata.color,
-+        raw: metadata.raw,
-+      };
-+    case "emoji":
-+      return {
-+        kind: "emoji",
-+        name: metadata.name,
-+        value: metadata.value,
-+        raw: metadata.raw,
-+      };
-+    case "footnote":
-+      return {
-+        kind: "footnote",
-+        footnoteKind: metadata.footnoteKind,
-+        id: metadata.id,
-+        text: metadata.text,
-+        raw: metadata.raw,
-+      };
-+    case "comment":
-+      return {
-+        kind: "comment",
-+        text: metadata.text,
-+        multiline: metadata.multiline,
-+        raw: metadata.raw,
-+      };
-+    case "callout":
-+      return {
-+        kind: "callout",
-+        calloutType: metadata.calloutType,
-+        foldState: metadata.foldState,
-+        onToggleFold: () => {},
-+      };
-+    case "toggle":
-+      return {
-+        kind: "toggle",
-+        foldState: metadata.foldState,
-+        onToggleFold: () => {},
-+      };
-+    case "foldedHeading":
-+      return {
-+        kind: "foldedHeading",
-+        level: metadata.level,
-+        foldState: metadata.foldState,
-+        onToggleFold: () => {},
-+      };
-+  }
-+}
-+
-+export interface NablaComponentDescriptor {
-+  readonly kind: NablaComponentKind;
-+  readonly props: NablaComponentProps;
-+}
-+
-+export function createComponentDescriptor(metadata: BridgeComponentMetadata): NablaComponentDescriptor {
-+  return {
-+    kind: toComponentKind(metadata),
-+    props: toComponentProps(metadata),
-+  };
-+}
-+
-+export const BRIDGE_DEFERRED_KINDS: readonly string[] = ["transclusion"];
-+
-+export const BRIDGE_BLOCKED_KINDS: readonly string[] = ["tooltip"];
-+
-+export function isBridgeKindSupported(kind: string): boolean {
-+  return (
-+    !BRIDGE_DEFERRED_KINDS.includes(kind) && !BRIDGE_BLOCKED_KINDS.includes(kind)
-+  );
-+}
-diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-index e5a62d6..70cf186 100644
---- a/packages/components/src/index.ts
-+++ b/packages/components/src/index.ts
-@@ -32,6 +32,15 @@ export { Callout, getCalloutDisplay } from "./callout.js";
- 
- export { Toggle, getToggleDisplay } from "./toggle.js";
- 
-+export {
-+  toComponentKind,
-+  toComponentProps,
-+  createComponentDescriptor,
-+  isBridgeKindSupported,
-+  BRIDGE_DEFERRED_KINDS,
-+  BRIDGE_BLOCKED_KINDS,
-+} from "./bridge.js";
-+
- export { FoldedHeading, getFoldedHeadingDisplay } from "./folded-heading.js";
- 
- export type { NablaComponentTheme } from "./theme.js";
-@@ -51,3 +60,4 @@ export type { CommentDisplay } from "./comment.js";
- export type { CalloutDisplay } from "./callout.js";
- export type { ToggleDisplay } from "./toggle.js";
- export type { FoldedHeadingDisplay } from "./folded-heading.js";
-+export type { BridgeComponentMetadata, NablaComponentDescriptor } from "./bridge.js";
-diff --git a/packages/components/tests/bridge.test.mjs b/packages/components/tests/bridge.test.mjs
+         foldState: metadata.foldState,
+         onToggleFold: () => {},
+       };
+diff --git a/packages/components/src/types.ts b/packages/components/src/types.ts
+index 87fca18..f8c33c2 100644
+--- a/packages/components/src/types.ts
++++ b/packages/components/src/types.ts
+@@ -128,6 +128,7 @@ export interface ToggleProps {
+ export interface FoldedHeadingProps {
+   readonly kind: "foldedHeading";
+   readonly level: number;
++  readonly text: string;
+   readonly foldState: "open" | "closed";
+   readonly children?: never;
+   readonly onToggleFold: () => void;
+diff --git a/packages/components/tests/api-consistency.test.mjs b/packages/components/tests/api-consistency.test.mjs
 new file mode 100644
-index 0000000..4b3e6cb
+index 0000000..09896b7
 --- /dev/null
-+++ b/packages/components/tests/bridge.test.mjs
-@@ -0,0 +1,245 @@
++++ b/packages/components/tests/api-consistency.test.mjs
+@@ -0,0 +1,293 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
-+async function load() {
++async function loadIndex() {
++  return import(new URL("../dist/index.js", import.meta.url));
++}
++
++async function loadBridge() {
 +  return import(new URL("../dist/bridge.js", import.meta.url));
 +}
 +
-+test("toComponentKind returns taskState for task state metadata", async () => {
-+  const mod = await load();
++// ── Component export completeness ──
 +
-+  const result = mod.toComponentKind({ kind: "taskState", state: "checked", text: "task" });
++const VISUAL_COMPONENTS = [
++  "TaskStateCheckbox",
++  "WikiLink",
++  "Tag",
++  "Highlight",
++  "Emoji",
++  "FootnoteReference",
++  "FootnoteDefinition",
++  "Comment",
++  "Callout",
++  "Toggle",
++  "FoldedHeading",
++];
 +
-+  assert.equal(result, "taskState");
++const PURE_HELPERS = [
++  "getNextTaskState",
++  "getWikiLinkDisplay",
++  "getTagDisplay",
++  "getHighlightStyle",
++  "getEmojiDisplay",
++  "getFootnoteDisplay",
++  "getCommentDisplay",
++  "getCalloutDisplay",
++  "getToggleDisplay",
++  "getFoldedHeadingDisplay",
++];
++
++const BRIDGE_EXPORTS = [
++  "toComponentKind",
++  "toComponentProps",
++  "createComponentDescriptor",
++  "isBridgeKindSupported",
++  "BRIDGE_DEFERRED_KINDS",
++  "BRIDGE_BLOCKED_KINDS",
++];
++
++test("all accepted visual components are exported", async () => {
++  const mod = await loadIndex();
++
++  for (const name of VISUAL_COMPONENTS) {
++    assert.equal(typeof mod[name], "function", `${name} should be a function`);
++  }
 +});
 +
-+test("toComponentKind returns wikiLink for wiki link metadata", async () => {
-+  const mod = await load();
++test("all accepted pure helpers are exported", async () => {
++  const mod = await loadIndex();
 +
-+  const result = mod.toComponentKind({ kind: "wikiLink", target: "Page", raw: "[[Page]]", unresolved: false });
-+
-+  assert.equal(result, "wikiLink");
++  for (const name of PURE_HELPERS) {
++    assert.equal(typeof mod[name], "function", `${name} should be a function`);
++  }
 +});
 +
-+test("toComponentKind returns tag for tag metadata", async () => {
-+  const mod = await load();
++test("all bridge APIs are exported", async () => {
++  const mod = await loadIndex();
 +
-+  const result = mod.toComponentKind({ kind: "tag", value: "mytag", segments: ["mytag"], raw: "#mytag" });
-+
-+  assert.equal(result, "tag");
++  for (const name of BRIDGE_EXPORTS) {
++    if (name.startsWith("BRIDGE_")) {
++      assert.ok(Array.isArray(mod[name]), `${name} should be an array`);
++    } else {
++      assert.equal(typeof mod[name], "function", `${name} should be a function`);
++    }
++  }
 +});
 +
-+test("toComponentKind returns highlight for highlight metadata", async () => {
-+  const mod = await load();
++// ── Forbidden exports ──
 +
-+  const result = mod.toComponentKind({ kind: "highlight", text: "hi", raw: "==hi==" });
++test("no tooltip or transclusion renderer is exported", async () => {
++  const mod = await loadIndex();
++  const keys = Object.keys(mod);
 +
-+  assert.equal(result, "highlight");
++  for (const forbidden of ["TooltipRenderer", "TransclusionRenderer"]) {
++    assert.equal(keys.includes(forbidden), false, `${forbidden} must not be exported`);
++  }
 +});
 +
-+test("toComponentKind returns emoji for emoji metadata", async () => {
-+  const mod = await load();
++// ── Component kind coverage via bridge ──
 +
-+  const result = mod.toComponentKind({ kind: "emoji", name: "check", value: "✅", raw: ":check:" });
++const EXPECTED_BRIDGE_KINDS = [
++  "taskState",
++  "wikiLink",
++  "tag",
++  "highlight",
++  "emoji",
++  "footnote",
++  "comment",
++  "callout",
++  "toggle",
++  "foldedHeading",
++];
 +
-+  assert.equal(result, "emoji");
++test("all bridge-supported kinds are accepted", async () => {
++  const mod = await loadBridge();
++
++  for (const kind of EXPECTED_BRIDGE_KINDS) {
++    assert.equal(mod.isBridgeKindSupported(kind), true, `${kind} should be bridge-supported`);
++  }
 +});
 +
-+test("toComponentKind returns footnote for footnote metadata", async () => {
-+  const mod = await load();
-+
-+  const result = mod.toComponentKind({ kind: "footnote", footnoteKind: "reference", id: "n1", raw: "[^n1]" });
-+
-+  assert.equal(result, "footnote");
-+});
-+
-+test("toComponentKind returns comment for comment metadata", async () => {
-+  const mod = await load();
-+
-+  const result = mod.toComponentKind({ kind: "comment", text: "note", multiline: false, raw: "%%note%%" });
-+
-+  assert.equal(result, "comment");
-+});
-+
-+test("toComponentKind returns callout for callout metadata", async () => {
-+  const mod = await load();
-+
-+  const result = mod.toComponentKind({ kind: "callout", calloutType: "note", foldState: "open" });
-+
-+  assert.equal(result, "callout");
-+});
-+
-+test("toComponentKind returns toggle for toggle metadata", async () => {
-+  const mod = await load();
-+
-+  const result = mod.toComponentKind({ kind: "toggle", foldState: "closed" });
-+
-+  assert.equal(result, "toggle");
-+});
-+
-+test("toComponentKind returns foldedHeading for folded heading metadata", async () => {
-+  const mod = await load();
-+
-+  const result = mod.toComponentKind({ kind: "foldedHeading", level: 2, text: "Title", foldState: "open" });
-+
-+  assert.equal(result, "foldedHeading");
-+});
-+
-+test("toComponentProps maps task state metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({ kind: "taskState", state: "unchecked", text: "buy milk" });
-+
-+  assert.equal(props.kind, "taskState");
-+  assert.equal(props.state, "unchecked");
-+  assert.equal(props.text, "buy milk");
-+  assert.equal(typeof props.onChange, "function");
-+});
-+
-+test("toComponentProps maps wiki link metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({
-+    kind: "wikiLink", target: "Page", alias: "Alias", heading: "Section", unresolved: true, raw: "[[Page#Section|Alias]]",
-+  });
-+
-+  assert.equal(props.kind, "wikiLink");
-+  assert.equal(props.target, "Page");
-+  assert.equal(props.alias, "Alias");
-+  assert.equal(props.heading, "Section");
-+  assert.equal(props.unresolved, true);
-+  assert.equal(props.raw, "[[Page#Section|Alias]]");
-+});
-+
-+test("toComponentProps maps tag metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({ kind: "tag", value: "nested/tag", segments: ["nested", "tag"], raw: "#nested/tag" });
-+
-+  assert.equal(props.kind, "tag");
-+  assert.equal(props.value, "nested/tag");
-+  assert.deepEqual(props.segments, ["nested", "tag"]);
-+  assert.equal(props.raw, "#nested/tag");
-+});
-+
-+test("toComponentProps maps highlight metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({ kind: "highlight", text: "yellow note", color: "#ff0", raw: "=={#ff0}yellow note==" });
-+
-+  assert.equal(props.kind, "highlight");
-+  assert.equal(props.text, "yellow note");
-+  assert.equal(props.color, "#ff0");
-+});
-+
-+test("toComponentProps maps emoji metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({ kind: "emoji", name: "check", value: "✅", raw: ":check:" });
-+
-+  assert.equal(props.kind, "emoji");
-+  assert.equal(props.name, "check");
-+  assert.equal(props.value, "✅");
-+});
-+
-+test("toComponentProps maps footnote metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({ kind: "footnote", footnoteKind: "definition", id: "def1", text: "Note text.", raw: "[^def1]: Note text." });
-+
-+  assert.equal(props.kind, "footnote");
-+  assert.equal(props.footnoteKind, "definition");
-+  assert.equal(props.id, "def1");
-+  assert.equal(props.text, "Note text.");
-+});
-+
-+test("toComponentProps maps comment metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({ kind: "comment", text: "private", multiline: false, raw: "%%private%%" });
-+
-+  assert.equal(props.kind, "comment");
-+  assert.equal(props.text, "private");
-+  assert.equal(props.multiline, false);
-+});
-+
-+test("toComponentProps maps callout metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({ kind: "callout", calloutType: "warning", foldState: "closed" });
-+
-+  assert.equal(props.kind, "callout");
-+  assert.equal(props.calloutType, "warning");
-+  assert.equal(props.foldState, "closed");
-+  assert.equal(typeof props.onToggleFold, "function");
-+});
-+
-+test("toComponentProps maps toggle metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({ kind: "toggle", foldState: "open" });
-+
-+  assert.equal(props.kind, "toggle");
-+  assert.equal(props.foldState, "open");
-+  assert.equal(typeof props.onToggleFold, "function");
-+});
-+
-+test("toComponentProps maps folded heading metadata to props", async () => {
-+  const mod = await load();
-+
-+  const props = mod.toComponentProps({ kind: "foldedHeading", level: 3, text: "Sub", foldState: "closed" });
-+
-+  assert.equal(props.kind, "foldedHeading");
-+  assert.equal(props.level, 3);
-+  assert.equal(props.foldState, "closed");
-+  assert.equal(typeof props.onToggleFold, "function");
-+});
-+
-+test("createComponentDescriptor returns kind and props", async () => {
-+  const mod = await load();
-+
-+  const descriptor = mod.createComponentDescriptor({ kind: "tag", value: "mytag", segments: ["mytag"], raw: "#mytag" });
-+
-+  assert.equal(descriptor.kind, "tag");
-+  assert.equal(descriptor.props.kind, "tag");
-+  assert.equal(descriptor.props.value, "mytag");
-+});
-+
-+test("isBridgeKindSupported returns true for all implemented kinds", async () => {
-+  const mod = await load();
-+
-+  assert.equal(mod.isBridgeKindSupported("taskState"), true);
-+  assert.equal(mod.isBridgeKindSupported("wikiLink"), true);
-+  assert.equal(mod.isBridgeKindSupported("tag"), true);
-+  assert.equal(mod.isBridgeKindSupported("highlight"), true);
-+  assert.equal(mod.isBridgeKindSupported("emoji"), true);
-+  assert.equal(mod.isBridgeKindSupported("footnote"), true);
-+  assert.equal(mod.isBridgeKindSupported("comment"), true);
-+  assert.equal(mod.isBridgeKindSupported("callout"), true);
-+  assert.equal(mod.isBridgeKindSupported("toggle"), true);
-+  assert.equal(mod.isBridgeKindSupported("foldedHeading"), true);
-+});
-+
-+test("isBridgeKindSupported returns false for deferred transclusion", async () => {
-+  const mod = await load();
++test("bridge does not support transclusion", async () => {
++  const mod = await loadBridge();
 +
 +  assert.equal(mod.isBridgeKindSupported("transclusion"), false);
 +});
 +
-+test("isBridgeKindSupported returns false for blocked tooltip", async () => {
-+  const mod = await load();
++test("bridge does not support tooltip", async () => {
++  const mod = await loadBridge();
 +
 +  assert.equal(mod.isBridgeKindSupported("tooltip"), false);
 +});
 +
-+test("BRIDGE_DEFERRED_KINDS includes transclusion", async () => {
-+  const mod = await load();
++test("BRIDGE_DEFERRED_KINDS marks transclusion as deferred", async () => {
++  const mod = await loadBridge();
 +
-+  assert.deepEqual([...mod.BRIDGE_DEFERRED_KINDS].sort(), ["transclusion"]);
++  assert.ok(mod.BRIDGE_DEFERRED_KINDS.includes("transclusion"));
 +});
 +
-+test("BRIDGE_BLOCKED_KINDS includes tooltip", async () => {
-+  const mod = await load();
++test("BRIDGE_BLOCKED_KINDS marks tooltip as blocked", async () => {
++  const mod = await loadBridge();
 +
-+  assert.deepEqual([...mod.BRIDGE_BLOCKED_KINDS].sort(), ["tooltip"]);
++  assert.ok(mod.BRIDGE_BLOCKED_KINDS.includes("tooltip"));
 +});
-diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
-index 26574bd..2e979f7 100644
---- a/packages/components/tests/public-api.test.mjs
-+++ b/packages/components/tests/public-api.test.mjs
-@@ -72,6 +72,17 @@ test("FoldedHeading is exported from public API", async () => {
-   assert.equal(typeof mod.getFoldedHeadingDisplay, "function");
++
++// Check deferred/blocked via bridge
++test("transclusion and tooltip are not bridge-supported", async () => {
++  const mod = await loadBridge();
++
++  assert.equal(mod.isBridgeKindSupported("transclusion"), false);
++  assert.equal(mod.isBridgeKindSupported("tooltip"), false);
++});
++
++// ── Folded heading text preservation ──
++
++test("FoldedHeadingProps in types.ts includes text", async () => {
++  const mod = await loadBridge();
++
++  const props = mod.toComponentProps({
++    kind: "foldedHeading",
++    level: 2,
++    text: "Section Title",
++    foldState: "open",
++  });
++
++  assert.equal(props.kind, "foldedHeading");
++  assert.equal(props.text, "Section Title");
++  assert.equal(props.level, 2);
++  assert.equal(props.foldState, "open");
++  assert.equal(typeof props.onToggleFold, "function");
++});
++
++test("toComponentProps preserves folded heading text through the bridge", async () => {
++  const mod = await loadBridge();
++
++  const inputText = "My Heading";
++  const props = mod.toComponentProps({
++    kind: "foldedHeading",
++    level: 3,
++    text: inputText,
++    foldState: "closed",
++  });
++
++  assert.equal(props.text, inputText);
++});
++
++test("createComponentDescriptor preserves folded heading text", async () => {
++  const mod = await loadBridge();
++
++  const descriptor = mod.createComponentDescriptor({
++    kind: "foldedHeading",
++    level: 1,
++    text: "Top Level",
++    foldState: "open",
++  });
++
++  assert.equal(descriptor.props.text, "Top Level");
++});
++
++// ── Source-of-truth invariant ──
++
++const FORBIDDEN_PROPS_KEYS = ["html", "innerHTML", "editorState", "jsonState", "serializedState"];
++
++test("task state props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "taskState", state: "checked", text: "item" });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false, `props must not contain "${key}"`);
++  }
++});
++
++test("wiki link props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "wikiLink", target: "Page", raw: "[[Page]]", unresolved: false });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false);
++  }
++});
++
++test("tag props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "tag", value: "tag", segments: ["tag"], raw: "#tag" });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false);
++  }
++});
++
++test("highlight props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "highlight", text: "hi", raw: "==hi==" });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false);
++  }
++});
++
++test("emoji props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "emoji", name: "check", value: "✅", raw: ":check:" });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false);
++  }
++});
++
++test("footnote props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "footnote", footnoteKind: "reference", id: "n1", raw: "[^n1]" });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false);
++  }
++});
++
++test("comment props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "comment", text: "note", multiline: false, raw: "%%note%%" });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false);
++  }
++});
++
++test("callout props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "callout", calloutType: "note", foldState: "open" });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false);
++  }
++});
++
++test("toggle props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "toggle", foldState: "closed" });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false);
++  }
++});
++
++test("folded heading props contain no hidden JSON or HTML", async () => {
++  const mod = await loadBridge();
++  const props = mod.toComponentProps({ kind: "foldedHeading", level: 2, text: "Title", foldState: "open" });
++
++  for (const key of FORBIDDEN_PROPS_KEYS) {
++    assert.equal(key in props, false);
++  }
++});
++
++// ── Blocked/deferred scope covered above in bridge tests ──
++
++// ── NABLA_COMPONENT_RENDERING_CONTRACT ──
++
++test("NABLA_COMPONENT_RENDERING_CONTRACT is a non-empty string", async () => {
++  const mod = await loadIndex();
++
++  assert.equal(typeof mod.NABLA_COMPONENT_RENDERING_CONTRACT, "string");
++  assert.ok(mod.NABLA_COMPONENT_RENDERING_CONTRACT.length > 0);
++});
+diff --git a/packages/components/tests/bridge.test.mjs b/packages/components/tests/bridge.test.mjs
+index 4b3e6cb..e9ae12b 100644
+--- a/packages/components/tests/bridge.test.mjs
++++ b/packages/components/tests/bridge.test.mjs
+@@ -184,13 +184,14 @@ test("toComponentProps maps toggle metadata to props", async () => {
+   assert.equal(typeof props.onToggleFold, "function");
  });
  
-+test("bridge functions are exported from public API", async () => {
-+  const mod = await load();
-+
-+  assert.equal(typeof mod.toComponentKind, "function");
-+  assert.equal(typeof mod.toComponentProps, "function");
-+  assert.equal(typeof mod.createComponentDescriptor, "function");
-+  assert.equal(typeof mod.isBridgeKindSupported, "function");
-+  assert.ok(Array.isArray(mod.BRIDGE_DEFERRED_KINDS));
-+  assert.ok(Array.isArray(mod.BRIDGE_BLOCKED_KINDS));
-+});
-+
- test("no forbidden visual components are exported", async () => {
+-test("toComponentProps maps folded heading metadata to props", async () => {
++test("toComponentProps maps folded heading metadata to props preserving text", async () => {
    const mod = await load();
-   const keys = Object.keys(mod);
+ 
+   const props = mod.toComponentProps({ kind: "foldedHeading", level: 3, text: "Sub", foldState: "closed" });
+ 
+   assert.equal(props.kind, "foldedHeading");
+   assert.equal(props.level, 3);
++  assert.equal(props.text, "Sub");
+   assert.equal(props.foldState, "closed");
+   assert.equal(typeof props.onToggleFold, "function");
+ });
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 508b7f6..d54d7bd 100644
+index d54d7bd..7baacfc 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-011` — Folded Heading Visual Component
-+`P4-012` — Editor-to-Components Bridge
+-`P4-012` — Editor-to-Components Bridge
++`P4-013` — API Consistency Audit
  
  ## Branch
  
@@ -510,42 +358,40 @@ index 508b7f6..d54d7bd 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -358,6 +358,27 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
- - No parser/serializer changes.
- - DOM/React rendering tests deferred to component fixture/regression phase.
+@@ -379,6 +379,25 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+ - No parser/serializer/workspace changes.
+ - Transclusion and tooltip remain deferred/blocked.
  
-+### P4-012 Notes
++### P4-013 Notes
 +
-+- Created `packages/components/src/bridge.ts` with pure adapter boundary between editor metadata and component props.
-+- Defines `BridgeComponentMetadata` discriminated union mirroring all 10 accepted editor node metadata shapes.
-+- `toComponentKind(metadata)` returns `NablaComponentKind`.
-+- `toComponentProps(metadata)` returns `NablaComponentProps` with no-op callback placeholders (editor runtime replaces these).
-+- `createComponentDescriptor(metadata)` returns `{ kind, props }` descriptor.
-+- `isBridgeKindSupported(kind)` checks against deferred/blocked lists.
-+- `BRIDGE_DEFERRED_KINDS` includes `transclusion`; `BRIDGE_BLOCKED_KINDS` includes `tooltip`.
-+- All 10 mappings supported: taskState, wikiLink, tag, highlight, emoji, footnote, comment, callout, toggle, foldedHeading.
-+- Bridge does not import React, render DOM, mutate Markdown, resolve workspace links, or call parser/serializer.
-+- Added `packages/components/tests/bridge.test.mjs` with 30 tests covering all kind mappings, prop shapes, descriptor creation, supported/unsupported kinds, and deferred/blocked constants.
-+- Updated `packages/components/tests/public-api.test.mjs` with bridge export verification.
-+- No editor source files modified.
-+- No component API contract rewrite.
++- Performed API consistency audit across `@nabla/components`.
++- Fixed gap: `FoldedHeadingProps` in `types.ts` was missing `text: string` — added it.
++- Fixed bridge: `toComponentProps` for foldedHeading now passes `text: metadata.text`.
++- Created `packages/components/tests/api-consistency.test.mjs` with 24 tests covering:
++  - Export completeness for all 11 visual components and 10 pure helpers
++  - Bridge API exports (6 functions/constants)
++  - Forbidden exports (no TooltipRenderer, TransclusionRenderer)
++  - Folded heading text preservation through the bridge
++  - Source-of-truth invariant (no html, innerHTML, editorState, jsonState, serializedState in any component props)
++  - Blocked/deferred scope verified via bridge
++- All 103 component tests pass (79 existing + 24 new).
++- No new visual components added.
++- No component visual behavior changed.
 +- No dependencies added.
-+- No DOM node views added.
-+- No editor behavior changed.
-+- No parser/serializer/workspace changes.
-+- Transclusion and tooltip remain deferred/blocked.
++- No editor/markup/workspace source changes.
++- No app/Phase 5 work started.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -376,4 +397,4 @@ None.
+@@ -397,4 +416,4 @@ None.
  
  ## Next Recommended Task
  
--P4-012 — Editor-to-Components Bridge — wire component rendering into the editor.
-+P4-013 — API Consistency Audit — verify consistent public API surface across all Phase 4 packages.
+-P4-013 — API Consistency Audit — verify consistent public API surface across all Phase 4 packages.
++P4-014 — Components Fixture/Regression Plan — create component-level rendering tests for all visual components.
