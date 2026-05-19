@@ -1,8 +1,8 @@
- packages/components/playground/src/main.tsx   | 27 +++++++++++
- packages/components/src/callout.css           | 64 +++++++++++++++++++++++++++
- packages/components/src/callout.tsx           | 56 +++++++++++++++++++++++
+ packages/components/playground/src/main.tsx   | 27 +++++++++++++++
  packages/components/src/index.ts              |  3 ++
- packages/components/tests/callout.test.mjs    | 41 +++++++++++++++++
- packages/components/tests/public-api.test.mjs |  8 +++-
- reports/IMPLEMENTATION_PROGRESS.md            | 23 +++++++++-
- 7 files changed, 219 insertions(+), 3 deletions(-)
+ packages/components/src/toggle.css            | 50 +++++++++++++++++++++++++++
+ packages/components/src/toggle.tsx            | 33 ++++++++++++++++++
+ packages/components/tests/public-api.test.mjs |  8 ++++-
+ packages/components/tests/toggle.test.mjs     | 28 +++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md            | 25 ++++++++++++--
+ 7 files changed, 170 insertions(+), 4 deletions(-)

@@ -24,6 +24,8 @@ packages/components/src/tag.tsx
 packages/components/src/task-state.css
 packages/components/src/task-state.tsx
 packages/components/src/theme.ts
+packages/components/src/toggle.css
+packages/components/src/toggle.tsx
 packages/components/src/tokens.css
 packages/components/src/types.ts
 packages/components/src/wiki-link.css
@@ -34,6 +36,7 @@ packages/components/tests/footnote-comment.test.mjs
 packages/components/tests/public-api.test.mjs
 packages/components/tests/tag-highlight.test.mjs
 packages/components/tests/task-state.test.mjs
+packages/components/tests/toggle.test.mjs
 packages/components/tests/wiki-link.test.mjs
 packages/components/tsconfig.json
 packages/editor/fixtures/emoji-preserve/expected.md
