@@ -2,23 +2,24 @@
 
 ## Phase
 
-Phase 3 — `@nabla/editor`
+Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P3-015` — Phase 3 Validation Report
+`P4-000` — Phase 4 Kickoff and Components Backlog Extraction
 
 ## Branch
 
-`phase-3-editor-core`
+`phase-4-components-core`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, API consistency validation, editor fixture/regression tests, and Phase 3 validation report.
+Phase 3 (`@nabla/editor`) — ACCEPTED.
+Phase 4 (`@nabla/components`) — kickoff report and backlog extracted.
 
 ### Repairs Applied
 
@@ -161,6 +162,20 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No source files changed.
 - No dependencies added.
 
+### P4-000 Notes
+
+- Created Phase 4 kickoff report in `reports/PHASE_4_KICKOFF.md`.
+- Created Phase 4 task backlog in `reports/PHASE_4_TASK_BACKLOG.md`.
+- New branch created: `phase-4-components-core`.
+- Package target: `@nabla/components`.
+- Backlog contains 15 tasks (P4-001 through P4-015): package skeleton, rendering contract, design tokens, individual visual components for all accepted Nabla syntax surfaces, editor-to-components bridge, API consistency, fixture/regression plan, and validation report.
+- Deferred scope documented: tooltip rendering (blocked), transclusion embedded rendering (deferred), app integration (Phase 5).
+- No source files changed.
+- No dependencies added.
+- No parser/serializer changes.
+- No workspace changes.
+- No editor source changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -179,4 +194,4 @@ None.
 
 ## Next Recommended Task
 
-External audit/approval for Phase 3 closure. Do not start Phase 4 until external audit accepts P3-015.
+P4-001 — Components Package Skeleton — create `packages/components/` with package.json, tsconfig.json, minimal entry, and verify it builds in the monorepo.
