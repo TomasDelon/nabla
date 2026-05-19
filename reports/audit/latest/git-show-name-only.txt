@@ -1,5 +1,5 @@
-packages/markup/src/extensions/folded-headings.ts
-packages/markup/src/parser.ts
-packages/markup/src/serializer.ts
-packages/markup/tests/wiki-links.test.mjs
-reports/IMPLEMENTATION_PROGRESS.md
+README.md
+reports/WORKFLOW.md
+reports/decisions/IDR-0001-audit-bundle-workflow.md
+reports/decisions/IDR-0002-future-streaming-markup-rendering.md
+reports/decisions/IDR-0003-phase-final-mega-audit.md

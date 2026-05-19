@@ -1,6 +1,6 @@
- packages/markup/src/extensions/folded-headings.ts | 26 ++++++++++++++++++++
- packages/markup/src/parser.ts                     | 26 ++++++++++++--------
- packages/markup/src/serializer.ts                 | 27 ++++++++++++++++++++-
- packages/markup/tests/wiki-links.test.mjs         | 26 ++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md                | 29 ++++++++++-------------
- 5 files changed, 107 insertions(+), 27 deletions(-)
+ README.md                                          |  85 ++++++++-
+ reports/WORKFLOW.md                                | 212 +++++++++++++++++++++
+ .../decisions/IDR-0001-audit-bundle-workflow.md    |  92 +++++++--
+ .../IDR-0002-future-streaming-markup-rendering.md  |  77 ++++++++
+ .../decisions/IDR-0003-phase-final-mega-audit.md   | 107 +++++++++++
+ 5 files changed, 560 insertions(+), 13 deletions(-)

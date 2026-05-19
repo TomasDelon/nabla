@@ -1,1 +1,1 @@
-9c5e0bc feat(markup): implement folded heading parsing
+51eafb5 docs: document operational workflow and audit policy

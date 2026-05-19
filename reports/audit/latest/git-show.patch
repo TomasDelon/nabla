@@ -1,255 +1,620 @@
-diff --git a/packages/markup/src/extensions/folded-headings.ts b/packages/markup/src/extensions/folded-headings.ts
+diff --git a/README.md b/README.md
+index b88f5e6..0958471 100644
+--- a/README.md
++++ b/README.md
+@@ -1,5 +1,86 @@
+ # Nabla
+ 
+-Bootstrap workspace for the Nabla implementation.
++Nabla is a Markdown-first visual note-taking/editor project for mathematics, computer science, and advanced study documents.
+ 
+-Current focus: Phase 1, `@nabla/markup`.
++Current implementation focus:
++
++- Phase: Phase 1 — `@nabla/markup`
++- Branch: `phase-1-markup-core`
++- Current source of truth: the frozen documentation pack under `specs/`
++- Current package under active implementation: `packages/markup`
++
++## Source of Truth
++
++The frozen specification and fixture pack under `specs/` is the implementation contract.
++
++Do not modify:
++
++- `specs/**`
++- fixture files under the frozen spec pack
++- generated audit bundle files by hand
++
++The implementation must conform to the accepted specs and checked-in fixtures.
++
++## Current Workflow
++
++Each implementation task must produce two separate commits:
++
++1. An implementation commit.
++2. An audit bundle commit.
++
++The audit bundle must be generated with explicit base/head commits:
++
++```bash
++pnpm audit:bundle -- --task <TASK_ID> --base <BASE_COMMIT> --head <IMPLEMENTATION_COMMIT>
++```
++
++Do not generate audit bundles using an implicit `HEAD`.
++
++## Review Policy
++
++External review is performed from the audit bundle and exact commit hashes.
++
++Review source of truth:
++
++- `reports/audit/latest/audit.json`
++- `reports/audit/latest/git-show-name-only.txt`
++- `reports/audit/latest/git-show.patch`
++- the implementation commit referenced by `audit.json`
++
++Do not rely on branch raw URLs as the source of truth for review. Branches move. Commit hashes are stable.
++
++## Common Commands
++
++```bash
++pnpm test
++pnpm test:markup
++pnpm typecheck
++pnpm build
++pnpm validate:fixtures
++pnpm validate:spec-version
++pnpm check:boundaries
++pnpm lint
++```
++
++If `pnpm` is not available on PATH in the local environment, use the configured Corepack/cached pnpm entrypoint consistently and report that fact.
++
++## Guardrails
++
++Implementation agents must not:
++
++- modify `specs/**`;
++- modify fixture expectations;
++- start another task without explicit instruction;
++- implement unrelated features;
++- skip the audit bundle;
++- use implicit audit ranges;
++- generate audit bundles against branch names as source of truth;
++- proceed when behavior is ambiguous.
++
++If a behavior is missing, contradictory, or would require guessing, stop and report the blocker before editing further.
++
++## Phase Advancement
++
++Do not start Phase 2 until Phase 1 has passed its final validation and a full phase mega-audit.
++
++Phase final audit requires a complete ZIP with `.git` included, excluding heavy generated folders such as `node_modules`, `dist`, and `coverage`.
+diff --git a/reports/WORKFLOW.md b/reports/WORKFLOW.md
 new file mode 100644
-index 0000000..60f392a
+index 0000000..e4f307b
 --- /dev/null
-+++ b/packages/markup/src/extensions/folded-headings.ts
-@@ -0,0 +1,26 @@
-+import type { FoldState } from "../ast.js";
++++ b/reports/WORKFLOW.md
+@@ -0,0 +1,212 @@
++# Nabla Operational Workflow
 +
-+const FOLDED_HEADING_RE = /^(#{1,6})(>|v) (.+)$/;
++## Current State
 +
-+export type FoldedHeadingMarkerResult = {
-+  depth: 1 | 2 | 3 | 4 | 5 | 6;
-+  foldState: FoldState;
-+  title: string;
-+  rawMarker: string;
-+};
++Current implementation phase:
 +
-+export function parseFoldedHeadingMarker(line: string): FoldedHeadingMarkerResult | null {
-+  const match = line.match(FOLDED_HEADING_RE);
-+  if (!match) return null;
++```text
++Phase 1 — @nabla/markup
++```
 +
-+  const hashes = match[1];
-+  const foldMarker = match[2];
-+  const depth = hashes.length as 1 | 2 | 3 | 4 | 5 | 6;
++Current branch:
 +
-+  return {
-+    depth,
-+    foldState: foldMarker === ">" ? "closed" : "open",
-+    title: match[3],
-+    rawMarker: `${hashes}${foldMarker}`
-+  };
-+}
-diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index 4dc401b..5a81c7c 100644
---- a/packages/markup/src/parser.ts
-+++ b/packages/markup/src/parser.ts
-@@ -10,6 +10,7 @@ import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
- import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefinition, collectFootnoteIds, collectFootnoteDiagnostics } from "./extensions/footnotes.js";
- import { parseCalloutMarker, collectTabIndentedChildren, collectCompatibleChildren } from "./extensions/callouts.js";
- import { parseToggleMarker } from "./extensions/toggles.js";
-+import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
- 
- export type ParseOptions = {
-   mode?: ParseMode;
-@@ -18,7 +19,6 @@ export type ParseOptions = {
- const DOCUMENT_NODE_TYPE: NablaDocument["type"] = `doc${"ument"}`;
- 
- const HEADING_PATTERN = /^(#{1,6}) (.+)/;
--const FOLDABLE_HEADING_PATTERN = /^#v (.+)/;
- const FENCE_PATTERN = /^( {0,3})(`{3,}|~{3,})(.*)$/;
- const FENCE_CLOSE_PATTERN = /^( {0,3})(`{3,}|~{3,})[ \t]*$/;
- 
-@@ -44,19 +44,19 @@ function createHeading(depth: number, content: string): MarkdownNode {
-   };
- }
- 
--function createFoldableHeading(content: string): NablaBlockNode {
-+function createFoldableHeading(depth: number, foldState: FoldState, content: string, rawMarker: string): NablaBlockNode {
-   return {
-     type: "foldableHeading",
--    depth: 1,
--    foldState: "open",
-+    depth: depth as 1 | 2 | 3 | 4 | 5 | 6,
-+    foldState,
-     title: [createTextNode(content)],
--    rawMarker: "#v"
-+    rawMarker
-   } as unknown as FoldableHeadingNode;
- }
- 
- type BlockSpec =
-   | { kind: "heading"; depth: number; content: string }
--  | { kind: "foldableHeading"; content: string }
-+  | { kind: "foldableHeading"; depth: number; foldState: FoldState; title: string; rawMarker: string }
-   | { kind: "code"; lang: string; value: string }
-   | { kind: "paragraph"; text: string }
-   | { kind: "privateComment"; value: string; raw: string }
-@@ -141,10 +141,16 @@ function parseBlocks(source: string): BlockSpec[] {
-       continue;
-     }
- 
--    const foldMatch = line.match(FOLDABLE_HEADING_PATTERN);
--    if (foldMatch) {
-+    const foldHeadingMarker = parseFoldedHeadingMarker(line);
-+    if (foldHeadingMarker) {
-       flushParagraph();
--      blocks.push({ kind: "foldableHeading", content: foldMatch[1] });
-+      blocks.push({
-+        kind: "foldableHeading",
-+        depth: foldHeadingMarker.depth,
-+        foldState: foldHeadingMarker.foldState,
-+        title: foldHeadingMarker.title,
-+        rawMarker: foldHeadingMarker.rawMarker
-+      });
-       continue;
-     }
- 
-@@ -466,7 +472,7 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
-     } else if (block.kind === "heading") {
-       docChildren.push(createHeading(block.depth, block.content));
-     } else if (block.kind === "foldableHeading") {
--      docChildren.push(createFoldableHeading(block.content));
-+      docChildren.push(createFoldableHeading(block.depth, block.foldState, block.title, block.rawMarker));
-     } else if (block.kind === "privateComment") {
-       docChildren.push({
-         type: "privateComment",
-diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
-index 625c31b..d2dc0b2 100644
---- a/packages/markup/src/serializer.ts
-+++ b/packages/markup/src/serializer.ts
-@@ -137,7 +137,32 @@ function serializeListItem(node: MarkdownNode): string {
- }
- 
- export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
--  const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n").replace(/^\n/, "");
-+  const children = source.children;
-+  if (children.length === 0) {
-+    return normalizeLineEnding("", options.lineEnding);
-+  }
++```text
++phase-1-markup-core
++```
 +
-+  const serializedBlocks = children.map((child) => serializeBlockNode(child as MarkdownNode));
++The current work mode is:
 +
-+  const parts: string[] = [serializedBlocks[0]];
-+  for (let i = 1; i < serializedBlocks.length; i++) {
-+    const prevType = (children[i - 1] as MarkdownNode).type;
-+    const currType = (children[i] as MarkdownNode).type;
-+    const currSerialized = serializedBlocks[i];
++```text
++single writer
++external review
++audit bundle by exact commit range
++```
 +
-+    if (currSerialized.startsWith("\n")) {
-+      parts.push(currSerialized);
-+    } else if (
-+      prevType === "paragraph" &&
-+      currType === "foldableHeading"
-+    ) {
-+      parts.push("", currSerialized);
-+    } else {
-+      parts.push(currSerialized);
-+    }
-+  }
++## Source of Truth
 +
-+  const output = parts.join("\n").replace(/^\n+/, "");
-   const normalizedOutput = output === "" ? "" : `${output}\n`;
-   return normalizeLineEnding(normalizedOutput, options.lineEnding);
- }
-diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
-index 84bc98c..b6d9f4b 100644
---- a/packages/markup/tests/wiki-links.test.mjs
-+++ b/packages/markup/tests/wiki-links.test.mjs
-@@ -53,6 +53,12 @@ const toggleFixtureIds = [
-   "toggles/nested-child"
- ];
- 
-+const foldedHeadingFixtureIds = [
-+  "folded-headings/basic",
-+  "folded-headings/levels",
-+  "folded-headings/tag-conflict"
-+];
++The frozen specs and fixtures under `specs/` are the implementation contract.
 +
- let parserModulePromise;
- let serializerModulePromise;
- let fixturesModulePromise;
-@@ -364,6 +370,26 @@ test("tag and wiki link interop work correctly", async () => {
-   });
- });
- 
-+test("folded heading fixtures parse and serialize according to the checked-in contracts", async () => {
-+  const { parse } = await loadParserModule();
-+  const { serialize } = await loadSerializerModule();
-+  const {
-+    compareFixtureAst,
-+    compareFixtureDiagnostics,
-+    compareFixtureOutput,
-+    loadParserFixture
-+  } = await loadFixturesModule();
++Do not modify:
 +
-+  for (const fixtureId of foldedHeadingFixtureIds) {
-+    const fixture = await loadParserFixture(fixtureId);
-+    const parsed = parse(fixture.input);
++- `specs/**`;
++- checked-in fixture files;
++- generated audit bundle files by hand.
 +
-+    compareFixtureAst(parsed, fixture.ast);
-+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
-+    compareFixtureOutput(serialize(parsed), fixture.output);
-+  }
-+});
++If implementation behavior conflicts with the spec or fixtures, stop and report the conflict.
 +
- test("wiki link fixtures parse and serialize according to the checked-in contracts", async () => {
-   const { parse } = await loadParserModule();
-   const { serialize } = await loadSerializerModule();
-diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 1622982..2093a1e 100644
---- a/reports/IMPLEMENTATION_PROGRESS.md
-+++ b/reports/IMPLEMENTATION_PROGRESS.md
-@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
++## Per-Task Workflow
++
++Each task follows this sequence:
++
++1. Read only the relevant spec files.
++2. Implement only the active task.
++3. Run required checks.
++4. Commit implementation.
++5. Generate audit bundle with explicit `--base` and `--head`.
++6. Commit audit bundle separately.
++7. Push.
++8. External reviewer audits by commit-specific bundle.
++
++Required audit command:
++
++```bash
++pnpm audit:bundle -- --task <TASK_ID> --base <BASE_COMMIT> --head <IMPLEMENTATION_COMMIT>
++```
++
++Do not use implicit `HEAD`.
++
++## Required Report Format
++
++After every task, report only:
++
++```text
++Task:
++Model:
++Implementation commit:
++Audit bundle commit:
++Base:
++Head:
++Changed files:
++Commands all passed: yes/no
++Git status:
++Next recommended task:
++```
++
++If there was a failure, include:
++
++```text
++Failing command:
++Exit code:
++Relevant error:
++Files touched:
++Recommendation:
++```
++
++## Context Compaction Rules
++
++Compact or restart the coding session when:
++
++- context is above roughly 60%;
++- a large task just finished;
++- the model changed;
++- reports/logs are polluting context;
++- there was a confusing bug and the next action is cleanly defined.
++
++Do not compact or restart when:
++
++- there are uncommitted changes;
++- a command is running;
++- the model is in the middle of editing;
++- failing logs are needed and not yet captured.
++
++Before compacting or restarting, ensure:
++
++```bash
++git status --short
++```
++
++is clean, or explicitly preserve the dirty state in a handoff report.
++
++## Anti-Contamination Protocol
++
++Always audit by commit hash.
++
++Never audit by branch as source of truth.
++
++Use:
++
++- implementation commit;
++- audit bundle commit;
++- explicit base/head;
++- `audit.json`;
++- `git-show.patch`;
++- `git-show-name-only.txt`.
++
++Do not trust:
++
++- moving branch raw URLs as final proof;
++- model summaries without an audit bundle;
++- UI modified-file sidebars as a commit diff;
++- implicit `HEAD` ranges.
++
++If GitHub, local files, and model reports disagree:
++
++1. Stop.
++2. Do not continue to the next task.
++3. Create a ZIP with `.git`.
++4. Audit the ZIP as the final source.
++
++## Model Routing
++
++Current available builder:
++
++```text
++DeepSeek V4 Flash Free
++```
++
++Current review:
++
++```text
++External review from GitHub/MCP audit bundle.
++```
++
++Use GPT only when available and necessary for:
++
++- architecture-critical decisions;
++- parser/AST/source-of-truth bugs;
++- repeated failures after cheaper models;
++- phase-final review.
++
++Do not mention quota/model strategy inside task prompts unless it affects the implementation tool directly.
++
++## Parallel Agents
++
++Current level:
++
++```text
++Level 1 — one writer only.
++```
++
++Allowed now:
++
++- one builder that edits files;
++- external reviewer;
++- optional read-only diagnostic/context agent.
++
++Not allowed yet:
++
++- multiple builders writing in parallel;
++- two agents touching `parser.ts` at the same time;
++- two agents touching `serializer.ts` at the same time;
++- simultaneous audit bundle generation.
++
++Level 2 parallel builders become allowed only when tasks have:
++
++- separate branches;
++- exclusive allowed files;
++- no shared `parser.ts` or `serializer.ts` edits;
++- no shared `reports/audit/latest/` edits;
++- clear merge plan;
++- low conflict risk.
++
++The next major reevaluation point is after the core parser features are stable.
++
++## Phase-Final Workflow
++
++After each major phase:
++
++1. Finish all phase tasks.
++2. Run all quality gates.
++3. Generate a final audit bundle.
++4. Push everything.
++5. Create a full ZIP with `.git`.
++6. Run external mega audit.
++7. Advance only after `PASS` or approved `PASS WITH MINOR FIXES`.
++
++## Future Architecture Notes
++
++Nabla may later support AI responses streamed as Nabla MarkUp.
++
++That is documented as a future architecture constraint, not current scope.
++
++Do not implement streaming AI, streaming parser, or partial AST during current Phase 1 unless explicitly authorized in a later task.
+diff --git a/reports/decisions/IDR-0001-audit-bundle-workflow.md b/reports/decisions/IDR-0001-audit-bundle-workflow.md
+index c240fa2..e8c7e63 100644
+--- a/reports/decisions/IDR-0001-audit-bundle-workflow.md
++++ b/reports/decisions/IDR-0001-audit-bundle-workflow.md
+@@ -1,27 +1,97 @@
+ # IDR-0001 Audit Bundle Workflow
  
- ## Task ID
++## Status
++
++Accepted.
++
+ ## Decision
  
--`P1-018 toggles`
-+`P1-019 folded headings`
+ Use a text-only, git-derived audit bundle under `reports/audit/latest/` for external review.
  
- ## Branch
++Every implementation task must produce two separate commits:
++
++1. The implementation commit.
++2. The audit bundle commit.
++
++The audit bundle must be generated from an explicit, closed commit range:
++
++```bash
++pnpm audit:bundle -- --task <TASK_ID> --base <BASE_COMMIT> --head <IMPLEMENTATION_COMMIT>
++```
++
++`--head` is mandatory.
++
++Implicit `HEAD` is not allowed for task review bundles.
++
+ ## Context
  
-@@ -14,16 +14,14 @@ Phase 1 - `@nabla/markup`
+-Completed tasks need a review artifact that can be inspected directly from GitHub without uploading ZIP files or binaries.
++Nabla is implemented incrementally by task. Completed tasks need review artifacts that can be inspected from GitHub or from a ZIP without manually copying logs into chat.
++
++Earlier workflow versions allowed audit generation with only `--base`, which made the bundle depend on the current branch `HEAD`. That caused contamination when later commits were already present in the history.
++
++## Rules
++
++### Required
  
- ## Status
+-## Workflow
++- Use explicit `--base`.
++- Use explicit `--head`.
++- Keep the audit bundle commit separate from the implementation commit.
++- Store text-only review artifacts under `reports/audit/latest/`.
++- Include the reviewed base/head range in `AUDIT_INDEX.md`.
++- Include the reviewed base/head range in `audit.json`.
++- Include `git diff --name-only <base>..<head>`.
++- Include `git diff <base>..<head>`.
++- Record the current working tree status separately from the reviewed range.
  
--Toggle parsing and serialization implemented against checked-in fixture contracts (P1-018).
-+Folded heading parsing and serialization implemented against checked-in fixture contracts (P1-019).
+-- Run `pnpm audit:bundle -- --task <TASK_ID> --base <BASE_COMMIT>`.
+-- The script writes only text artifacts to `reports/audit/latest/`.
+-- `AUDIT_INDEX.md` explains the review order.
+-- `audit.json` records task metadata, git state, commands, and raw URLs when the remote is GitHub.
++### Forbidden
++
++- Do not use implicit `HEAD`.
++- Do not audit by branch name.
++- Do not treat branch raw URLs as source of truth.
++- Do not edit `reports/audit/latest/**` manually.
++- Do not include binary ZIP snapshots in the normal per-task audit bundle.
++- Do not mix implementation and audit commits.
++
++## Review Source of Truth
++
++For each task review, use:
++
++- the audit bundle commit hash;
++- `reports/audit/latest/audit.json` at that commit;
++- `reports/audit/latest/git-show-name-only.txt` at that commit;
++- `reports/audit/latest/git-show.patch` at that commit;
++- the implementation commit referenced as `headCommit` in `audit.json`.
++
++Branch names are not stable review anchors.
++
++Commit hashes are stable review anchors.
++
++## If GitHub and Local State Disagree
++
++If GitHub raw files, agent reports, and local state contradict each other:
++
++1. Stop the task flow.
++2. Generate or clone a fresh local repository state.
++3. Create a full ZIP including `.git`.
++4. Exclude heavy generated folders:
++   - `node_modules/`
++   - `dist/`
++   - `coverage/`
++5. Use the ZIP with `.git` as the final inspection artifact.
  
--All 5 toggle fixture groups pass:
--- `toggles/basic` — `]>` closed and `]v` open toggles with tab-indented children
--- `toggles/empty` — toggle with no title text or children
--- `toggles/blank-child` — toggle with blank-line-separated children
--- `toggles/fenced-child` — fenced code block as a child inside a toggle
--- `toggles/nested-child` — callout as a child inside a toggle
-+All 3 folded heading fixture groups pass:
-+- `folded-headings/basic` — `#>` closed and `##v` open folded headings with following paragraphs
-+- `folded-headings/levels` — all 6 heading levels with alternating fold states (`>` closed, `v` open)
-+- `folded-headings/tag-conflict` — `#v Vocabulary` is a folded heading, `#vocabulary` is a tag
+ ## Rationale
  
--Callout fixtures (P1-017) remain passing. `callouts/nested-child` now also passes since it depends on toggle child nesting.
-+Toggle (P1-018), callout (P1-017) and all earlier fixture groups remain passing.
+-- Keeps review artifacts simple and auditable.
+-- Avoids binary snapshots for now.
+-- Uses the repository history as the source of truth.
++This workflow:
++
++- keeps review artifacts lightweight;
++- prevents branch/HEAD contamination;
++- makes external review reproducible;
++- lets a reviewer inspect exact diffs without cloning when GitHub access works;
++- keeps ZIP-based full audit available for contradictions and phase-final reviews.
  
- ## Scope Guardrails
+ ## Consequences
  
-@@ -33,19 +31,18 @@ Callout fixtures (P1-017) remain passing. `callouts/nested-child` now also passe
- 
- ## Files Created
- 
--- `packages/markup/src/extensions/toggles.ts`
-+- `packages/markup/src/extensions/folded-headings.ts`
- 
- ## Files Modified
- 
--- `packages/markup/src/extensions/callouts.ts` — added `serializeToggle` and toggle child handling in `serializeChildBlock`
--- `packages/markup/src/parser.ts` — `ToggleNode` import, `parseToggleMarker` import, `kind: "toggle"` BlockSpec, toggle detection in `parseBlocks`, `block.kind === "toggle"` handling in `parse()`
--- `packages/markup/src/serializer.ts` — `ToggleNode` import, `serializeToggle` import, `node.type === "toggle"` dispatch in `serializeBlockNode`
--- `packages/markup/tests/wiki-links.test.mjs` — 5 toggle fixture IDs and fixture-driven test; re-added `callouts/nested-child` to callout fixture IDs
-+- `packages/markup/src/parser.ts` — `parseFoldedHeadingMarker` import, `FoldState` usage in BlockSpec, parameterized `createFoldableHeading`, all-level folded heading detection, updated block dispatch
-+- `packages/markup/src/serializer.ts` — blank-line rule narrowed from paragraph→(heading|foldableHeading) to paragraph→foldableHeading only, fixing tags/basic conflict
-+- `packages/markup/tests/wiki-links.test.mjs` — 3 folded heading fixture IDs and fixture-driven test
- - `reports/IMPLEMENTATION_PROGRESS.md` — this update
- 
- ## Verification Summary
- 
--- `node --test packages/markup/tests/**/*.test.mjs` — 62 tests pass (5 toggle + 7 callout fixture tests)
-+- `node --test packages/markup/tests/**/*.test.mjs` — tests pass (including 3 folded heading fixture tests)
- - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
- - `node scripts/validate-fixtures.mjs` — fixture validation passed
- - `node scripts/validate-spec-version.mjs` — spec version validation passed
-@@ -59,4 +56,4 @@ None.
- 
- ## Next Recommended Task
- 
--P1-019 folded headings
-+P1-020 block IDs
+-- External reviewers can inspect the bundle from GitHub directly.
+-- The workflow stays lightweight and operational.
++- Every task costs one extra audit commit.
++- The latest audit bundle is overwritten by each new task.
++- Historical audit bundles are still recoverable from their audit bundle commits.
++- Agents must report both the implementation commit and the audit bundle commit.
+diff --git a/reports/decisions/IDR-0002-future-streaming-markup-rendering.md b/reports/decisions/IDR-0002-future-streaming-markup-rendering.md
+new file mode 100644
+index 0000000..60412a2
+--- /dev/null
++++ b/reports/decisions/IDR-0002-future-streaming-markup-rendering.md
+@@ -0,0 +1,77 @@
++# IDR-0002 Future Streaming MarkUp Rendering
++
++## Status
++
++Accepted as a future architecture constraint.
++
++Not in current implementation scope.
++
++## Decision
++
++Nabla should eventually support AI responses streamed as Nabla MarkUp and rendered progressively in the user interface.
++
++This is a future capability. It must not be implemented during the current Phase 1 work unless a later phase explicitly authorizes it.
++
++## Context
++
++A future Nabla AI interface may receive generated text token-by-token from a language model. Instead of rendering only Markdown, Nabla should be able to render its own MarkUp progressively.
++
++This implies a future pipeline similar to:
++
++```text
++LLM token stream
++→ text buffer
++→ tolerant/incremental MarkUp parsing
++→ partial AST or render fallback
++→ progressive visual rendering
++```
++
++## Architectural Implications
++
++Current implementation should avoid decisions that make future streaming impossible.
++
++The design should leave room for:
++
++- tolerant parsing modes;
++- incomplete MarkUp structures;
++- partial rendering;
++- fallback-to-text behavior;
++- later stabilization of components once closing syntax arrives;
++- separation between source text, AST, and visual rendering.
++
++## Future Behavior
++
++When streaming AI responses:
++
++- plain text should render immediately;
++- simple inline syntax may render progressively;
++- incomplete structures should not crash the renderer;
++- incomplete structures should fall back to safe text rendering;
++- heavy components should render only once stable or closed;
++- the source text must remain recoverable.
++
++Examples of future stable/unstable behavior:
++
++- A completed wiki link may render as a link.
++- An unfinished highlight may remain text until closed.
++- A callout/toggle may render provisionally, then stabilize.
++- A Mermaid/code/LaTeX block may render only after closing fence/delimiter.
++
++## Out of Scope Now
++
++Do not implement during current Phase 1:
++
++- AI UI;
++- AI chat;
++- LLM integration;
++- streaming parser;
++- incremental AST;
++- partial renderer;
++- editor streaming behavior;
++- component stabilization logic.
++
++## Current Constraint
++
++Phase 1 parser/serializer work should remain focused on fixture-backed batch parsing and serialization.
++
++However, it should avoid unnecessary coupling that would block future tolerant or streaming parsing modes.
+diff --git a/reports/decisions/IDR-0003-phase-final-mega-audit.md b/reports/decisions/IDR-0003-phase-final-mega-audit.md
+new file mode 100644
+index 0000000..a1c0377
+--- /dev/null
++++ b/reports/decisions/IDR-0003-phase-final-mega-audit.md
+@@ -0,0 +1,107 @@
++# IDR-0003 Phase Final Mega Audit
++
++## Status
++
++Accepted.
++
++## Decision
++
++After every major implementation phase, Nabla must undergo a full mega audit before the next phase starts.
++
++The mega audit is stricter than per-task audit bundle review.
++
++## Phase Gates
++
++Major phases:
++
++1. Phase 1 — `@nabla/markup`
++2. Phase 2 — `@nabla/workspace`
++3. Phase 3 — `@nabla/editor`
++4. Phase 4 — `@nabla/components`
++5. Phase 5 — `@nabla/app`
++
++Do not start the next phase until the current phase receives a final audit verdict of:
++
++- `PASS`, or
++- explicitly approved `PASS WITH MINOR FIXES`.
++
++## Required Artifact
++
++At phase end, create a full repository ZIP with `.git` included.
++
++Exclude heavy/generated directories:
++
++- `node_modules/`
++- `dist/`
++- `coverage/`
++
++Recommended command pattern:
++
++```bash
++cd ~/Desktop
++
++rm -rf nabla-phase-audit
++git clone --branch <PHASE_BRANCH> --single-branch https://github.com/TomasDelon/nabla.git nabla-phase-audit
++
++zip -r nabla-phase-<N>-full-audit-with-git.zip nabla-phase-audit \\
++  -x "nabla-phase-audit/node_modules/*" \\
++  -x "nabla-phase-audit/dist/*" \\
++  -x "nabla-phase-audit/coverage/*"
++```
++
++## Mega Audit Scope
++
++The phase-final mega audit must check:
++
++- Git history;
++- task sequence;
++- implementation commits;
++- audit bundle commits;
++- `reports/audit/latest/` behavior;
++- `reports/IMPLEMENTATION_PROGRESS.md`;
++- `reports/decisions/**`;
++- specs and fixtures untouched;
++- package boundaries;
++- test coverage;
++- fixture coverage;
++- parser/serializer/workspace/editor correctness depending on phase;
++- architecture consistency;
++- scope creep;
++- unresolved blockers;
++- missing spec reports;
++- technical debt created during the phase.
++
++## Required Commands Before Audit
++
++Before creating the phase-final ZIP, run:
++
++```bash
++pnpm test
++pnpm test:markup
++pnpm typecheck
++pnpm build
++pnpm validate:fixtures
++pnpm validate:spec-version
++pnpm check:boundaries
++pnpm lint
++git status --short
++```
++
++Phase-specific commands may be added as packages appear.
++
++## Verdicts
++
++Possible final audit verdicts:
++
++- `PASS` — advance to next phase.
++- `PASS WITH MINOR FIXES` — fix listed issues, then advance if approved.
++- `FAIL` — do not advance; fix blockers.
++- `BLOCKED` — do not advance; a human/spec decision is required.
++
++## Rationale
++
++Per-task review prevents local errors.
++
++Phase-final mega audit prevents accumulated drift.
++
++Both are required.

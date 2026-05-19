@@ -1,27 +1,27 @@
 {
-  "taskId": "P1-019",
-  "baseCommit": "775b670",
-  "headCommit": "9c5e0bc",
+  "taskId": "DOCS-001",
+  "baseCommit": "3cf6ee7",
+  "headCommit": "51eafb5",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-19T00:26:09.934Z",
-  "currentHead": "9c5e0bc56ea714964ca9e20f7d34bd5ad0b0a1c3",
-  "currentWorkingTreeStatus": "?? nabla_operational_docs_patch.zip",
+  "timestamp": "2026-05-19T00:27:46.727Z",
+  "currentHead": "51eafb52f030d18d3e60b375180a6c12aafc1fb4",
+  "currentWorkingTreeStatus": "",
   "changedFiles": [
-    "packages/markup/src/extensions/folded-headings.ts",
-    "packages/markup/src/parser.ts",
-    "packages/markup/src/serializer.ts",
-    "packages/markup/tests/wiki-links.test.mjs",
-    "reports/IMPLEMENTATION_PROGRESS.md"
+    "README.md",
+    "reports/WORKFLOW.md",
+    "reports/decisions/IDR-0001-audit-bundle-workflow.md",
+    "reports/decisions/IDR-0002-future-streaming-markup-rendering.md",
+    "reports/decisions/IDR-0003-phase-final-mega-audit.md"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 775b670..9c5e0bc",
-    "git diff --stat 775b670..9c5e0bc",
-    "git diff 775b670..9c5e0bc",
-    "git log --oneline 775b670..9c5e0bc",
-    "git ls-tree -r --name-only 9c5e0bc",
+    "git diff --name-only 3cf6ee7..51eafb5",
+    "git diff --stat 3cf6ee7..51eafb5",
+    "git diff 3cf6ee7..51eafb5",
+    "git log --oneline 3cf6ee7..51eafb5",
+    "git ls-tree -r --name-only 51eafb5",
     "git remote get-url origin"
   ],
   "rawUrls": {

@@ -38,6 +38,7 @@ packages/markup/tsconfig.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
 reports/IMPLEMENTATION_PROGRESS.md
+reports/WORKFLOW.md
 reports/audit/latest/AUDIT_INDEX.md
 reports/audit/latest/audit.json
 reports/audit/latest/git-branch.txt
@@ -50,6 +51,8 @@ reports/audit/latest/package-json.txt
 reports/audit/latest/progress-report.md
 reports/audit/latest/repo-tree.txt
 reports/decisions/IDR-0001-audit-bundle-workflow.md
+reports/decisions/IDR-0002-future-streaming-markup-rendering.md
+reports/decisions/IDR-0003-phase-final-mega-audit.md
 scripts/check-boundaries.mjs
 scripts/create-audit-bundle.mjs
 scripts/report-unavailable.mjs
