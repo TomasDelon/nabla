@@ -2,24 +2,25 @@
 
 ## Phase
 
-Phase 4 — `@nabla/components`
+Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P4-015` — Phase 4 Validation Report
+`P5-000` — Phase 5 kickoff and app backlog extraction
 
 ## Branch
 
-`phase-4-components-core`
+`phase-5-app-core`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
 Phase 3 (`@nabla/editor`) — ACCEPTED.
-Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created; rendering contract types defined.
+Phase 4 (`@nabla/components`) — ACCEPTED.
+Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet created.
 
 ### Repairs Applied
 
@@ -423,6 +424,19 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No source/test/fixture/package changes made.
 - No app/Phase 5 work started.
 
+### P5-000 Notes
+
+- Phase 5 kickoff report created: `reports/PHASE_5_KICKOFF.md`.
+- Phase 5 task backlog created: `reports/PHASE_5_TASK_BACKLOG.md`.
+- New branch created: `phase-5-app-core`.
+- Package target: `@nabla/app`.
+- Backlog contains 11 tasks (P5-001 through P5-011): app package skeleton, dev server/shell, sample document loading, render pipeline, component integration, editor MVP, workspace integration (conditional), visual polish, fixtures, API consistency, and validation report.
+- Deferred scope documented: tooltip (BLOCKED), transclusion (DEFERRED), database persistence, user accounts, collaboration, AI features, production deployment.
+- No packages/app created yet.
+- No Phase 5 implementation started.
+- No dependencies added.
+- No source files changed.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -441,5 +455,4 @@ None.
 
 ## Next Recommended Task
 
-External audit/approval for Phase 4 closure, then P4-CLOSE — Phase 4 closure merge.
-Do not start Phase 5 until P4-015 and P4-CLOSE are externally accepted.
+P5-001 — App Package Skeleton — create `packages/app/` with minimal package setup.

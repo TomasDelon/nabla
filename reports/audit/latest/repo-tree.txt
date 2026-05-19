@@ -226,6 +226,8 @@ reports/PHASE_3_VALIDATION.md
 reports/PHASE_4_KICKOFF.md
 reports/PHASE_4_TASK_BACKLOG.md
 reports/PHASE_4_VALIDATION.md
+reports/PHASE_5_KICKOFF.md
+reports/PHASE_5_TASK_BACKLOG.md
 reports/WORKFLOW.md
 reports/audit/latest/AUDIT_INDEX.md
 reports/audit/latest/audit.json
