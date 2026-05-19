@@ -1,1 +1,1 @@
-8e777dd chore(workspace): add workspace package skeleton
+66989ae feat(workspace): add block ID index

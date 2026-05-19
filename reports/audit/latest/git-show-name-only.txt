@@ -1,5 +1,5 @@
-package.json
-packages/workspace/package.json
+packages/workspace/src/block-index.ts
 packages/workspace/src/index.ts
-packages/workspace/tsconfig.json
-pnpm-lock.yaml
+packages/workspace/tests/block-id.test.mjs
+packages/workspace/tests/helpers/load-ts-module.mjs
+reports/IMPLEMENTATION_PROGRESS.md
