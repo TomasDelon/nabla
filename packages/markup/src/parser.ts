@@ -13,6 +13,7 @@ import { parseToggleMarker } from "./extensions/toggles.js";
 import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
 import { parseTransclusionLine } from "./extensions/transclusions.js";
 import { processBlockIds } from "./extensions/block-ids.js";
+import { tryParseEmojiShortcode, buildEmojiUnknownDiagnostic } from "./extensions/emoji-shortcodes.js";
 import { DIAGNOSTIC_CODES } from "./diagnostics.js";
 
 export type ParseOptions = {
@@ -460,6 +461,32 @@ function parseParagraphChildren(source: string) {
         bufferStart = index + tagNode.raw.length;
         index = bufferStart;
         continue;
+      }
+    }
+
+    if (source[index] === ":") {
+      if (
+        isOffsetProtected(protectedRegions, index) ||
+        inlineHtmlContainers.some((region) => index >= region.start && index < region.end)
+      ) {
+        index += 1;
+        continue;
+      }
+
+      const emojiResult = tryParseEmojiShortcode(source, index);
+      if (emojiResult !== null) {
+        if (emojiResult.kind === "known") {
+          if (bufferStart < index) {
+            children.push(createTextNode(source.slice(bufferStart, index)));
+          }
+          children.push(emojiResult.node as MarkdownNode);
+          bufferStart = index + emojiResult.node.raw.length;
+          index = bufferStart;
+          continue;
+        }
+        if (emojiResult.kind === "unknown") {
+          diagnostics.push(buildEmojiUnknownDiagnostic(emojiResult.name));
+        }
       }
     }
 

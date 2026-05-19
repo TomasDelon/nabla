@@ -1,4 +1,4 @@
-import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode, TransclusionNode } from "./ast.js";
+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode, TransclusionNode, EmojiShortcodeNode } from "./ast.js";
 import { serializeWikiLink } from "./extensions/wiki-links.js";
 import { serializeTag } from "./extensions/tags.js";
 import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
@@ -7,6 +7,7 @@ import { serializeFrontmatter } from "./extensions/frontmatter.js";
 import { serializeFootnoteReference, serializeFootnoteDefinition } from "./extensions/footnotes.js";
 import { serializeCallout, serializeToggle } from "./extensions/callouts.js";
 import { serializeTransclusion } from "./extensions/transclusions.js";
+import { serializeEmojiShortcode } from "./extensions/emoji-shortcodes.js";
 
 export type SerializeOptions = {
   lineEnding?: "lf" | "crlf";
@@ -65,6 +66,10 @@ function serializeInlineNode(node: MarkdownNode) {
 
   if (node.type === "footnoteReference") {
     return serializeFootnoteReference(node as FootnoteReferenceNode);
+  }
+
+  if (node.type === "emojiShortcode") {
+    return serializeEmojiShortcode(node as EmojiShortcodeNode);
   }
 
   return "";

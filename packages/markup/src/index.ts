@@ -60,6 +60,12 @@ export {
   parseTransclusionLine,
   serializeTransclusion
 } from "./extensions/transclusions.js";
+export {
+  tryParseEmojiShortcode,
+  serializeEmojiShortcode,
+  DEFAULT_EMOJI_REGISTRY,
+  buildEmojiUnknownDiagnostic
+} from "./extensions/emoji-shortcodes.js";
 export type {
   ProtectedRegion,
   ProtectedRegionKind
