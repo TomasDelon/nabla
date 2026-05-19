@@ -1,356 +1,641 @@
-diff --git a/packages/components/src/bridge.ts b/packages/components/src/bridge.ts
-index bd97c73..451e35b 100644
---- a/packages/components/src/bridge.ts
-+++ b/packages/components/src/bridge.ts
-@@ -162,6 +162,7 @@ export function toComponentProps(metadata: BridgeComponentMetadata): NablaCompon
-       return {
-         kind: "foldedHeading",
-         level: metadata.level,
-+        text: metadata.text,
-         foldState: metadata.foldState,
-         onToggleFold: () => {},
-       };
-diff --git a/packages/components/src/types.ts b/packages/components/src/types.ts
-index 87fca18..f8c33c2 100644
---- a/packages/components/src/types.ts
-+++ b/packages/components/src/types.ts
-@@ -128,6 +128,7 @@ export interface ToggleProps {
- export interface FoldedHeadingProps {
-   readonly kind: "foldedHeading";
-   readonly level: number;
-+  readonly text: string;
-   readonly foldState: "open" | "closed";
-   readonly children?: never;
-   readonly onToggleFold: () => void;
-diff --git a/packages/components/tests/api-consistency.test.mjs b/packages/components/tests/api-consistency.test.mjs
+diff --git a/packages/components/fixtures/bridge-folded-heading-text/expected.json b/packages/components/fixtures/bridge-folded-heading-text/expected.json
 new file mode 100644
-index 0000000..09896b7
+index 0000000..021b33f
 --- /dev/null
-+++ b/packages/components/tests/api-consistency.test.mjs
-@@ -0,0 +1,293 @@
++++ b/packages/components/fixtures/bridge-folded-heading-text/expected.json
+@@ -0,0 +1,9 @@
++{
++  "kind": "foldedHeading",
++  "props": {
++    "kind": "foldedHeading",
++    "level": 2,
++    "text": "Section Title",
++    "foldState": "open"
++  }
++}
+diff --git a/packages/components/fixtures/bridge-folded-heading-text/input.json b/packages/components/fixtures/bridge-folded-heading-text/input.json
+new file mode 100644
+index 0000000..9f84694
+--- /dev/null
++++ b/packages/components/fixtures/bridge-folded-heading-text/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "createComponentDescriptor",
++  "args": [{ "kind": "foldedHeading", "level": 2, "text": "Section Title", "foldState": "open" }]
++}
+diff --git a/packages/components/fixtures/bridge-task-state/expected.json b/packages/components/fixtures/bridge-task-state/expected.json
+new file mode 100644
+index 0000000..48aa7bf
+--- /dev/null
++++ b/packages/components/fixtures/bridge-task-state/expected.json
+@@ -0,0 +1,5 @@
++{
++  "kind": "taskState",
++  "state": "checked",
++  "text": "buy milk"
++}
+diff --git a/packages/components/fixtures/bridge-task-state/input.json b/packages/components/fixtures/bridge-task-state/input.json
+new file mode 100644
+index 0000000..78a2dd9
+--- /dev/null
++++ b/packages/components/fixtures/bridge-task-state/input.json
+@@ -0,0 +1,5 @@
++{
++  "operation": "toComponentProps",
++  "args": [{ "kind": "taskState", "state": "checked", "text": "buy milk" }],
++  "functionKeys": ["onChange"]
++}
+diff --git a/packages/components/fixtures/bridge-wiki-link/expected.json b/packages/components/fixtures/bridge-wiki-link/expected.json
+new file mode 100644
+index 0000000..65179c4
+--- /dev/null
++++ b/packages/components/fixtures/bridge-wiki-link/expected.json
+@@ -0,0 +1,6 @@
++{
++  "kind": "wikiLink",
++  "target": "Page",
++  "raw": "[[Page]]",
++  "unresolved": false
++}
+diff --git a/packages/components/fixtures/bridge-wiki-link/input.json b/packages/components/fixtures/bridge-wiki-link/input.json
+new file mode 100644
+index 0000000..ce39928
+--- /dev/null
++++ b/packages/components/fixtures/bridge-wiki-link/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "toComponentProps",
++  "args": [{ "kind": "wikiLink", "target": "Page", "raw": "[[Page]]", "unresolved": false }]
++}
+diff --git a/packages/components/fixtures/callout-closed/expected.json b/packages/components/fixtures/callout-closed/expected.json
+new file mode 100644
+index 0000000..6bb1c97
+--- /dev/null
++++ b/packages/components/fixtures/callout-closed/expected.json
+@@ -0,0 +1,5 @@
++{
++  "calloutType": "warning",
++  "foldState": "closed",
++  "typeLabel": "Warning"
++}
+diff --git a/packages/components/fixtures/callout-closed/input.json b/packages/components/fixtures/callout-closed/input.json
+new file mode 100644
+index 0000000..64432a9
+--- /dev/null
++++ b/packages/components/fixtures/callout-closed/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getCalloutDisplay",
++  "args": [{ "calloutType": "warning", "foldState": "closed" }]
++}
+diff --git a/packages/components/fixtures/callout-open/expected.json b/packages/components/fixtures/callout-open/expected.json
+new file mode 100644
+index 0000000..cb33c64
+--- /dev/null
++++ b/packages/components/fixtures/callout-open/expected.json
+@@ -0,0 +1,5 @@
++{
++  "calloutType": "note",
++  "foldState": "open",
++  "typeLabel": "Note"
++}
+diff --git a/packages/components/fixtures/callout-open/input.json b/packages/components/fixtures/callout-open/input.json
+new file mode 100644
+index 0000000..5c49762
+--- /dev/null
++++ b/packages/components/fixtures/callout-open/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getCalloutDisplay",
++  "args": [{ "calloutType": "note", "foldState": "open" }]
++}
+diff --git a/packages/components/fixtures/comment-editing/expected.json b/packages/components/fixtures/comment-editing/expected.json
+new file mode 100644
+index 0000000..5aa6e77
+--- /dev/null
++++ b/packages/components/fixtures/comment-editing/expected.json
+@@ -0,0 +1,6 @@
++{
++  "text": "note",
++  "multiline": false,
++  "raw": "%%note%%",
++  "visible": true
++}
+diff --git a/packages/components/fixtures/comment-editing/input.json b/packages/components/fixtures/comment-editing/input.json
+new file mode 100644
+index 0000000..98c71ef
+--- /dev/null
++++ b/packages/components/fixtures/comment-editing/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getCommentDisplay",
++  "args": [{ "text": "note", "multiline": false, "raw": "%%note%%", "mode": "editing" }]
++}
+diff --git a/packages/components/fixtures/comment-reading/expected.json b/packages/components/fixtures/comment-reading/expected.json
+new file mode 100644
+index 0000000..d55c984
+--- /dev/null
++++ b/packages/components/fixtures/comment-reading/expected.json
+@@ -0,0 +1,6 @@
++{
++  "text": "note",
++  "multiline": false,
++  "raw": "%%note%%",
++  "visible": false
++}
+diff --git a/packages/components/fixtures/comment-reading/input.json b/packages/components/fixtures/comment-reading/input.json
+new file mode 100644
+index 0000000..3b0cdb5
+--- /dev/null
++++ b/packages/components/fixtures/comment-reading/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getCommentDisplay",
++  "args": [{ "text": "note", "multiline": false, "raw": "%%note%%", "mode": "reading" }]
++}
+diff --git a/packages/components/fixtures/emoji-known/expected.json b/packages/components/fixtures/emoji-known/expected.json
+new file mode 100644
+index 0000000..97f6ead
+--- /dev/null
++++ b/packages/components/fixtures/emoji-known/expected.json
+@@ -0,0 +1,6 @@
++{
++  "name": "check",
++  "value": "✅",
++  "raw": ":check:",
++  "isKnown": true
++}
+diff --git a/packages/components/fixtures/emoji-known/input.json b/packages/components/fixtures/emoji-known/input.json
+new file mode 100644
+index 0000000..92c94d3
+--- /dev/null
++++ b/packages/components/fixtures/emoji-known/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getEmojiDisplay",
++  "args": [{ "name": "check", "value": "✅", "raw": ":check:" }]
++}
+diff --git a/packages/components/fixtures/emoji-unknown/expected.json b/packages/components/fixtures/emoji-unknown/expected.json
+new file mode 100644
+index 0000000..837ce14
+--- /dev/null
++++ b/packages/components/fixtures/emoji-unknown/expected.json
+@@ -0,0 +1,6 @@
++{
++  "name": "unknown",
++  "value": ":unknown:",
++  "raw": ":unknown:",
++  "isKnown": false
++}
+diff --git a/packages/components/fixtures/emoji-unknown/input.json b/packages/components/fixtures/emoji-unknown/input.json
+new file mode 100644
+index 0000000..a51ba81
+--- /dev/null
++++ b/packages/components/fixtures/emoji-unknown/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getEmojiDisplay",
++  "args": [{ "name": "unknown", "value": ":unknown:", "raw": ":unknown:" }]
++}
+diff --git a/packages/components/fixtures/folded-heading-closed/expected.json b/packages/components/fixtures/folded-heading-closed/expected.json
+new file mode 100644
+index 0000000..2e7c4b0
+--- /dev/null
++++ b/packages/components/fixtures/folded-heading-closed/expected.json
+@@ -0,0 +1,5 @@
++{
++  "level": 3,
++  "text": "Sub",
++  "foldState": "closed"
++}
+diff --git a/packages/components/fixtures/folded-heading-closed/input.json b/packages/components/fixtures/folded-heading-closed/input.json
+new file mode 100644
+index 0000000..3cdb0bd
+--- /dev/null
++++ b/packages/components/fixtures/folded-heading-closed/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getFoldedHeadingDisplay",
++  "args": [{ "level": 3, "text": "Sub", "foldState": "closed" }]
++}
+diff --git a/packages/components/fixtures/folded-heading-open/expected.json b/packages/components/fixtures/folded-heading-open/expected.json
+new file mode 100644
+index 0000000..9884556
+--- /dev/null
++++ b/packages/components/fixtures/folded-heading-open/expected.json
+@@ -0,0 +1,5 @@
++{
++  "level": 2,
++  "text": "Section",
++  "foldState": "open"
++}
+diff --git a/packages/components/fixtures/folded-heading-open/input.json b/packages/components/fixtures/folded-heading-open/input.json
+new file mode 100644
+index 0000000..b1d4dd9
+--- /dev/null
++++ b/packages/components/fixtures/folded-heading-open/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getFoldedHeadingDisplay",
++  "args": [{ "level": 2, "text": "Section", "foldState": "open" }]
++}
+diff --git a/packages/components/fixtures/footnote-definition/expected.json b/packages/components/fixtures/footnote-definition/expected.json
+new file mode 100644
+index 0000000..58a1e82
+--- /dev/null
++++ b/packages/components/fixtures/footnote-definition/expected.json
+@@ -0,0 +1,6 @@
++{
++  "id": "def1",
++  "kind": "definition",
++  "text": "Note text.",
++  "displayText": "[^def1]: Note text."
++}
+diff --git a/packages/components/fixtures/footnote-definition/input.json b/packages/components/fixtures/footnote-definition/input.json
+new file mode 100644
+index 0000000..87ca3dd
+--- /dev/null
++++ b/packages/components/fixtures/footnote-definition/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getFootnoteDisplay",
++  "args": [{ "footnoteKind": "definition", "id": "def1", "text": "Note text." }]
++}
+diff --git a/packages/components/fixtures/footnote-reference/expected.json b/packages/components/fixtures/footnote-reference/expected.json
+new file mode 100644
+index 0000000..a54dd57
+--- /dev/null
++++ b/packages/components/fixtures/footnote-reference/expected.json
+@@ -0,0 +1,5 @@
++{
++  "id": "ref1",
++  "kind": "reference",
++  "displayText": "[ref1]"
++}
+diff --git a/packages/components/fixtures/footnote-reference/input.json b/packages/components/fixtures/footnote-reference/input.json
+new file mode 100644
+index 0000000..bd7db6c
+--- /dev/null
++++ b/packages/components/fixtures/footnote-reference/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getFootnoteDisplay",
++  "args": [{ "footnoteKind": "reference", "id": "ref1" }]
++}
+diff --git a/packages/components/fixtures/highlight-color/expected.json b/packages/components/fixtures/highlight-color/expected.json
+new file mode 100644
+index 0000000..f791d48
+--- /dev/null
++++ b/packages/components/fixtures/highlight-color/expected.json
+@@ -0,0 +1,5 @@
++{
++  "text": "colored",
++  "color": "#ff0",
++  "backgroundColor": "#ff0"
++}
+diff --git a/packages/components/fixtures/highlight-color/input.json b/packages/components/fixtures/highlight-color/input.json
+new file mode 100644
+index 0000000..b11dd1d
+--- /dev/null
++++ b/packages/components/fixtures/highlight-color/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getHighlightStyle",
++  "args": [{ "text": "colored", "color": "#ff0" }]
++}
+diff --git a/packages/components/fixtures/highlight-simple/expected.json b/packages/components/fixtures/highlight-simple/expected.json
+new file mode 100644
+index 0000000..908b00d
+--- /dev/null
++++ b/packages/components/fixtures/highlight-simple/expected.json
+@@ -0,0 +1,4 @@
++{
++  "text": "hello",
++  "backgroundColor": "#ffff0066"
++}
+diff --git a/packages/components/fixtures/highlight-simple/input.json b/packages/components/fixtures/highlight-simple/input.json
+new file mode 100644
+index 0000000..178f320
+--- /dev/null
++++ b/packages/components/fixtures/highlight-simple/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getHighlightStyle",
++  "args": [{ "text": "hello" }]
++}
+diff --git a/packages/components/fixtures/tag-nested/expected.json b/packages/components/fixtures/tag-nested/expected.json
+new file mode 100644
+index 0000000..ce65e9c
+--- /dev/null
++++ b/packages/components/fixtures/tag-nested/expected.json
+@@ -0,0 +1,5 @@
++{
++  "value": "nested/tag",
++  "segments": ["nested", "tag"],
++  "displayText": "#nested/tag"
++}
+diff --git a/packages/components/fixtures/tag-nested/input.json b/packages/components/fixtures/tag-nested/input.json
+new file mode 100644
+index 0000000..e9a818e
+--- /dev/null
++++ b/packages/components/fixtures/tag-nested/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getTagDisplay",
++  "args": [{ "value": "nested/tag", "segments": ["nested", "tag"] }]
++}
+diff --git a/packages/components/fixtures/tag-simple/expected.json b/packages/components/fixtures/tag-simple/expected.json
+new file mode 100644
+index 0000000..84acad3
+--- /dev/null
++++ b/packages/components/fixtures/tag-simple/expected.json
+@@ -0,0 +1,5 @@
++{
++  "value": "mytag",
++  "segments": ["mytag"],
++  "displayText": "#mytag"
++}
+diff --git a/packages/components/fixtures/tag-simple/input.json b/packages/components/fixtures/tag-simple/input.json
+new file mode 100644
+index 0000000..aa44fb5
+--- /dev/null
++++ b/packages/components/fixtures/tag-simple/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getTagDisplay",
++  "args": [{ "value": "mytag", "segments": ["mytag"] }]
++}
+diff --git a/packages/components/fixtures/task-state-cancelled/expected.json b/packages/components/fixtures/task-state-cancelled/expected.json
+new file mode 100644
+index 0000000..054ce28
+--- /dev/null
++++ b/packages/components/fixtures/task-state-cancelled/expected.json
+@@ -0,0 +1 @@
++"important"
+\ No newline at end of file
+diff --git a/packages/components/fixtures/task-state-cancelled/input.json b/packages/components/fixtures/task-state-cancelled/input.json
+new file mode 100644
+index 0000000..c186090
+--- /dev/null
++++ b/packages/components/fixtures/task-state-cancelled/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getNextTaskState",
++  "args": ["cancelled"]
++}
+diff --git a/packages/components/fixtures/task-state-checked/expected.json b/packages/components/fixtures/task-state-checked/expected.json
+new file mode 100644
+index 0000000..1207dcd
+--- /dev/null
++++ b/packages/components/fixtures/task-state-checked/expected.json
+@@ -0,0 +1 @@
++"cancelled"
+\ No newline at end of file
+diff --git a/packages/components/fixtures/task-state-checked/input.json b/packages/components/fixtures/task-state-checked/input.json
+new file mode 100644
+index 0000000..3035ed9
+--- /dev/null
++++ b/packages/components/fixtures/task-state-checked/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getNextTaskState",
++  "args": ["checked"]
++}
+diff --git a/packages/components/fixtures/task-state-important/expected.json b/packages/components/fixtures/task-state-important/expected.json
+new file mode 100644
+index 0000000..9f549d3
+--- /dev/null
++++ b/packages/components/fixtures/task-state-important/expected.json
+@@ -0,0 +1 @@
++"unchecked"
+\ No newline at end of file
+diff --git a/packages/components/fixtures/task-state-important/input.json b/packages/components/fixtures/task-state-important/input.json
+new file mode 100644
+index 0000000..1c5bbb3
+--- /dev/null
++++ b/packages/components/fixtures/task-state-important/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getNextTaskState",
++  "args": ["important"]
++}
+diff --git a/packages/components/fixtures/task-state-unchecked/expected.json b/packages/components/fixtures/task-state-unchecked/expected.json
+new file mode 100644
+index 0000000..832e87f
+--- /dev/null
++++ b/packages/components/fixtures/task-state-unchecked/expected.json
+@@ -0,0 +1 @@
++"checked"
+\ No newline at end of file
+diff --git a/packages/components/fixtures/task-state-unchecked/input.json b/packages/components/fixtures/task-state-unchecked/input.json
+new file mode 100644
+index 0000000..1bbb102
+--- /dev/null
++++ b/packages/components/fixtures/task-state-unchecked/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getNextTaskState",
++  "args": ["unchecked"]
++}
+diff --git a/packages/components/fixtures/toggle-closed/expected.json b/packages/components/fixtures/toggle-closed/expected.json
+new file mode 100644
+index 0000000..40a78fe
+--- /dev/null
++++ b/packages/components/fixtures/toggle-closed/expected.json
+@@ -0,0 +1,3 @@
++{
++  "foldState": "closed"
++}
+diff --git a/packages/components/fixtures/toggle-closed/input.json b/packages/components/fixtures/toggle-closed/input.json
+new file mode 100644
+index 0000000..5241309
+--- /dev/null
++++ b/packages/components/fixtures/toggle-closed/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getToggleDisplay",
++  "args": [{ "foldState": "closed" }]
++}
+diff --git a/packages/components/fixtures/toggle-open/expected.json b/packages/components/fixtures/toggle-open/expected.json
+new file mode 100644
+index 0000000..5d02ab0
+--- /dev/null
++++ b/packages/components/fixtures/toggle-open/expected.json
+@@ -0,0 +1,3 @@
++{
++  "foldState": "open"
++}
+diff --git a/packages/components/fixtures/toggle-open/input.json b/packages/components/fixtures/toggle-open/input.json
+new file mode 100644
+index 0000000..61eb7fb
+--- /dev/null
++++ b/packages/components/fixtures/toggle-open/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getToggleDisplay",
++  "args": [{ "foldState": "open" }]
++}
+diff --git a/packages/components/fixtures/wiki-link-resolved/expected.json b/packages/components/fixtures/wiki-link-resolved/expected.json
+new file mode 100644
+index 0000000..35df5fb
+--- /dev/null
++++ b/packages/components/fixtures/wiki-link-resolved/expected.json
+@@ -0,0 +1,6 @@
++{
++  "displayText": "Resolved Link",
++  "hasAlias": true,
++  "hasHeading": false,
++  "hasBlockId": false
++}
+diff --git a/packages/components/fixtures/wiki-link-resolved/input.json b/packages/components/fixtures/wiki-link-resolved/input.json
+new file mode 100644
+index 0000000..48144e2
+--- /dev/null
++++ b/packages/components/fixtures/wiki-link-resolved/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getWikiLinkDisplay",
++  "args": [{ "target": "ResolvedPage", "alias": "Resolved Link" }]
++}
+diff --git a/packages/components/fixtures/wiki-link-unresolved/expected.json b/packages/components/fixtures/wiki-link-unresolved/expected.json
+new file mode 100644
+index 0000000..5d157eb
+--- /dev/null
++++ b/packages/components/fixtures/wiki-link-unresolved/expected.json
+@@ -0,0 +1,6 @@
++{
++  "displayText": "MissingPage",
++  "hasAlias": false,
++  "hasHeading": false,
++  "hasBlockId": false
++}
+diff --git a/packages/components/fixtures/wiki-link-unresolved/input.json b/packages/components/fixtures/wiki-link-unresolved/input.json
+new file mode 100644
+index 0000000..c05046f
+--- /dev/null
++++ b/packages/components/fixtures/wiki-link-unresolved/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "getWikiLinkDisplay",
++  "args": [{ "target": "MissingPage" }]
++}
+diff --git a/packages/components/tests/component-fixtures.test.mjs b/packages/components/tests/component-fixtures.test.mjs
+new file mode 100644
+index 0000000..c7acd42
+--- /dev/null
++++ b/packages/components/tests/component-fixtures.test.mjs
+@@ -0,0 +1,101 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
++import { readdir, readFile } from "node:fs/promises";
++import { join, dirname } from "node:path";
++import { fileURLToPath } from "node:url";
 +
-+async function loadIndex() {
-+  return import(new URL("../dist/index.js", import.meta.url));
++const __dirname = dirname(fileURLToPath(import.meta.url));
++const FIXTURES_DIR = join(__dirname, "..", "fixtures");
++
++const OPERATION_MODULES = {
++  getNextTaskState: "../dist/task-state.js",
++  getWikiLinkDisplay: "../dist/wiki-link.js",
++  getTagDisplay: "../dist/tag.js",
++  getHighlightStyle: "../dist/highlight.js",
++  getEmojiDisplay: "../dist/emoji.js",
++  getFootnoteDisplay: "../dist/footnote.js",
++  getCommentDisplay: "../dist/comment.js",
++  getCalloutDisplay: "../dist/callout.js",
++  getToggleDisplay: "../dist/toggle.js",
++  getFoldedHeadingDisplay: "../dist/folded-heading.js",
++  toComponentKind: "../dist/bridge.js",
++  toComponentProps: "../dist/bridge.js",
++  createComponentDescriptor: "../dist/bridge.js",
++  isBridgeKindSupported: "../dist/bridge.js",
++};
++
++function isObject(v) {
++  return typeof v === "object" && v !== null;
 +}
 +
-+async function loadBridge() {
-+  return import(new URL("../dist/bridge.js", import.meta.url));
++function checkFunctionKeys(result, keys, label) {
++  for (const key of keys) {
++    assert.equal(typeof result[key], "function", `${label}: ${key} should be a function`);
++  }
 +}
 +
-+// ── Component export completeness ──
-+
-+const VISUAL_COMPONENTS = [
-+  "TaskStateCheckbox",
-+  "WikiLink",
-+  "Tag",
-+  "Highlight",
-+  "Emoji",
-+  "FootnoteReference",
-+  "FootnoteDefinition",
-+  "Comment",
-+  "Callout",
-+  "Toggle",
-+  "FoldedHeading",
-+];
-+
-+const PURE_HELPERS = [
-+  "getNextTaskState",
-+  "getWikiLinkDisplay",
-+  "getTagDisplay",
-+  "getHighlightStyle",
-+  "getEmojiDisplay",
-+  "getFootnoteDisplay",
-+  "getCommentDisplay",
-+  "getCalloutDisplay",
-+  "getToggleDisplay",
-+  "getFoldedHeadingDisplay",
-+];
-+
-+const BRIDGE_EXPORTS = [
-+  "toComponentKind",
-+  "toComponentProps",
-+  "createComponentDescriptor",
-+  "isBridgeKindSupported",
-+  "BRIDGE_DEFERRED_KINDS",
-+  "BRIDGE_BLOCKED_KINDS",
-+];
-+
-+test("all accepted visual components are exported", async () => {
-+  const mod = await loadIndex();
-+
-+  for (const name of VISUAL_COMPONENTS) {
-+    assert.equal(typeof mod[name], "function", `${name} should be a function`);
-+  }
-+});
-+
-+test("all accepted pure helpers are exported", async () => {
-+  const mod = await loadIndex();
-+
-+  for (const name of PURE_HELPERS) {
-+    assert.equal(typeof mod[name], "function", `${name} should be a function`);
-+  }
-+});
-+
-+test("all bridge APIs are exported", async () => {
-+  const mod = await loadIndex();
-+
-+  for (const name of BRIDGE_EXPORTS) {
-+    if (name.startsWith("BRIDGE_")) {
-+      assert.ok(Array.isArray(mod[name]), `${name} should be an array`);
++function checkFields(result, expected, label) {
++  for (const [key, value] of Object.entries(expected)) {
++    const actual = result[key];
++    if (isObject(value)) {
++      checkFields(actual, value, `${label}.${key}`);
 +    } else {
-+      assert.equal(typeof mod[name], "function", `${name} should be a function`);
++      assert.deepEqual(actual, value, `${label}: field "${key}" mismatch`);
 +    }
 +  }
-+});
++}
 +
-+// ── Forbidden exports ──
++async function loadFixtures() {
++  const entries = await readdir(FIXTURES_DIR, { withFileTypes: true });
++  const dirs = entries.filter((e) => e.isDirectory());
++  const results = [];
 +
-+test("no tooltip or transclusion renderer is exported", async () => {
-+  const mod = await loadIndex();
-+  const keys = Object.keys(mod);
++  for (const dir of dirs) {
++    const inputPath = join(FIXTURES_DIR, dir.name, "input.json");
++    const expectedPath = join(FIXTURES_DIR, dir.name, "expected.json");
 +
-+  for (const forbidden of ["TooltipRenderer", "TransclusionRenderer"]) {
-+    assert.equal(keys.includes(forbidden), false, `${forbidden} must not be exported`);
++    const inputRaw = await readFile(inputPath, "utf8");
++    const expectedRaw = await readFile(expectedPath, "utf8");
++
++    const input = JSON.parse(inputRaw);
++    const expected = JSON.parse(expectedRaw);
++
++    results.push({
++      name: dir.name,
++      operation: input.operation,
++      args: input.args ?? [],
++      expected,
++      functionKeys: input.functionKeys ?? [],
++    });
++  }
++
++  return results.sort((a, b) => a.name.localeCompare(b.name));
++}
++
++test("all component fixtures pass", async () => {
++  const fixtures = await loadFixtures();
++
++  assert.ok(fixtures.length > 0, "At least one fixture must exist");
++
++  for (const fixture of fixtures) {
++    await test(fixture.name, async () => {
++      const modulePath = OPERATION_MODULES[fixture.operation];
++      assert.ok(modulePath !== undefined, `Unknown operation: ${fixture.operation}`);
++
++      const mod = await import(new URL(modulePath, import.meta.url));
++      const fn = mod[fixture.operation];
++
++      assert.equal(typeof fn, "function", `${fixture.operation} must be a function`);
++
++      const result = fn(...fixture.args);
++
++      checkFunctionKeys(result, fixture.functionKeys, fixture.name);
++
++      if (isObject(fixture.expected)) {
++        checkFields(result, fixture.expected, fixture.name);
++      } else {
++        assert.deepEqual(result, fixture.expected, `${fixture.name}: value mismatch`);
++      }
++    });
 +  }
 +});
-+
-+// ── Component kind coverage via bridge ──
-+
-+const EXPECTED_BRIDGE_KINDS = [
-+  "taskState",
-+  "wikiLink",
-+  "tag",
-+  "highlight",
-+  "emoji",
-+  "footnote",
-+  "comment",
-+  "callout",
-+  "toggle",
-+  "foldedHeading",
-+];
-+
-+test("all bridge-supported kinds are accepted", async () => {
-+  const mod = await loadBridge();
-+
-+  for (const kind of EXPECTED_BRIDGE_KINDS) {
-+    assert.equal(mod.isBridgeKindSupported(kind), true, `${kind} should be bridge-supported`);
-+  }
-+});
-+
-+test("bridge does not support transclusion", async () => {
-+  const mod = await loadBridge();
-+
-+  assert.equal(mod.isBridgeKindSupported("transclusion"), false);
-+});
-+
-+test("bridge does not support tooltip", async () => {
-+  const mod = await loadBridge();
-+
-+  assert.equal(mod.isBridgeKindSupported("tooltip"), false);
-+});
-+
-+test("BRIDGE_DEFERRED_KINDS marks transclusion as deferred", async () => {
-+  const mod = await loadBridge();
-+
-+  assert.ok(mod.BRIDGE_DEFERRED_KINDS.includes("transclusion"));
-+});
-+
-+test("BRIDGE_BLOCKED_KINDS marks tooltip as blocked", async () => {
-+  const mod = await loadBridge();
-+
-+  assert.ok(mod.BRIDGE_BLOCKED_KINDS.includes("tooltip"));
-+});
-+
-+// Check deferred/blocked via bridge
-+test("transclusion and tooltip are not bridge-supported", async () => {
-+  const mod = await loadBridge();
-+
-+  assert.equal(mod.isBridgeKindSupported("transclusion"), false);
-+  assert.equal(mod.isBridgeKindSupported("tooltip"), false);
-+});
-+
-+// ── Folded heading text preservation ──
-+
-+test("FoldedHeadingProps in types.ts includes text", async () => {
-+  const mod = await loadBridge();
-+
-+  const props = mod.toComponentProps({
-+    kind: "foldedHeading",
-+    level: 2,
-+    text: "Section Title",
-+    foldState: "open",
-+  });
-+
-+  assert.equal(props.kind, "foldedHeading");
-+  assert.equal(props.text, "Section Title");
-+  assert.equal(props.level, 2);
-+  assert.equal(props.foldState, "open");
-+  assert.equal(typeof props.onToggleFold, "function");
-+});
-+
-+test("toComponentProps preserves folded heading text through the bridge", async () => {
-+  const mod = await loadBridge();
-+
-+  const inputText = "My Heading";
-+  const props = mod.toComponentProps({
-+    kind: "foldedHeading",
-+    level: 3,
-+    text: inputText,
-+    foldState: "closed",
-+  });
-+
-+  assert.equal(props.text, inputText);
-+});
-+
-+test("createComponentDescriptor preserves folded heading text", async () => {
-+  const mod = await loadBridge();
-+
-+  const descriptor = mod.createComponentDescriptor({
-+    kind: "foldedHeading",
-+    level: 1,
-+    text: "Top Level",
-+    foldState: "open",
-+  });
-+
-+  assert.equal(descriptor.props.text, "Top Level");
-+});
-+
-+// ── Source-of-truth invariant ──
-+
-+const FORBIDDEN_PROPS_KEYS = ["html", "innerHTML", "editorState", "jsonState", "serializedState"];
-+
-+test("task state props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "taskState", state: "checked", text: "item" });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false, `props must not contain "${key}"`);
-+  }
-+});
-+
-+test("wiki link props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "wikiLink", target: "Page", raw: "[[Page]]", unresolved: false });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false);
-+  }
-+});
-+
-+test("tag props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "tag", value: "tag", segments: ["tag"], raw: "#tag" });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false);
-+  }
-+});
-+
-+test("highlight props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "highlight", text: "hi", raw: "==hi==" });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false);
-+  }
-+});
-+
-+test("emoji props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "emoji", name: "check", value: "✅", raw: ":check:" });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false);
-+  }
-+});
-+
-+test("footnote props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "footnote", footnoteKind: "reference", id: "n1", raw: "[^n1]" });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false);
-+  }
-+});
-+
-+test("comment props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "comment", text: "note", multiline: false, raw: "%%note%%" });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false);
-+  }
-+});
-+
-+test("callout props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "callout", calloutType: "note", foldState: "open" });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false);
-+  }
-+});
-+
-+test("toggle props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "toggle", foldState: "closed" });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false);
-+  }
-+});
-+
-+test("folded heading props contain no hidden JSON or HTML", async () => {
-+  const mod = await loadBridge();
-+  const props = mod.toComponentProps({ kind: "foldedHeading", level: 2, text: "Title", foldState: "open" });
-+
-+  for (const key of FORBIDDEN_PROPS_KEYS) {
-+    assert.equal(key in props, false);
-+  }
-+});
-+
-+// ── Blocked/deferred scope covered above in bridge tests ──
-+
-+// ── NABLA_COMPONENT_RENDERING_CONTRACT ──
-+
-+test("NABLA_COMPONENT_RENDERING_CONTRACT is a non-empty string", async () => {
-+  const mod = await loadIndex();
-+
-+  assert.equal(typeof mod.NABLA_COMPONENT_RENDERING_CONTRACT, "string");
-+  assert.ok(mod.NABLA_COMPONENT_RENDERING_CONTRACT.length > 0);
-+});
-diff --git a/packages/components/tests/bridge.test.mjs b/packages/components/tests/bridge.test.mjs
-index 4b3e6cb..e9ae12b 100644
---- a/packages/components/tests/bridge.test.mjs
-+++ b/packages/components/tests/bridge.test.mjs
-@@ -184,13 +184,14 @@ test("toComponentProps maps toggle metadata to props", async () => {
-   assert.equal(typeof props.onToggleFold, "function");
- });
- 
--test("toComponentProps maps folded heading metadata to props", async () => {
-+test("toComponentProps maps folded heading metadata to props preserving text", async () => {
-   const mod = await load();
- 
-   const props = mod.toComponentProps({ kind: "foldedHeading", level: 3, text: "Sub", foldState: "closed" });
- 
-   assert.equal(props.kind, "foldedHeading");
-   assert.equal(props.level, 3);
-+  assert.equal(props.text, "Sub");
-   assert.equal(props.foldState, "closed");
-   assert.equal(typeof props.onToggleFold, "function");
- });
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index d54d7bd..7baacfc 100644
+index 7baacfc..e293d93 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-012` — Editor-to-Components Bridge
-+`P4-013` — API Consistency Audit
+-`P4-013` — API Consistency Audit
++`P4-014` — Components Fixture/Regression Plan
  
  ## Branch
  
@@ -358,40 +643,33 @@ index d54d7bd..7baacfc 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -379,6 +379,25 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
- - No parser/serializer/workspace changes.
- - Transclusion and tooltip remain deferred/blocked.
+@@ -398,6 +398,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+ - No editor/markup/workspace source changes.
+ - No app/Phase 5 work started.
  
-+### P4-013 Notes
++### P4-014 Notes
 +
-+- Performed API consistency audit across `@nabla/components`.
-+- Fixed gap: `FoldedHeadingProps` in `types.ts` was missing `text: string` — added it.
-+- Fixed bridge: `toComponentProps` for foldedHeading now passes `text: metadata.text`.
-+- Created `packages/components/tests/api-consistency.test.mjs` with 24 tests covering:
-+  - Export completeness for all 11 visual components and 10 pure helpers
-+  - Bridge API exports (6 functions/constants)
-+  - Forbidden exports (no TooltipRenderer, TransclusionRenderer)
-+  - Folded heading text preservation through the bridge
-+  - Source-of-truth invariant (no html, innerHTML, editorState, jsonState, serializedState in any component props)
-+  - Blocked/deferred scope verified via bridge
-+- All 103 component tests pass (79 existing + 24 new).
-+- No new visual components added.
-+- No component visual behavior changed.
++- Created `packages/components/fixtures/` with 25 fixture cases covering all accepted components and bridge mappings.
++- Created `packages/components/tests/component-fixtures.test.mjs` — fixture-driven test runner that loads JSON fixtures, calls declared operations, and compares results.
++- Fixture cases cover: 4 task-state cycles, 2 wiki-link displays, 2 tag displays, 2 highlight styles, 2 emoji displays, 2 footnote displays, 2 comment displays, 2 callout displays, 2 toggle displays, 2 folded-heading displays, 3 bridge mappings (task-state props, wiki-link props, folded-heading text preservation through descriptor).
++- The `bridge-folded-heading-text` fixture proves folded heading text is preserved through `createComponentDescriptor`.
++- All 129 component tests pass (104 existing + 25 new fixture tests).
++- No source/component behavior changed.
++- No DOM snapshot tests added.
 +- No dependencies added.
 +- No editor/markup/workspace source changes.
-+- No app/Phase 5 work started.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -397,4 +416,4 @@ None.
+@@ -416,4 +428,4 @@ None.
  
  ## Next Recommended Task
  
--P4-013 — API Consistency Audit — verify consistent public API surface across all Phase 4 packages.
-+P4-014 — Components Fixture/Regression Plan — create component-level rendering tests for all visual components.
+-P4-014 — Components Fixture/Regression Plan — create component-level rendering tests for all visual components.
++P4-015 — Phase 4 Validation Report — write a validation report covering all Phase 4 tasks.

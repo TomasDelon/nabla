@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-013` — API Consistency Audit
+`P4-014` — Components Fixture/Regression Plan
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -398,6 +398,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No editor/markup/workspace source changes.
 - No app/Phase 5 work started.
 
+### P4-014 Notes
+
+- Created `packages/components/fixtures/` with 25 fixture cases covering all accepted components and bridge mappings.
+- Created `packages/components/tests/component-fixtures.test.mjs` — fixture-driven test runner that loads JSON fixtures, calls declared operations, and compares results.
+- Fixture cases cover: 4 task-state cycles, 2 wiki-link displays, 2 tag displays, 2 highlight styles, 2 emoji displays, 2 footnote displays, 2 comment displays, 2 callout displays, 2 toggle displays, 2 folded-heading displays, 3 bridge mappings (task-state props, wiki-link props, folded-heading text preservation through descriptor).
+- The `bridge-folded-heading-text` fixture proves folded heading text is preserved through `createComponentDescriptor`.
+- All 129 component tests pass (104 existing + 25 new fixture tests).
+- No source/component behavior changed.
+- No DOM snapshot tests added.
+- No dependencies added.
+- No editor/markup/workspace source changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -416,4 +428,4 @@ None.
 
 ## Next Recommended Task
 
-P4-014 — Components Fixture/Regression Plan — create component-level rendering tests for all visual components.
+P4-015 — Phase 4 Validation Report — write a validation report covering all Phase 4 tasks.

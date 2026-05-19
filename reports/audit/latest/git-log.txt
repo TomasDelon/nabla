@@ -1,1 +1,1 @@
-3bb3931 test(components): add API consistency coverage
+34a19e5 test(components): add component fixture regression coverage
