@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-010` — Toggle Visual Component
+`P4-011` — Folded Heading Visual Component
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -340,6 +340,24 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No parser/serializer changes.
 - DOM/React rendering tests deferred to component fixture/regression phase.
 
+### P4-011 Notes
+
+- Created `packages/components/src/folded-heading.tsx` with `FoldedHeading` component and `getFoldedHeadingDisplay` helper.
+- Created `packages/components/src/folded-heading.css` with heading-like disclosure row, fold indicator, body indentation, and `--nabla-*` token styling.
+- Folded heading renders a clickable header with fold indicator; heading level drives font size (h1=1.5rem down to h6=0.875rem); body hidden when `foldState` is `"closed"`.
+- Exported `FoldedHeading`, `getFoldedHeadingDisplay`, and `FoldedHeadingDisplay` type from `packages/components/src/index.ts`.
+- Updated playground with Folded Heading section showing open level-2 and closed level-3 examples with fold toggle interaction.
+- Added `packages/components/tests/folded-heading.test.mjs` with 4 tests covering metadata (level, foldState, text) and component function export.
+- Updated `packages/components/tests/public-api.test.mjs` with FoldedHeading export test; removed FoldedHeading from forbidden-exports test.
+- Local `FoldedHeadingProps` type used (types.ts `FoldedHeadingProps` has `children?: never`); no `types.ts` modifications.
+- No new visual components added beyond folded heading.
+- No component API contract rewrite.
+- No dependencies added.
+- No editor/markup/workspace source changes.
+- No app/Phase 5 work started.
+- No parser/serializer changes.
+- DOM/React rendering tests deferred to component fixture/regression phase.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -358,4 +376,4 @@ None.
 
 ## Next Recommended Task
 
-P4-010 — Toggle Visual Component — implement a React component for toggle blocks.
+P4-012 — Editor-to-Components Bridge — wire component rendering into the editor.

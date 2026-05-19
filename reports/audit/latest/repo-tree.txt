@@ -14,6 +14,8 @@ packages/components/src/comment.css
 packages/components/src/comment.tsx
 packages/components/src/emoji.css
 packages/components/src/emoji.tsx
+packages/components/src/folded-heading.css
+packages/components/src/folded-heading.tsx
 packages/components/src/footnote.css
 packages/components/src/footnote.tsx
 packages/components/src/highlight.css
@@ -32,6 +34,7 @@ packages/components/src/wiki-link.css
 packages/components/src/wiki-link.tsx
 packages/components/tests/callout.test.mjs
 packages/components/tests/emoji.test.mjs
+packages/components/tests/folded-heading.test.mjs
 packages/components/tests/footnote-comment.test.mjs
 packages/components/tests/public-api.test.mjs
 packages/components/tests/tag-highlight.test.mjs

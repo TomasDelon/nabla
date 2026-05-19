@@ -1,1 +1,1 @@
-125345b feat(components): add toggle component
+d466c76 feat(components): add folded heading component

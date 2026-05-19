@@ -1,7 +1,7 @@
 packages/components/playground/src/main.tsx
+packages/components/src/folded-heading.css
+packages/components/src/folded-heading.tsx
 packages/components/src/index.ts
-packages/components/src/toggle.css
-packages/components/src/toggle.tsx
+packages/components/tests/folded-heading.test.mjs
 packages/components/tests/public-api.test.mjs
-packages/components/tests/toggle.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

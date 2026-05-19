@@ -1,34 +1,34 @@
 diff --git a/packages/components/playground/src/main.tsx b/packages/components/playground/src/main.tsx
-index d04a5f7..03a03a2 100644
+index 03a03a2..18df84a 100644
 --- a/packages/components/playground/src/main.tsx
 +++ b/packages/components/playground/src/main.tsx
-@@ -8,6 +8,7 @@ import { Emoji } from "../../src/emoji.tsx";
- import { FootnoteReference, FootnoteDefinition } from "../../src/footnote.tsx";
+@@ -9,6 +9,7 @@ import { FootnoteReference, FootnoteDefinition } from "../../src/footnote.tsx";
  import { Comment } from "../../src/comment.tsx";
  import { Callout } from "../../src/callout.tsx";
-+import { Toggle } from "../../src/toggle.tsx";
+ import { Toggle } from "../../src/toggle.tsx";
++import { FoldedHeading } from "../../src/folded-heading.tsx";
  
  import "../../src/tokens.css";
  import "../../src/task-state.css";
-@@ -18,6 +19,7 @@ import "../../src/emoji.css";
- import "../../src/footnote.css";
+@@ -20,6 +21,7 @@ import "../../src/footnote.css";
  import "../../src/comment.css";
  import "../../src/callout.css";
-+import "../../src/toggle.css";
+ import "../../src/toggle.css";
++import "../../src/folded-heading.css";
  import "./playground.css";
  
  type TaskState = "unchecked" | "checked" | "cancelled" | "important";
-@@ -64,6 +66,18 @@ function App() {
+@@ -78,6 +80,18 @@ function App() {
      }));
    }
  
-+  const [toggleFoldStates, setToggleFoldStates] = useState<Record<string, "open" | "closed">>({
-+    first: "open",
-+    second: "closed",
++  const [headingFoldStates, setHeadingFoldStates] = useState<Record<string, "open" | "closed">>({
++    h2: "open",
++    h3: "closed",
 +  });
 +
-+  function handleToggle(key: string) {
-+    setToggleFoldStates((prev) => ({
++  function toggleHeading(key: string) {
++    setHeadingFoldStates((prev) => ({
 +      ...prev,
 +      [key]: prev[key] === "open" ? "closed" : "open",
 +    }));
@@ -37,59 +37,40 @@ index d04a5f7..03a03a2 100644
    return (
      <div className="playground">
        <h1 className="playground__heading">@nabla/components</h1>
-@@ -156,6 +170,19 @@ function App() {
-           </Callout>
+@@ -183,6 +197,19 @@ function App() {
+           </Toggle>
          </ExampleRow>
        </Section>
 +
-+      <Section title="Toggle">
-+        <ExampleRow label="Open toggle">
-+          <Toggle foldState={toggleFoldStates.first} onToggleFold={() => handleToggle("first")}>
-+            <p style={{ margin: 0 }}>This toggle body is visible when open.</p>
-+          </Toggle>
++      <Section title="Folded Heading">
++        <ExampleRow label="Level-2 heading (open)">
++          <FoldedHeading level={2} text="Section Title" foldState={headingFoldStates.h2} onToggleFold={() => toggleHeading("h2")}>
++            <p style={{ margin: 0 }}>Content under a level-2 folded heading.</p>
++          </FoldedHeading>
 +        </ExampleRow>
-+        <ExampleRow label="Closed toggle">
-+          <Toggle foldState={toggleFoldStates.second} onToggleFold={() => handleToggle("second")}>
-+            <p style={{ margin: 0 }}>This toggle body is hidden when closed.</p>
-+          </Toggle>
++        <ExampleRow label="Level-3 heading (closed)">
++          <FoldedHeading level={3} text="Sub Section" foldState={headingFoldStates.h3} onToggleFold={() => toggleHeading("h3")}>
++            <p style={{ margin: 0 }}>Content under a level-3 folded heading, hidden when closed.</p>
++          </FoldedHeading>
 +        </ExampleRow>
 +      </Section>
      </div>
    );
  }
-diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-index 9eff4e2..faab386 100644
---- a/packages/components/src/index.ts
-+++ b/packages/components/src/index.ts
-@@ -30,6 +30,8 @@ export { Comment, getCommentDisplay } from "./comment.js";
- 
- export { Callout, getCalloutDisplay } from "./callout.js";
- 
-+export { Toggle, getToggleDisplay } from "./toggle.js";
-+
- export type { NablaComponentTheme } from "./theme.js";
- 
- export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
-@@ -45,3 +47,4 @@ export type { EmojiDisplay } from "./emoji.js";
- export type { FootnoteDisplay } from "./footnote.js";
- export type { CommentDisplay } from "./comment.js";
- export type { CalloutDisplay } from "./callout.js";
-+export type { ToggleDisplay } from "./toggle.js";
-diff --git a/packages/components/src/toggle.css b/packages/components/src/toggle.css
+diff --git a/packages/components/src/folded-heading.css b/packages/components/src/folded-heading.css
 new file mode 100644
-index 0000000..30f81c3
+index 0000000..1fc5ae3
 --- /dev/null
-+++ b/packages/components/src/toggle.css
++++ b/packages/components/src/folded-heading.css
 @@ -0,0 +1,50 @@
-+.nabla-toggle {
++.nabla-folded-heading {
 +  border: 1px solid var(--nabla-color-border);
 +  border-radius: var(--nabla-radius-md);
 +  font-family: var(--nabla-font-family);
-+  font-size: var(--nabla-font-size-md);
 +  line-height: var(--nabla-line-height);
 +}
 +
-+.nabla-toggle__header {
++.nabla-folded-heading__header {
 +  display: flex;
 +  align-items: center;
 +  gap: 0.5rem;
@@ -99,144 +80,203 @@ index 0000000..30f81c3
 +  border: none;
 +  cursor: pointer;
 +  font-family: inherit;
-+  font-size: inherit;
++  font-weight: 600;
 +  color: var(--nabla-color-text);
 +  text-align: left;
 +  border-radius: var(--nabla-radius-md);
 +}
 +
-+.nabla-toggle__header:hover {
++.nabla-folded-heading__header:hover {
 +  background: var(--nabla-color-surface);
 +}
 +
-+.nabla-toggle__header:focus-visible {
++.nabla-folded-heading__header:focus-visible {
 +  outline: 2px solid var(--nabla-color-primary);
 +  outline-offset: -2px;
 +}
 +
-+.nabla-toggle__indicator {
++.nabla-folded-heading__indicator {
 +  font-size: 0.75rem;
 +  color: var(--nabla-color-text-muted);
 +  user-select: none;
 +  flex-shrink: 0;
 +}
 +
-+.nabla-toggle__label {
++.nabla-folded-heading__title {
 +  white-space: nowrap;
 +  overflow: hidden;
 +  text-overflow: ellipsis;
 +}
 +
-+.nabla-toggle__body {
++.nabla-folded-heading__body {
 +  padding: 0.75rem;
++  padding-left: 2rem;
 +  border-top: 1px solid var(--nabla-color-border);
 +}
-diff --git a/packages/components/src/toggle.tsx b/packages/components/src/toggle.tsx
+diff --git a/packages/components/src/folded-heading.tsx b/packages/components/src/folded-heading.tsx
 new file mode 100644
-index 0000000..d52e30a
+index 0000000..7f41778
 --- /dev/null
-+++ b/packages/components/src/toggle.tsx
-@@ -0,0 +1,33 @@
++++ b/packages/components/src/folded-heading.tsx
+@@ -0,0 +1,59 @@
 +import { type ReactNode } from "react";
 +
-+export interface ToggleDisplay {
++export interface FoldedHeadingDisplay {
++  readonly level: number;
 +  readonly foldState: "open" | "closed";
++  readonly text: string;
 +}
 +
-+export function getToggleDisplay(props: {
++export function getFoldedHeadingDisplay(props: {
++  readonly level: number;
 +  readonly foldState: "open" | "closed";
-+}): ToggleDisplay {
++  readonly text: string;
++}): FoldedHeadingDisplay {
 +  return {
++    level: props.level,
 +    foldState: props.foldState,
++    text: props.text,
 +  };
 +}
 +
-+export interface ToggleProps {
++export interface FoldedHeadingProps {
++  readonly level: number;
++  readonly text: string;
 +  readonly foldState: "open" | "closed";
 +  readonly onToggleFold: () => void;
 +  readonly children?: ReactNode;
 +}
 +
-+export function Toggle({ foldState, onToggleFold, children }: ToggleProps) {
++const HEADING_FONT_SIZE: Record<number, string> = {
++  1: "1.5rem",
++  2: "1.25rem",
++  3: "1.125rem",
++  4: "1rem",
++  5: "0.875rem",
++  6: "0.875rem",
++};
++
++export function FoldedHeading({ level, text, foldState, onToggleFold, children }: FoldedHeadingProps) {
++  const display = getFoldedHeadingDisplay({ level, foldState, text });
++  const fontSize = HEADING_FONT_SIZE[level] ?? "1rem";
++
 +  return (
-+    <div className="nabla-toggle" data-fold-state={foldState}>
-+      <button className="nabla-toggle__header" onClick={onToggleFold} type="button" aria-expanded={foldState === "open"}>
-+        <span className="nabla-toggle__indicator" aria-hidden="true">
++    <div className="nabla-folded-heading" data-fold-state={foldState} data-level={level}>
++      <button
++        className="nabla-folded-heading__header"
++        onClick={onToggleFold}
++        type="button"
++        aria-expanded={foldState === "open"}
++        style={{ fontSize }}
++      >
++        <span className="nabla-folded-heading__indicator" aria-hidden="true">
 +          {foldState === "open" ? "▾" : "▸"}
 +        </span>
-+        <span className="nabla-toggle__label">Toggle content</span>
++        <span className="nabla-folded-heading__title">{display.text}</span>
 +      </button>
-+      {foldState === "open" && <div className="nabla-toggle__body">{children}</div>}
++      {foldState === "open" && <div className="nabla-folded-heading__body">{children}</div>}
 +    </div>
 +  );
 +}
-diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
-index 0ce2d9f..f581119 100644
---- a/packages/components/tests/public-api.test.mjs
-+++ b/packages/components/tests/public-api.test.mjs
-@@ -58,11 +58,17 @@ test("Callout is exported from public API", async () => {
-   assert.equal(typeof mod.getCalloutDisplay, "function");
- });
+diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
+index faab386..e5a62d6 100644
+--- a/packages/components/src/index.ts
++++ b/packages/components/src/index.ts
+@@ -32,6 +32,8 @@ export { Callout, getCalloutDisplay } from "./callout.js";
  
-+test("Toggle is exported from public API", async () => {
+ export { Toggle, getToggleDisplay } from "./toggle.js";
+ 
++export { FoldedHeading, getFoldedHeadingDisplay } from "./folded-heading.js";
++
+ export type { NablaComponentTheme } from "./theme.js";
+ 
+ export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
+@@ -48,3 +50,4 @@ export type { FootnoteDisplay } from "./footnote.js";
+ export type { CommentDisplay } from "./comment.js";
+ export type { CalloutDisplay } from "./callout.js";
+ export type { ToggleDisplay } from "./toggle.js";
++export type { FoldedHeadingDisplay } from "./folded-heading.js";
+diff --git a/packages/components/tests/folded-heading.test.mjs b/packages/components/tests/folded-heading.test.mjs
+new file mode 100644
+index 0000000..dd4294f
+--- /dev/null
++++ b/packages/components/tests/folded-heading.test.mjs
+@@ -0,0 +1,40 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++async function load() {
++  return import(new URL("../dist/folded-heading.js", import.meta.url));
++}
++
++test("getFoldedHeadingDisplay returns open state with level and text", async () => {
 +  const mod = await load();
 +
-+  assert.equal(typeof mod.Toggle, "function");
-+  assert.equal(typeof mod.getToggleDisplay, "function");
++  const result = mod.getFoldedHeadingDisplay({ level: 2, foldState: "open", text: "Section Title" });
++
++  assert.equal(result.level, 2);
++  assert.equal(result.foldState, "open");
++  assert.equal(result.text, "Section Title");
++});
++
++test("getFoldedHeadingDisplay returns closed state with level and text", async () => {
++  const mod = await load();
++
++  const result = mod.getFoldedHeadingDisplay({ level: 3, foldState: "closed", text: "Sub Section" });
++
++  assert.equal(result.level, 3);
++  assert.equal(result.foldState, "closed");
++  assert.equal(result.text, "Sub Section");
++});
++
++test("getFoldedHeadingDisplay preserves heading level 1", async () => {
++  const mod = await load();
++
++  const result = mod.getFoldedHeadingDisplay({ level: 1, foldState: "open", text: "Top" });
++
++  assert.equal(result.level, 1);
++});
++
++test("FoldedHeading is a function", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.FoldedHeading, "function");
++});
+diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
+index f581119..26574bd 100644
+--- a/packages/components/tests/public-api.test.mjs
++++ b/packages/components/tests/public-api.test.mjs
+@@ -65,11 +65,19 @@ test("Toggle is exported from public API", async () => {
+   assert.equal(typeof mod.getToggleDisplay, "function");
+ });
+ 
++test("FoldedHeading is exported from public API", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.FoldedHeading, "function");
++  assert.equal(typeof mod.getFoldedHeadingDisplay, "function");
 +});
 +
  test("no forbidden visual components are exported", async () => {
    const mod = await load();
    const keys = Object.keys(mod);
  
--  assert.equal(keys.includes("Toggle"), false);
-   assert.equal(keys.includes("FoldedHeading"), false);
+-  assert.equal(keys.includes("FoldedHeading"), false);
++  assert.equal(keys.includes("TooltipRenderer"), false);
++  assert.equal(keys.includes("TransclusionRenderer"), false);
  });
  
-diff --git a/packages/components/tests/toggle.test.mjs b/packages/components/tests/toggle.test.mjs
-new file mode 100644
-index 0000000..c86109e
---- /dev/null
-+++ b/packages/components/tests/toggle.test.mjs
-@@ -0,0 +1,28 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+
-+async function load() {
-+  return import(new URL("../dist/toggle.js", import.meta.url));
-+}
-+
-+test("getToggleDisplay for open state", async () => {
-+  const mod = await load();
-+
-+  const result = mod.getToggleDisplay({ foldState: "open" });
-+
-+  assert.equal(result.foldState, "open");
-+});
-+
-+test("getToggleDisplay for closed state", async () => {
-+  const mod = await load();
-+
-+  const result = mod.getToggleDisplay({ foldState: "closed" });
-+
-+  assert.equal(result.foldState, "closed");
-+});
-+
-+test("Toggle is a function", async () => {
-+  const mod = await load();
-+
-+  assert.equal(typeof mod.Toggle, "function");
-+});
+ test("NABLA_COMPONENT_THEME is exported", async () => {
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index b7a924e..5e5595b 100644
+index 5e5595b..508b7f6 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-009` — Callout Visual Component
-+`P4-010` — Toggle Visual Component
+-`P4-010` — Toggle Visual Component
++`P4-011` — Folded Heading Visual Component
  
  ## Branch
  
@@ -244,27 +284,26 @@ index b7a924e..5e5595b 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -321,6 +321,25 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+@@ -340,6 +340,24 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
  - No parser/serializer changes.
  - DOM/React rendering tests deferred to component fixture/regression phase.
  
-+### P4-010 Notes
++### P4-011 Notes
 +
-+- Created `packages/components/src/toggle.tsx` with `Toggle` component and `getToggleDisplay` helper.
-+- Created `packages/components/src/toggle.css` with compact disclosure row, chevron indicator, and `--nabla-*` token styling.
-+- Toggle renders a clickable header row with chevron indicator; body is hidden when `foldState` is `"closed"`.
-+- Header is a full-width button; `aria-expanded` attribute set for accessibility.
-+- Exported `Toggle`, `getToggleDisplay`, and `ToggleDisplay` type from `packages/components/src/index.ts`.
-+- Updated playground with Toggle section showing open and closed examples with fold toggle interaction.
-+- Added `packages/components/tests/toggle.test.mjs` with 3 tests covering `getToggleDisplay` metadata and component function export.
-+- Updated `packages/components/tests/public-api.test.mjs` with Toggle export test; removed Toggle from forbidden-exports test.
-+- Local `ToggleProps` type used (types.ts `ToggleProps` has `children?: never`); no `types.ts` modifications.
-+- No new visual components added beyond toggle.
++- Created `packages/components/src/folded-heading.tsx` with `FoldedHeading` component and `getFoldedHeadingDisplay` helper.
++- Created `packages/components/src/folded-heading.css` with heading-like disclosure row, fold indicator, body indentation, and `--nabla-*` token styling.
++- Folded heading renders a clickable header with fold indicator; heading level drives font size (h1=1.5rem down to h6=0.875rem); body hidden when `foldState` is `"closed"`.
++- Exported `FoldedHeading`, `getFoldedHeadingDisplay`, and `FoldedHeadingDisplay` type from `packages/components/src/index.ts`.
++- Updated playground with Folded Heading section showing open level-2 and closed level-3 examples with fold toggle interaction.
++- Added `packages/components/tests/folded-heading.test.mjs` with 4 tests covering metadata (level, foldState, text) and component function export.
++- Updated `packages/components/tests/public-api.test.mjs` with FoldedHeading export test; removed FoldedHeading from forbidden-exports test.
++- Local `FoldedHeadingProps` type used (types.ts `FoldedHeadingProps` has `children?: never`); no `types.ts` modifications.
++- No new visual components added beyond folded heading.
 +- No component API contract rewrite.
 +- No dependencies added.
 +- No editor/markup/workspace source changes.
@@ -275,9 +314,9 @@ index b7a924e..5e5595b 100644
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -339,4 +358,4 @@ None.
+@@ -358,4 +376,4 @@ None.
  
  ## Next Recommended Task
  
--P4-009 — Callout Visual Component — implement a React component for callout blocks.
-+P4-010 — Toggle Visual Component — implement a React component for toggle blocks.
+-P4-010 — Toggle Visual Component — implement a React component for toggle blocks.
++P4-012 — Editor-to-Components Bridge — wire component rendering into the editor.
