@@ -1,1 +1,1 @@
-bbab647 feat(app): add app package skeleton
+26132ff feat(app): add dev server and minimal shell

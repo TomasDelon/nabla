@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "pnpm@11.1.3",
   "scripts": {
+    "dev:app": "pnpm --dir packages/app dev",
     "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json packages/app/tsconfig.json",
     "audit:bundle": "node scripts/create-audit-bundle.mjs",
     "check:boundaries": "node scripts/check-boundaries.mjs",

@@ -1,104 +1,234 @@
 diff --git a/package.json b/package.json
-index c6d10be..a7bea82 100644
+index a7bea82..77099bd 100644
 --- a/package.json
 +++ b/package.json
-@@ -4,14 +4,14 @@
+@@ -4,6 +4,7 @@
    "private": true,
    "packageManager": "pnpm@11.1.3",
    "scripts": {
--    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json",
-+    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json packages/app/tsconfig.json",
++    "dev:app": "pnpm --dir packages/app dev",
+     "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json packages/app/tsconfig.json",
      "audit:bundle": "node scripts/create-audit-bundle.mjs",
      "check:boundaries": "node scripts/check-boundaries.mjs",
-     "lint": "node scripts/report-unavailable.mjs lint --silent \"Lint tooling is not bootstrapped in P1-001\"",
-     "test": "node --test packages/markup/tests/**/*.test.mjs",
-     "test:markup": "node --test packages/markup/tests/**/*.test.mjs",
-     "test:workspace": "node -e \"const fs=require('fs');const p=require('path');const d=p.join(process.cwd(),'packages/workspace/tests');if(fs.existsSync(d)){require('child_process').execSync('node --test '+d+'/**/*.test.mjs',{cwd:process.cwd(),stdio:'inherit',shell:true})}else{console.log('test:workspace: no tests yet');process.exit(0)}\"",
--    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json",
-+    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json packages/components/tsconfig.json packages/app/tsconfig.json",
-     "validate:fixtures": "node scripts/validate-fixtures.mjs",
-     "validate:spec-version": "node scripts/validate-spec-version.mjs"
-   },
+diff --git a/packages/app/index.html b/packages/app/index.html
+new file mode 100644
+index 0000000..152a9f6
+--- /dev/null
++++ b/packages/app/index.html
+@@ -0,0 +1,12 @@
++<!DOCTYPE html>
++<html lang="en">
++  <head>
++    <meta charset="UTF-8" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <title>Nabla</title>
++  </head>
++  <body>
++    <div id="root"></div>
++    <script type="module" src="/src/main.tsx"></script>
++  </body>
++</html>
 diff --git a/packages/app/package.json b/packages/app/package.json
-new file mode 100644
-index 0000000..1f34f44
---- /dev/null
+index 1f34f44..b176aff 100644
+--- a/packages/app/package.json
 +++ b/packages/app/package.json
-@@ -0,0 +1,24 @@
-+{
-+  "name": "@nabla/app",
-+  "version": "0.0.0",
-+  "private": true,
-+  "type": "module",
-+  "main": "./dist/index.js",
-+  "types": "./dist/index.d.ts",
-+  "exports": {
-+    ".": {
-+      "types": "./dist/index.d.ts",
-+      "default": "./dist/index.js"
-+    }
+@@ -16,9 +16,18 @@
+   ],
+   "scripts": {
+     "build": "tsc -p tsconfig.json",
+-    "typecheck": "tsc -p tsconfig.json --noEmit"
++    "typecheck": "tsc -p tsconfig.json --noEmit",
++    "dev": "vite --host 127.0.0.1"
+   },
+   "dependencies": {
+-    "@nabla/markup": "workspace:*"
++    "@nabla/markup": "workspace:*",
++    "react": "^18.3.1",
++    "react-dom": "^18.3.1",
++    "@types/react": "^18.3.0",
++    "@types/react-dom": "^18.3.0"
 +  },
-+  "files": [
-+    "dist"
-+  ],
-+  "scripts": {
-+    "build": "tsc -p tsconfig.json",
-+    "typecheck": "tsc -p tsconfig.json --noEmit"
-+  },
-+  "dependencies": {
-+    "@nabla/markup": "workspace:*"
-+  }
-+}
-diff --git a/packages/app/src/index.ts b/packages/app/src/index.ts
++  "devDependencies": {
++    "@vitejs/plugin-react": "^4.3.0",
++    "vite": "^5.4.0"
+   }
+ }
+diff --git a/packages/app/src/app.css b/packages/app/src/app.css
 new file mode 100644
-index 0000000..537ebf7
+index 0000000..9d23a56
 --- /dev/null
-+++ b/packages/app/src/index.ts
-@@ -0,0 +1 @@
-+export const NABLA_APP_PACKAGE = "@nabla/app";
++++ b/packages/app/src/app.css
+@@ -0,0 +1,64 @@
++* {
++  margin: 0;
++  padding: 0;
++  box-sizing: border-box;
++}
++
++body {
++  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
++  color: #1a1a1a;
++  background: #ffffff;
++  line-height: 1.6;
++}
++
++.app {
++  max-width: 640px;
++  margin: 0 auto;
++  padding: 2rem;
++}
++
++.app-header {
++  margin-bottom: 2rem;
++}
++
++.app-title {
++  font-size: 1.5rem;
++  font-weight: 700;
++  margin-bottom: 0.25rem;
++}
++
++.app-subtitle {
++  color: #6b7280;
++  font-size: 0.875rem;
++}
++
++.app-main {
++  display: flex;
++  flex-direction: column;
++  gap: 1.5rem;
++}
++
++.status-card {
++  background: #f9fafb;
++  border: 1px solid #e5e7eb;
++  border-radius: 0.375rem;
++  padding: 1rem;
++}
++
++.status-card__title {
++  font-size: 1.125rem;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.status-card__note {
++  color: #6b7280;
++  font-size: 0.875rem;
++}
++
++.app-reminder {
++  font-size: 0.75rem;
++  color: #6b7280;
++  text-align: center;
++  font-style: italic;
++}
+diff --git a/packages/app/src/main.tsx b/packages/app/src/main.tsx
+new file mode 100644
+index 0000000..012e956
+--- /dev/null
++++ b/packages/app/src/main.tsx
+@@ -0,0 +1,29 @@
++import { createRoot } from "react-dom/client";
++import "./app.css";
++
++function App() {
++  return (
++    <div className="app">
++      <header className="app-header">
++        <h1 className="app-title">Nabla</h1>
++        <p className="app-subtitle">Markdown-first visual editor</p>
++      </header>
++      <main className="app-main">
++        <div className="status-card">
++          <h2 className="status-card__title">Phase 5 app shell running</h2>
++          <p className="status-card__note">
++            This is not loading documents yet.
++          </p>
++        </div>
++        <p className="app-reminder">
++          Markdown/Nabla Markdown+ remains the source of truth.
++        </p>
++      </main>
++    </div>
++  );
++}
++
++const root = document.getElementById("root");
++if (root) {
++  createRoot(root).render(<App />);
++}
 diff --git a/packages/app/tsconfig.json b/packages/app/tsconfig.json
-new file mode 100644
-index 0000000..cf9e1b1
---- /dev/null
+index cf9e1b1..6d2a23a 100644
+--- a/packages/app/tsconfig.json
 +++ b/packages/app/tsconfig.json
-@@ -0,0 +1,10 @@
-+{
-+  "extends": "../../tsconfig.base.json",
-+  "compilerOptions": {
-+    "rootDir": "src",
-+    "outDir": "dist"
-+  },
-+  "include": [
-+    "src/**/*.ts"
-+  ]
-+}
+@@ -2,9 +2,12 @@
+   "extends": "../../tsconfig.base.json",
+   "compilerOptions": {
+     "rootDir": "src",
+-    "outDir": "dist"
++    "outDir": "dist",
++    "jsx": "react-jsx",
++    "jsxImportSource": "react"
+   },
+   "include": [
+-    "src/**/*.ts"
++    "src/**/*.ts",
++    "src/**/*.tsx"
+   ]
+ }
+diff --git a/packages/app/vite.config.ts b/packages/app/vite.config.ts
+new file mode 100644
+index 0000000..081c8d9
+--- /dev/null
++++ b/packages/app/vite.config.ts
+@@ -0,0 +1,6 @@
++import { defineConfig } from "vite";
++import react from "@vitejs/plugin-react";
++
++export default defineConfig({
++  plugins: [react()],
++});
 diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
-index 2a78879..7b9a27c 100644
+index 7b9a27c..2607d48 100644
 --- a/pnpm-lock.yaml
 +++ b/pnpm-lock.yaml
-@@ -12,6 +12,12 @@ importers:
-         specifier: ^5.6.3
-         version: 5.9.3
+@@ -17,6 +17,25 @@ importers:
+       '@nabla/markup':
+         specifier: workspace:*
+         version: link:../markup
++      '@types/react':
++        specifier: ^18.3.0
++        version: 18.3.28
++      '@types/react-dom':
++        specifier: ^18.3.0
++        version: 18.3.7(@types/react@18.3.28)
++      react:
++        specifier: ^18.3.1
++        version: 18.3.1
++      react-dom:
++        specifier: ^18.3.1
++        version: 18.3.1(react@18.3.1)
++    devDependencies:
++      '@vitejs/plugin-react':
++        specifier: ^4.3.0
++        version: 4.7.0(vite@5.4.21)
++      vite:
++        specifier: ^5.4.0
++        version: 5.4.21
  
-+  packages/app:
-+    dependencies:
-+      '@nabla/markup':
-+        specifier: workspace:*
-+        version: link:../markup
-+
    packages/components:
      dependencies:
-       '@nabla/markup':
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 1868319..b7141c0 100644
+index b7141c0..ea3fb36 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
  
  ## Last Task
  
--`P5-000` — Phase 5 kickoff and app backlog extraction
-+`P5-001` — App Package Skeleton
+-`P5-001` — App Package Skeleton
++`P5-002` — App Dev Server and Minimal Shell
  
  ## Branch
  
@@ -106,32 +236,31 @@ index 1868319..b7141c0 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -437,6 +437,17 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
- - No dependencies added.
- - No source files changed.
+@@ -448,6 +448,16 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
+ - No document loading/rendering/editor integration.
+ - No Phase 1–4 source package changes.
  
-+### P5-001 Notes
++### P5-002 Notes
 +
-+- Created `packages/app/` with `package.json`, `tsconfig.json`, and `src/index.ts`.
-+- Package exports `NABLA_APP_PACKAGE` constant.
-+- Root `package.json` build/typecheck scripts updated to include `packages/app/tsconfig.json`.
-+- Dependency: `@nabla/markup` (workspace).
-+- No app shell/UI implemented.
-+- No React/Vite/dev server added.
-+- No document loading/rendering/editor integration.
++- Created `packages/app/index.html`, `packages/app/vite.config.ts`, `packages/app/src/main.tsx`, `packages/app/src/app.css`.
++- App shell renders: title "Nabla", subtitle "Markdown-first visual editor", status card "Phase 5 app shell running", source-of-truth reminder.
++- Updated `packages/app/package.json` with React/Vite dependencies and dev/build scripts.
++- Updated root `package.json` with `dev:app` script.
++- Dependencies added: `react`, `react-dom`, `@types/react`, `@types/react-dom`, `vite`, `@vitejs/plugin-react`.
++- No document loading, render pipeline, editor integration, component integration, or workspace integration.
 +- No Phase 1–4 source package changes.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -455,4 +466,4 @@ None.
+@@ -466,4 +476,4 @@ None.
  
  ## Next Recommended Task
  
--P5-001 — App Package Skeleton — create `packages/app/` with minimal package setup.
-+P5-002 — App Dev Server and Minimal Shell — set up Vite dev server and minimal HTML/React shell.
+-P5-002 — App Dev Server and Minimal Shell — set up Vite dev server and minimal HTML/React shell.
++P5-003 — Sample Document Source Loading — implement hardcoded sample document loading into the app state.

@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-001` — App Package Skeleton
+`P5-002` — App Dev Server and Minimal Shell
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -448,6 +448,16 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - No document loading/rendering/editor integration.
 - No Phase 1–4 source package changes.
 
+### P5-002 Notes
+
+- Created `packages/app/index.html`, `packages/app/vite.config.ts`, `packages/app/src/main.tsx`, `packages/app/src/app.css`.
+- App shell renders: title "Nabla", subtitle "Markdown-first visual editor", status card "Phase 5 app shell running", source-of-truth reminder.
+- Updated `packages/app/package.json` with React/Vite dependencies and dev/build scripts.
+- Updated root `package.json` with `dev:app` script.
+- Dependencies added: `react`, `react-dom`, `@types/react`, `@types/react-dom`, `vite`, `@vitejs/plugin-react`.
+- No document loading, render pipeline, editor integration, component integration, or workspace integration.
+- No Phase 1–4 source package changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -466,4 +476,4 @@ None.
 
 ## Next Recommended Task
 
-P5-002 — App Dev Server and Minimal Shell — set up Vite dev server and minimal HTML/React shell.
+P5-003 — Sample Document Source Loading — implement hardcoded sample document loading into the app state.
