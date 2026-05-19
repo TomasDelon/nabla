@@ -1,1 +1,1 @@
-d858fb4 feat(workspace): add file index and wiki link resolver
+4362c2a feat(workspace): add backlink index
