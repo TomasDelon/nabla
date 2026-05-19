@@ -1,7 +1,6 @@
- packages/markup/src/extensions/callouts.ts | 27 ++++++++++++++++++++-
- packages/markup/src/extensions/toggles.ts  | 22 +++++++++++++++++
- packages/markup/src/parser.ts              | 39 ++++++++++++++++++++++++++++--
- packages/markup/src/serializer.ts          |  8 ++++--
- packages/markup/tests/wiki-links.test.mjs  | 31 +++++++++++++++++++++++-
- reports/IMPLEMENTATION_PROGRESS.md         | 38 +++++++++++++++++------------
- 6 files changed, 143 insertions(+), 22 deletions(-)
+ packages/markup/src/extensions/folded-headings.ts | 26 ++++++++++++++++++++
+ packages/markup/src/parser.ts                     | 26 ++++++++++++--------
+ packages/markup/src/serializer.ts                 | 27 ++++++++++++++++++++-
+ packages/markup/tests/wiki-links.test.mjs         | 26 ++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md                | 29 ++++++++++-------------
+ 5 files changed, 107 insertions(+), 27 deletions(-)

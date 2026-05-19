@@ -8,6 +8,7 @@ packages/markup/src/ast.ts
 packages/markup/src/diagnostics.ts
 packages/markup/src/extensions/callouts.ts
 packages/markup/src/extensions/comments.ts
+packages/markup/src/extensions/folded-headings.ts
 packages/markup/src/extensions/footnotes.ts
 packages/markup/src/extensions/frontmatter.ts
 packages/markup/src/extensions/highlights.ts

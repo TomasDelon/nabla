@@ -1,211 +1,169 @@
-diff --git a/packages/markup/src/extensions/callouts.ts b/packages/markup/src/extensions/callouts.ts
-index 2bb24dc..6a9fa9a 100644
---- a/packages/markup/src/extensions/callouts.ts
-+++ b/packages/markup/src/extensions/callouts.ts
-@@ -1,4 +1,4 @@
--import type { CalloutNode, FoldState, SyntaxStatus, MarkdownNode, NablaBlockNode } from "../ast.js";
-+import type { CalloutNode, ToggleNode, FoldState, SyntaxStatus, MarkdownNode, NablaBlockNode } from "../ast.js";
- 
- const CALLOUT_CANONICAL_RE = /^\[!([A-Za-z][A-Za-z0-9_-]*)](\>|v)?[ \t]*(.*)$/;
- const CALLOUT_COMPATIBLE_RE = /^> \[!([A-Za-z][A-Za-z0-9_-]*)]\s*(.*)$/;
-@@ -144,6 +144,22 @@ export function serializeCallout(node: CalloutNode): string {
-   return `\n${header}\n${childOutputs.join("\n\n")}`;
- }
- 
-+export function serializeToggle(node: ToggleNode): string {
-+  const title = node.title.map((child) => (child as { value?: string }).value ?? "").join("");
-+  const header = `${node.rawMarker} ${title}`;
-+
-+  if (node.children.length === 0) {
-+    return `\n${header}`;
-+  }
-+
-+  const childOutputs: string[] = [];
-+  for (const child of node.children) {
-+    childOutputs.push(serializeChildBlock(child as MarkdownNode | NablaBlockNode));
-+  }
-+
-+  return `\n${header}\n${childOutputs.join("\n\n")}`;
-+}
-+
- function serializeChildBlock(node: MarkdownNode | NablaBlockNode): string {
-   if (node.type === "paragraph" && Array.isArray(node.children)) {
-     const text = node.children.map((child) => (child as { value?: string }).value ?? "").join("");
-@@ -167,5 +183,14 @@ function serializeChildBlock(node: MarkdownNode | NablaBlockNode): string {
-       .join("\n");
-   }
- 
-+  if (node.type === "toggle") {
-+    const inner = serializeToggle(node as ToggleNode);
-+    return inner
-+      .replace(/^\n/, "")
-+      .split("\n")
-+      .map((l) => `\t${l}`)
-+      .join("\n");
-+  }
-+
-   return "";
- }
-\ No newline at end of file
-diff --git a/packages/markup/src/extensions/toggles.ts b/packages/markup/src/extensions/toggles.ts
+diff --git a/packages/markup/src/extensions/folded-headings.ts b/packages/markup/src/extensions/folded-headings.ts
 new file mode 100644
-index 0000000..cc47d1c
+index 0000000..60f392a
 --- /dev/null
-+++ b/packages/markup/src/extensions/toggles.ts
-@@ -0,0 +1,22 @@
++++ b/packages/markup/src/extensions/folded-headings.ts
+@@ -0,0 +1,26 @@
 +import type { FoldState } from "../ast.js";
 +
-+const TOGGLE_RE = /^](\>|v)[ \t]*(.*)$/;
++const FOLDED_HEADING_RE = /^(#{1,6})(>|v) (.+)$/;
 +
-+export type ToggleMarkerResult = {
++export type FoldedHeadingMarkerResult = {
++  depth: 1 | 2 | 3 | 4 | 5 | 6;
 +  foldState: FoldState;
 +  title: string;
-+  rawMarker: "]>" | "]v";
++  rawMarker: string;
 +};
 +
-+export function parseToggleMarker(line: string): ToggleMarkerResult | null {
-+  const match = line.match(TOGGLE_RE);
++export function parseFoldedHeadingMarker(line: string): FoldedHeadingMarkerResult | null {
++  const match = line.match(FOLDED_HEADING_RE);
 +  if (!match) return null;
 +
-+  const foldMarker = match[1];
++  const hashes = match[1];
++  const foldMarker = match[2];
++  const depth = hashes.length as 1 | 2 | 3 | 4 | 5 | 6;
 +
 +  return {
++    depth,
 +    foldState: foldMarker === ">" ? "closed" : "open",
-+    title: match[2],
-+    rawMarker: `]${foldMarker}` as "]>" | "]v"
++    title: match[3],
++    rawMarker: `${hashes}${foldMarker}`
 +  };
 +}
 diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index be28ac4..4dc401b 100644
+index 4dc401b..5a81c7c 100644
 --- a/packages/markup/src/parser.ts
 +++ b/packages/markup/src/parser.ts
-@@ -1,4 +1,4 @@
--import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode, CalloutNode, FoldState, SyntaxStatus } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode, CalloutNode, ToggleNode, FoldState, SyntaxStatus } from "./ast.js";
- import type { ParseMode } from "./parse-mode.js";
- import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
- import { parseWikiLink } from "./extensions/wiki-links.js";
-@@ -9,6 +9,7 @@ import { parseTaskStateMarker, parseListMarkerPrefix, hasBracketMarker } from ".
- import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
+@@ -10,6 +10,7 @@ import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
  import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefinition, collectFootnoteIds, collectFootnoteDiagnostics } from "./extensions/footnotes.js";
  import { parseCalloutMarker, collectTabIndentedChildren, collectCompatibleChildren } from "./extensions/callouts.js";
-+import { parseToggleMarker } from "./extensions/toggles.js";
+ import { parseToggleMarker } from "./extensions/toggles.js";
++import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
  
  export type ParseOptions = {
    mode?: ParseMode;
-@@ -64,7 +65,8 @@ type BlockSpec =
-   | { kind: "frontmatter"; raw: string; data: Record<string, unknown> | null; diagnostic?: Diagnostic }
-   | { kind: "thematicBreak" }
-   | { kind: "footnoteDefinition"; id: string; content: string; raw: string }
--  | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string };
-+  | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string }
-+  | { kind: "toggle"; foldState: FoldState; title: string; rawMarker: string; childContent: string };
+@@ -18,7 +19,6 @@ export type ParseOptions = {
+ const DOCUMENT_NODE_TYPE: NablaDocument["type"] = `doc${"ument"}`;
  
- function parseBlocks(source: string): BlockSpec[] {
-   const lines = source.split("\n");
-@@ -237,6 +239,21 @@ function parseBlocks(source: string): BlockSpec[] {
+ const HEADING_PATTERN = /^(#{1,6}) (.+)/;
+-const FOLDABLE_HEADING_PATTERN = /^#v (.+)/;
+ const FENCE_PATTERN = /^( {0,3})(`{3,}|~{3,})(.*)$/;
+ const FENCE_CLOSE_PATTERN = /^( {0,3})(`{3,}|~{3,})[ \t]*$/;
+ 
+@@ -44,19 +44,19 @@ function createHeading(depth: number, content: string): MarkdownNode {
+   };
+ }
+ 
+-function createFoldableHeading(content: string): NablaBlockNode {
++function createFoldableHeading(depth: number, foldState: FoldState, content: string, rawMarker: string): NablaBlockNode {
+   return {
+     type: "foldableHeading",
+-    depth: 1,
+-    foldState: "open",
++    depth: depth as 1 | 2 | 3 | 4 | 5 | 6,
++    foldState,
+     title: [createTextNode(content)],
+-    rawMarker: "#v"
++    rawMarker
+   } as unknown as FoldableHeadingNode;
+ }
+ 
+ type BlockSpec =
+   | { kind: "heading"; depth: number; content: string }
+-  | { kind: "foldableHeading"; content: string }
++  | { kind: "foldableHeading"; depth: number; foldState: FoldState; title: string; rawMarker: string }
+   | { kind: "code"; lang: string; value: string }
+   | { kind: "paragraph"; text: string }
+   | { kind: "privateComment"; value: string; raw: string }
+@@ -141,10 +141,16 @@ function parseBlocks(source: string): BlockSpec[] {
        continue;
      }
  
-+    const toggleMarker = parseToggleMarker(line);
-+    if (toggleMarker !== null) {
-+      flushParagraph();
-+      const { childLines, endIndex } = collectTabIndentedChildren(lines, i + 1);
+-    const foldMatch = line.match(FOLDABLE_HEADING_PATTERN);
+-    if (foldMatch) {
++    const foldHeadingMarker = parseFoldedHeadingMarker(line);
++    if (foldHeadingMarker) {
+       flushParagraph();
+-      blocks.push({ kind: "foldableHeading", content: foldMatch[1] });
 +      blocks.push({
-+        kind: "toggle",
-+        foldState: toggleMarker.foldState,
-+        title: toggleMarker.title,
-+        rawMarker: toggleMarker.rawMarker,
-+        childContent: childLines.join("\n")
++        kind: "foldableHeading",
++        depth: foldHeadingMarker.depth,
++        foldState: foldHeadingMarker.foldState,
++        title: foldHeadingMarker.title,
++        rawMarker: foldHeadingMarker.rawMarker
 +      });
-+      i = endIndex;
-+      continue;
-+    }
-+
-     paragraphLines.push(line);
-   }
- 
-@@ -521,6 +538,24 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
-       };
- 
-       docChildren.push(calloutNode as unknown as NablaBlockNode);
-+    } else if (block.kind === "toggle") {
-+      const titleDoc = parse(block.title);
-+      const titleChildren = titleDoc.children.length === 1 && titleDoc.children[0].type === "paragraph"
-+        ? (titleDoc.children[0] as MarkdownNode).children ?? []
-+        : [];
-+      const childDoc = block.childContent !== "" ? parse(block.childContent) : null;
-+      allDiagnostics.push(...titleDoc.diagnostics);
-+      if (childDoc) {
-+        allDiagnostics.push(...childDoc.diagnostics);
-+      }
-+
-+      docChildren.push({
-+        type: "toggle",
-+        title: titleChildren as import("./ast.js").NablaInlineNode[],
-+        foldState: block.foldState,
-+        children: childDoc ? (childDoc.children as Array<MarkdownNode | NablaBlockNode>) : [],
-+        rawMarker: block.rawMarker
-+      } as ToggleNode);
+       continue;
      }
-   }
  
+@@ -466,7 +472,7 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
+     } else if (block.kind === "heading") {
+       docChildren.push(createHeading(block.depth, block.content));
+     } else if (block.kind === "foldableHeading") {
+-      docChildren.push(createFoldableHeading(block.content));
++      docChildren.push(createFoldableHeading(block.depth, block.foldState, block.title, block.rawMarker));
+     } else if (block.kind === "privateComment") {
+       docChildren.push({
+         type: "privateComment",
 diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
-index 0edc7bd..625c31b 100644
+index 625c31b..d2dc0b2 100644
 --- a/packages/markup/src/serializer.ts
 +++ b/packages/markup/src/serializer.ts
-@@ -1,11 +1,11 @@
--import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode } from "./ast.js";
- import { serializeWikiLink } from "./extensions/wiki-links.js";
- import { serializeTag } from "./extensions/tags.js";
- import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
- import { taskStateToMarker } from "./extensions/task-states.js";
- import { serializeFrontmatter } from "./extensions/frontmatter.js";
- import { serializeFootnoteReference, serializeFootnoteDefinition } from "./extensions/footnotes.js";
--import { serializeCallout } from "./extensions/callouts.js";
-+import { serializeCallout, serializeToggle } from "./extensions/callouts.js";
- 
- export type SerializeOptions = {
-   lineEnding?: "lf" | "crlf";
-@@ -109,6 +109,10 @@ function serializeBlockNode(node: MarkdownNode) {
-     return serializeCallout(node as CalloutNode);
-   }
- 
-+  if (node.type === "toggle") {
-+    return serializeToggle(node as ToggleNode);
-+  }
-+
-   return "";
+@@ -137,7 +137,32 @@ function serializeListItem(node: MarkdownNode): string {
  }
  
+ export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
+-  const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n").replace(/^\n/, "");
++  const children = source.children;
++  if (children.length === 0) {
++    return normalizeLineEnding("", options.lineEnding);
++  }
++
++  const serializedBlocks = children.map((child) => serializeBlockNode(child as MarkdownNode));
++
++  const parts: string[] = [serializedBlocks[0]];
++  for (let i = 1; i < serializedBlocks.length; i++) {
++    const prevType = (children[i - 1] as MarkdownNode).type;
++    const currType = (children[i] as MarkdownNode).type;
++    const currSerialized = serializedBlocks[i];
++
++    if (currSerialized.startsWith("\n")) {
++      parts.push(currSerialized);
++    } else if (
++      prevType === "paragraph" &&
++      currType === "foldableHeading"
++    ) {
++      parts.push("", currSerialized);
++    } else {
++      parts.push(currSerialized);
++    }
++  }
++
++  const output = parts.join("\n").replace(/^\n+/, "");
+   const normalizedOutput = output === "" ? "" : `${output}\n`;
+   return normalizeLineEnding(normalizedOutput, options.lineEnding);
+ }
 diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
-index ce4d092..84bc98c 100644
+index 84bc98c..b6d9f4b 100644
 --- a/packages/markup/tests/wiki-links.test.mjs
 +++ b/packages/markup/tests/wiki-links.test.mjs
-@@ -41,7 +41,16 @@ const calloutFixtureIds = [
-   "callouts/fold-states",
-   "callouts/empty",
-   "callouts/blank-child",
--  "callouts/fenced-child"
-+  "callouts/fenced-child",
-+  "callouts/nested-child"
-+];
-+
-+const toggleFixtureIds = [
-+  "toggles/basic",
-+  "toggles/empty",
-+  "toggles/blank-child",
-+  "toggles/fenced-child",
-+  "toggles/nested-child"
+@@ -53,6 +53,12 @@ const toggleFixtureIds = [
+   "toggles/nested-child"
  ];
  
++const foldedHeadingFixtureIds = [
++  "folded-headings/basic",
++  "folded-headings/levels",
++  "folded-headings/tag-conflict"
++];
++
  let parserModulePromise;
-@@ -147,6 +156,26 @@ test("callout fixtures parse and serialize according to the checked-in contracts
-   }
+ let serializerModulePromise;
+ let fixturesModulePromise;
+@@ -364,6 +370,26 @@ test("tag and wiki link interop work correctly", async () => {
+   });
  });
  
-+test("toggle fixtures parse and serialize according to the checked-in contracts", async () => {
++test("folded heading fixtures parse and serialize according to the checked-in contracts", async () => {
 +  const { parse } = await loadParserModule();
 +  const { serialize } = await loadSerializerModule();
 +  const {
@@ -215,7 +173,7 @@ index ce4d092..84bc98c 100644
 +    loadParserFixture
 +  } = await loadFixturesModule();
 +
-+  for (const fixtureId of toggleFixtureIds) {
++  for (const fixtureId of foldedHeadingFixtureIds) {
 +    const fixture = await loadParserFixture(fixtureId);
 +    const parsed = parse(fixture.input);
 +
@@ -225,82 +183,73 @@ index ce4d092..84bc98c 100644
 +  }
 +});
 +
- test("tag parser handles single and nested tag values", async () => {
+ test("wiki link fixtures parse and serialize according to the checked-in contracts", async () => {
    const { parse } = await loadParserModule();
- 
+   const { serialize } = await loadSerializerModule();
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 74dc2ae..1622982 100644
+index 1622982..2093a1e 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
  
  ## Task ID
  
--`P1-017 callouts`
-+`P1-018 toggles`
+-`P1-018 toggles`
++`P1-019 folded headings`
  
  ## Branch
  
-@@ -14,17 +14,16 @@ Phase 1 - `@nabla/markup`
+@@ -14,16 +14,14 @@ Phase 1 - `@nabla/markup`
  
  ## Status
  
--Callout parsing and serialization implemented against checked-in fixture contracts (P1-017).
-+Toggle parsing and serialization implemented against checked-in fixture contracts (P1-018).
+-Toggle parsing and serialization implemented against checked-in fixture contracts (P1-018).
++Folded heading parsing and serialization implemented against checked-in fixture contracts (P1-019).
  
--All 6 callout fixture groups pass:
--- `callouts/canonical` — standard `[!type] title` syntax with tab-indented children
--- `callouts/compatible` — compatible `> **type** title` syntax
--- `callouts/fold-states` — `[!type +/-]` folded/unfolded callouts
--- `callouts/empty` — callout with no title text or children
--- `callouts/blank-child` — callout with an empty child (blank child line preserved)
--- `callouts/fenced-child` — fenced code block as a child inside a callout
-+All 5 toggle fixture groups pass:
-+- `toggles/basic` — `]>` closed and `]v` open toggles with tab-indented children
-+- `toggles/empty` — toggle with no title text or children
-+- `toggles/blank-child` — toggle with blank-line-separated children
-+- `toggles/fenced-child` — fenced code block as a child inside a toggle
-+- `toggles/nested-child` — callout as a child inside a toggle
+-All 5 toggle fixture groups pass:
+-- `toggles/basic` — `]>` closed and `]v` open toggles with tab-indented children
+-- `toggles/empty` — toggle with no title text or children
+-- `toggles/blank-child` — toggle with blank-line-separated children
+-- `toggles/fenced-child` — fenced code block as a child inside a toggle
+-- `toggles/nested-child` — callout as a child inside a toggle
++All 3 folded heading fixture groups pass:
++- `folded-headings/basic` — `#>` closed and `##v` open folded headings with following paragraphs
++- `folded-headings/levels` — all 6 heading levels with alternating fold states (`>` closed, `v` open)
++- `folded-headings/tag-conflict` — `#v Vocabulary` is a folded heading, `#vocabulary` is a tag
  
--Note: `callouts/nested-child` is deferred to P1-018 (toggle implementation) since it tests callout+toggle nesting.
-+Callout fixtures (P1-017) remain passing. `callouts/nested-child` now also passes since it depends on toggle child nesting.
+-Callout fixtures (P1-017) remain passing. `callouts/nested-child` now also passes since it depends on toggle child nesting.
++Toggle (P1-018), callout (P1-017) and all earlier fixture groups remain passing.
  
  ## Scope Guardrails
  
-@@ -34,18 +33,25 @@ Note: `callouts/nested-child` is deferred to P1-018 (toggle implementation) sinc
+@@ -33,19 +31,18 @@ Callout fixtures (P1-017) remain passing. `callouts/nested-child` now also passe
  
  ## Files Created
  
--- `packages/markup/src/extensions/callouts.ts`
-+- `packages/markup/src/extensions/toggles.ts`
+-- `packages/markup/src/extensions/toggles.ts`
++- `packages/markup/src/extensions/folded-headings.ts`
  
  ## Files Modified
  
--- `packages/markup/src/parser.ts` — `callout` BlockSpec kind, `parseCalloutMarker` detection in `parseBlocks`, recursive `parse()` for child content, `CalloutNode` construction
--- `packages/markup/src/serializer.ts` — `serializeCallout` dispatch, leading `\n` strip in `serialize()` to normalize first-block separator
--- `packages/markup/tests/wiki-links.test.mjs` — 6 callout fixture IDs and fixture-driven test (nested-child deferred to P1-018)
-+- `packages/markup/src/extensions/callouts.ts` — added `serializeToggle` and toggle child handling in `serializeChildBlock`
-+- `packages/markup/src/parser.ts` — `ToggleNode` import, `parseToggleMarker` import, `kind: "toggle"` BlockSpec, toggle detection in `parseBlocks`, `block.kind === "toggle"` handling in `parse()`
-+- `packages/markup/src/serializer.ts` — `ToggleNode` import, `serializeToggle` import, `node.type === "toggle"` dispatch in `serializeBlockNode`
-+- `packages/markup/tests/wiki-links.test.mjs` — 5 toggle fixture IDs and fixture-driven test; re-added `callouts/nested-child` to callout fixture IDs
-+- `reports/IMPLEMENTATION_PROGRESS.md` — this update
+-- `packages/markup/src/extensions/callouts.ts` — added `serializeToggle` and toggle child handling in `serializeChildBlock`
+-- `packages/markup/src/parser.ts` — `ToggleNode` import, `parseToggleMarker` import, `kind: "toggle"` BlockSpec, toggle detection in `parseBlocks`, `block.kind === "toggle"` handling in `parse()`
+-- `packages/markup/src/serializer.ts` — `ToggleNode` import, `serializeToggle` import, `node.type === "toggle"` dispatch in `serializeBlockNode`
+-- `packages/markup/tests/wiki-links.test.mjs` — 5 toggle fixture IDs and fixture-driven test; re-added `callouts/nested-child` to callout fixture IDs
++- `packages/markup/src/parser.ts` — `parseFoldedHeadingMarker` import, `FoldState` usage in BlockSpec, parameterized `createFoldableHeading`, all-level folded heading detection, updated block dispatch
++- `packages/markup/src/serializer.ts` — blank-line rule narrowed from paragraph→(heading|foldableHeading) to paragraph→foldableHeading only, fixing tags/basic conflict
++- `packages/markup/tests/wiki-links.test.mjs` — 3 folded heading fixture IDs and fixture-driven test
+ - `reports/IMPLEMENTATION_PROGRESS.md` — this update
  
  ## Verification Summary
  
--- `node --test packages/markup/tests/**/*.test.mjs` — 60 tests pass (6 callout fixture tests)
-+- `node --test packages/markup/tests/**/*.test.mjs` — 62 tests pass (5 toggle + 7 callout fixture tests)
+-- `node --test packages/markup/tests/**/*.test.mjs` — 62 tests pass (5 toggle + 7 callout fixture tests)
++- `node --test packages/markup/tests/**/*.test.mjs` — tests pass (including 3 folded heading fixture tests)
  - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
-+- `node scripts/validate-fixtures.mjs` — fixture validation passed
-+- `node scripts/validate-spec-version.mjs` — spec version validation passed
-+- `node scripts/check-boundaries.mjs` — boundary check passed
-+- `node scripts/report-unavailable.mjs lint` — lint unavailable (bootstrap placeholder)
-+- `tsc -b packages/markup/tsconfig.json` — build passed
- 
- ## Active Blockers
- 
-@@ -53,4 +59,4 @@ None.
+ - `node scripts/validate-fixtures.mjs` — fixture validation passed
+ - `node scripts/validate-spec-version.mjs` — spec version validation passed
+@@ -59,4 +56,4 @@ None.
  
  ## Next Recommended Task
  
--P1-013 comments
-+P1-019 folded headings
+-P1-019 folded headings
++P1-020 block IDs

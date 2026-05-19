@@ -1,1 +1,1 @@
-2e1f8b7 feat(markup): implement toggle parsing
+9c5e0bc feat(markup): implement folded heading parsing
