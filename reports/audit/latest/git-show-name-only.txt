@@ -1,2 +1,10 @@
 reports/IMPLEMENTATION_PROGRESS.md
 reports/PHASE_4_VALIDATION.md
+reports/audit/latest/AUDIT_INDEX.md
+reports/audit/latest/audit.json
+reports/audit/latest/git-log.txt
+reports/audit/latest/git-show-name-only.txt
+reports/audit/latest/git-show-stat.txt
+reports/audit/latest/git-show.patch
+reports/audit/latest/progress-report.md
+reports/audit/latest/repo-tree.txt
