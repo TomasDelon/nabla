@@ -82,6 +82,14 @@ const emojiFixtureIds = [
   "emoji-shortcodes/punctuation-and-protected"
 ];
 
+const tableFixtureIds = [
+  "gfm-tables/alignment"
+];
+
+const blockIdTableFixtureIds = [
+  "block-ids/table"
+];
+
 let parserModulePromise;
 let serializerModulePromise;
 let fixturesModulePromise;
@@ -484,6 +492,46 @@ test("emoji shortcode fixtures parse and serialize according to the checked-in c
   } = await loadFixturesModule();
 
   for (const fixtureId of emojiFixtureIds) {
+    const fixture = await loadParserFixture(fixtureId);
+    const parsed = parse(fixture.input);
+
+    compareFixtureAst(parsed, fixture.ast);
+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
+    compareFixtureOutput(serialize(parsed), fixture.output);
+  }
+});
+
+test("GFM table fixtures parse and serialize according to the checked-in contracts", async () => {
+  const { parse } = await loadParserModule();
+  const { serialize } = await loadSerializerModule();
+  const {
+    compareFixtureAst,
+    compareFixtureDiagnostics,
+    compareFixtureOutput,
+    loadParserFixture
+  } = await loadFixturesModule();
+
+  for (const fixtureId of tableFixtureIds) {
+    const fixture = await loadParserFixture(fixtureId);
+    const parsed = parse(fixture.input);
+
+    compareFixtureAst(parsed, fixture.ast);
+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
+    compareFixtureOutput(serialize(parsed), fixture.output);
+  }
+});
+
+test("table block ID fixtures parse and serialize according to the checked-in contracts", async () => {
+  const { parse } = await loadParserModule();
+  const { serialize } = await loadSerializerModule();
+  const {
+    compareFixtureAst,
+    compareFixtureDiagnostics,
+    compareFixtureOutput,
+    loadParserFixture
+  } = await loadFixturesModule();
+
+  for (const fixtureId of blockIdTableFixtureIds) {
     const fixture = await loadParserFixture(fixtureId);
     const parsed = parse(fixture.input);
 

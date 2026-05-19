@@ -8,6 +8,7 @@ import { serializeFootnoteReference, serializeFootnoteDefinition } from "./exten
 import { serializeCallout, serializeToggle } from "./extensions/callouts.js";
 import { serializeTransclusion } from "./extensions/transclusions.js";
 import { serializeEmojiShortcode } from "./extensions/emoji-shortcodes.js";
+import { serializeTable } from "./extensions/gfm-tables.js";
 
 export type SerializeOptions = {
   lineEnding?: "lf" | "crlf";
@@ -159,6 +160,17 @@ function serializeBlockNode(node: MarkdownNode) {
     const result = serializeTransclusion(node as TransclusionNode);
     const blockId = getBlockId(node);
     if (!blockId) return `\n${result}`;
+    return `\n${result} ^${blockId}`;
+  }
+
+  if (node.type === "table") {
+    const result = serializeTable(node);
+    const blockId = getBlockId(node);
+    if (!blockId) return `\n${result}`;
+    const isOwnLine = (node.data as Record<string, unknown> | undefined)?.nablaBlockIdOwnLine;
+    if (isOwnLine) {
+      return `\n${result}\n^${blockId}`;
+    }
     return `\n${result} ^${blockId}`;
   }
 

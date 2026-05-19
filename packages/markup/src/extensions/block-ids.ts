@@ -92,7 +92,7 @@ export function extractBlockId(text: string): BlockIdResult {
 
 const ATTACHABLE_KINDS = new Set([
   "paragraph", "heading", "foldableHeading", "listItem",
-  "callout", "toggle", "transclusion"
+  "callout", "toggle", "transclusion", "table"
 ]);
 
 export function getBlockText(block: { kind: string; text?: string; content?: string; title?: string }): string | null {
@@ -157,6 +157,12 @@ export function processBlockIds(
         }
         if (prevAttachable !== -1) {
           (blocks[prevAttachable] as Record<string, unknown>).nablaBlockId = ownLineId;
+          Object.defineProperty(blocks[prevAttachable], "nablaBlockIdOwnLine", {
+            value: true,
+            enumerable: false,
+            writable: false,
+            configurable: false
+          });
           blocks.splice(i, 1);
           i--;
           continue;

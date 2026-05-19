@@ -70,6 +70,16 @@ export type {
   ProtectedRegion,
   ProtectedRegionKind
 } from "./protected-regions.js";
+export {
+  buildTableNode,
+  serializeTable,
+  detectTableStart,
+  parseTable,
+  parseTableAlignment,
+  splitTableRow,
+  isTableSeparatorLine
+} from "./extensions/gfm-tables.js";
+export type { TableBlockSpec } from "./extensions/gfm-tables.js";
 export type { SerializeOptions } from "./serializer.js";
 export type {
   ExpectedDiagnostic,

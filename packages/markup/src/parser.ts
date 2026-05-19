@@ -14,6 +14,7 @@ import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
 import { parseTransclusionLine } from "./extensions/transclusions.js";
 import { processBlockIds } from "./extensions/block-ids.js";
 import { tryParseEmojiShortcode, buildEmojiUnknownDiagnostic } from "./extensions/emoji-shortcodes.js";
+import { detectTableStart, parseTable, buildTableNode } from "./extensions/gfm-tables.js";
 import { DIAGNOSTIC_CODES } from "./diagnostics.js";
 
 export type ParseOptions = {
@@ -89,6 +90,7 @@ type BlockSpec = (
   | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string; nablaBlockId?: string }
   | { kind: "toggle"; foldState: FoldState; title: string; rawMarker: string; childContent: string; nablaBlockId?: string }
   | { kind: "transclusion"; text: string; nablaBlockId?: string }
+  | { kind: "table"; headerRow: string; separator: string; bodyRows: string[]; nablaBlockId?: string }
 );
 
 function parseBlocks(source: string): BlockSpec[] {
@@ -284,6 +286,21 @@ function parseBlocks(source: string): BlockSpec[] {
       flushParagraph();
       blocks.push({ kind: "transclusion", text: line });
       continue;
+    }
+
+    if (detectTableStart(lines, i)) {
+      flushParagraph();
+      const table = parseTable(lines, i);
+      if (table !== null) {
+        blocks.push({
+          kind: "table",
+          headerRow: table.headerRow,
+          separator: table.separator,
+          bodyRows: table.bodyRows
+        });
+        i = table.endIndex;
+        continue;
+      }
     }
 
     paragraphLines.push(line);
@@ -647,6 +664,8 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
         transclusionNode.data = blockData as import("./ast.js").BlockNodeData;
       }
       docChildren.push(transclusionNode as unknown as NablaBlockNode);
+    } else if (block.kind === "table") {
+      docChildren.push(buildTableNode(block.headerRow, block.separator, block.bodyRows, block.nablaBlockId, (block as Record<string, unknown>).nablaBlockIdOwnLine as boolean | undefined));
     }
   }
 
