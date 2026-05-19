@@ -1,3 +1,16 @@
- .../workspace/tests/workspace-fixtures.test.mjs    | 234 +++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md                 |  76 ++++---
- 2 files changed, 283 insertions(+), 27 deletions(-)
+ packages/workspace/src/block-index.ts              |   2 +-
+ packages/workspace/src/index.ts                    |  41 ++
+ packages/workspace/src/workspace.ts                | 111 ++-
+ .../workspace/tests/workspace-fixtures.test.mjs    |  49 +-
+ packages/workspace/tests/workspace-shape.test.mjs  |  75 ++
+ reports/IMPLEMENTATION_PROGRESS.md                 |  84 ++-
+ reports/audit/latest/AUDIT_INDEX.md                |   6 +-
+ reports/audit/latest/audit.json                    |  46 +-
+ reports/audit/latest/git-branch.txt                |   2 +-
+ reports/audit/latest/git-log.txt                   |   2 +-
+ reports/audit/latest/git-show-name-only.txt        |   4 +
+ reports/audit/latest/git-show-stat.txt             |  10 +-
+ reports/audit/latest/git-show.patch                | 804 +++++++++++++--------
+ reports/audit/latest/progress-report.md            |  84 ++-
+ reports/audit/latest/repo-tree.txt                 |   1 +
+ 15 files changed, 897 insertions(+), 424 deletions(-)

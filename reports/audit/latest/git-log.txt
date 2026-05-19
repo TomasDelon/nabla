@@ -1,1 +1,3 @@
-cee7823 test(workspace): add workspace fixture regression coverage
+83db762 docs: reclassify workspace shape alignment as P2-011A
+7b9eaf5 docs: add audit bundle for P2-012 workspace shape alignment
+2ed92d6 feat(workspace): align workspace fixture output shape

@@ -1,2 +1,15 @@
+packages/workspace/src/block-index.ts
+packages/workspace/src/index.ts
+packages/workspace/src/workspace.ts
 packages/workspace/tests/workspace-fixtures.test.mjs
+packages/workspace/tests/workspace-shape.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md
+reports/audit/latest/AUDIT_INDEX.md
+reports/audit/latest/audit.json
+reports/audit/latest/git-branch.txt
+reports/audit/latest/git-log.txt
+reports/audit/latest/git-show-name-only.txt
+reports/audit/latest/git-show-stat.txt
+reports/audit/latest/git-show.patch
+reports/audit/latest/progress-report.md
+reports/audit/latest/repo-tree.txt
