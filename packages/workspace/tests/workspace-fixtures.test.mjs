@@ -37,8 +37,8 @@ function diagnosticByCode(diagnostics, code) {
 // resolution-basic
 // ---------------------------------------------------------------------------
 // PASSABLE: wiki link resolutions, transclusion resolutions, backlinks,
-//           heading index, block index, diagnostics (empty)
-// DEFERRED: per-document grouping (documents[]), ownerType in blocks
+//           heading index, block index, diagnostics (empty), grouped documents,
+//           ownerType in blocks
 // ---------------------------------------------------------------------------
 // NOTE on path convention: heading/block index entries store filePath as the
 // normalized path (no .md extension).  Wiki link and transclusion resolutions
@@ -47,12 +47,14 @@ function diagnosticByCode(diagnostics, code) {
 // (with .md).  A future comparator could bridge the two conventions.
 // ---------------------------------------------------------------------------
 test("workspace fixture: resolution-basic", async () => {
-  const { createWorkspace } = await loadWorkspace();
+  const { createWorkspace, toWorkspaceFixtureShape } = await loadWorkspace();
   const root = await resolveSpecFixturesRoot();
   const dir = path.join(root, "workspace", "resolution-basic");
   const files = await readFixtureFiles(dir);
+  const expected = await readFixtureJson(dir, "expected-index.json");
 
   const result = createWorkspace(files, { maxTransclusionDepth: 10 });
+  const shape = toWorkspaceFixtureShape(result);
 
   assert.equal(result.diagnostics.length, 0);
 
@@ -92,6 +94,7 @@ test("workspace fixture: resolution-basic", async () => {
   const b = result.workspace.index.blocks[0];
   assert.equal(b.blockId, "thm-main");
   assert.equal(b.filePath, "analyse");
+  assert.equal(b.ownerType, "paragraph");
 
   // backlinks – 2 kinds
   assert.equal(result.workspace.index.backlinks.length, 2);
@@ -103,26 +106,37 @@ test("workspace fixture: resolution-basic", async () => {
   assert.ok(bkBlock);
   assert.equal(bkBlock.sourcePath, "main.md");
   assert.equal(bkBlock.targetPath, "analyse");
+
+  const mainDoc = shape.documents.find(doc => doc.path === "main.md");
+  assert.deepEqual(mainDoc, expected.documents[0]);
+
+  const analyseDoc = shape.documents.find(doc => doc.path === "analyse.md");
+  assert.deepEqual(analyseDoc, expected.documents[1]);
+
+  assert.deepEqual(shape.backlinks, expected.backlinks);
 });
 
 // ---------------------------------------------------------------------------
 // missing-target
 // ---------------------------------------------------------------------------
-// PASSABLE: unresolved wiki link with LINK_MISSING_TARGET diagnostic
-// DEFERRED: per-document grouping (missingLinks[], missingTransclusions[]),
-//           transclusion MISSING_TARGET (inline transclusion ![[missing]]
+// PASSABLE: unresolved wiki link with LINK_MISSING_TARGET diagnostic,
+//           grouped missingLinks[]
+// DEFERRED: transclusion MISSING_TARGET / missingTransclusions[] for fixture
+//           (inline transclusion ![[missing]]
 //           is in a paragraph; the parser emits INLINE_UNSUPPORTED instead
 //           of producing a transclusion node, so the resolver never processes
 //           it), diagnostic message text differs (actual: "Note target not
 //           found: missing" vs fixture: "Wiki link target does not exist.")
 // ---------------------------------------------------------------------------
 test("workspace fixture: missing-target", async () => {
-  const { createWorkspace } = await loadWorkspace();
+  const { createWorkspace, toWorkspaceFixtureShape } = await loadWorkspace();
   const root = await resolveSpecFixturesRoot();
   const dir = path.join(root, "workspace", "missing-target");
   const files = await readFixtureFiles(dir);
+  const expected = await readFixtureJson(dir, "expected-index.json");
 
   const result = createWorkspace(files);
+  const shape = toWorkspaceFixtureShape(result);
 
   // diagnostics count = 2 (one from parser for inline transclusion,
   // one from wiki-link resolver for missing link target)
@@ -150,21 +164,28 @@ test("workspace fixture: missing-target", async () => {
 
   // transclusion – not resolved (inline, skipped by parser)
   assert.equal(result.transclusions.resolutions.length, 0);
+
+  const mainDoc = shape.documents.find(doc => doc.path === "main.md");
+  assert.deepEqual(mainDoc?.missingLinks, expected.documents[0].missingLinks);
+  assert.equal(mainDoc?.missingTransclusions, undefined);
 });
 
 // ---------------------------------------------------------------------------
 // backlink-position-optional
 // ---------------------------------------------------------------------------
-// PASSABLE: resolved wiki link, backlinks (note kind), heading index
-// DEFERRED: per-document grouping (documents[]), sourcePositionPolicy field
+// PASSABLE: resolved wiki link, backlinks (note kind), heading index,
+//           grouped documents[]
+// DEFERRED: sourcePositionPolicy field
 // ---------------------------------------------------------------------------
 test("workspace fixture: backlink-position-optional", async () => {
-  const { createWorkspace } = await loadWorkspace();
+  const { createWorkspace, toWorkspaceFixtureShape } = await loadWorkspace();
   const root = await resolveSpecFixturesRoot();
   const dir = path.join(root, "workspace", "backlink-position-optional");
   const files = await readFixtureFiles(dir);
+  const expected = await readFixtureJson(dir, "expected-index.json");
 
   const result = createWorkspace(files);
+  const shape = toWorkspaceFixtureShape(result);
 
   assert.equal(result.diagnostics.length, 0);
 
@@ -187,6 +208,14 @@ test("workspace fixture: backlink-position-optional", async () => {
   assert.equal(h.text, "Target");
   assert.equal(h.slug, "target");
   assert.equal(h.filePath, "target");
+
+  const mainDoc = shape.documents.find(doc => doc.path === "main.md");
+  assert.deepEqual(mainDoc, expected.documents[0]);
+
+  const targetDoc = shape.documents.find(doc => doc.path === "target.md");
+  assert.deepEqual(targetDoc, expected.documents[1]);
+
+  assert.deepEqual(shape.backlinks, expected.backlinks);
 });
 
 // ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@ export { resolveTransclusions } from "./transclusion-resolver.js";
 export type { TransclusionResolution, TransclusionResolverResult } from "./transclusion-resolver.js";
 
 export { createWorkspace } from "./workspace.js";
+export { toWorkspaceFixtureShape } from "./workspace.js";
 export type { WorkspaceResult } from "./workspace.js";
 
 export { buildBacklinkIndex } from "./backlink-index.js";
@@ -44,10 +45,50 @@ export type HeadingIndexEntry = {
 export type BlockIndexEntry = {
   filePath: string;
   blockId: string;
+  ownerType?: string;
   position?: {
     start: { line: number; column: number; offset: number };
     end: { line: number; column: number; offset: number };
   };
+};
+
+export type WorkspaceFixtureLinkEntry = {
+  target?: string;
+  heading?: string;
+  blockId?: string;
+  resolvedPath?: string;
+};
+
+export type WorkspaceFixtureTransclusionEntry = {
+  target?: string;
+  heading?: string;
+  blockId?: string;
+  resolvedPath?: string;
+};
+
+export type WorkspaceFixtureHeadingEntry = {
+  text: string;
+  slug: string;
+};
+
+export type WorkspaceFixtureBlockEntry = {
+  id: string;
+  ownerType: string;
+};
+
+export type WorkspaceFixtureDocument = {
+  path: string;
+  links?: WorkspaceFixtureLinkEntry[];
+  transclusions?: WorkspaceFixtureTransclusionEntry[];
+  headings?: WorkspaceFixtureHeadingEntry[];
+  blocks?: WorkspaceFixtureBlockEntry[];
+  missingLinks?: string[];
+  missingTransclusions?: string[];
+};
+
+export type WorkspaceFixtureIndex = {
+  documents: WorkspaceFixtureDocument[];
+  backlinks: Array<Pick<BacklinkEntry, "sourcePath" | "targetPath" | "kind">>;
 };
 
 export type BacklinkEntry = {

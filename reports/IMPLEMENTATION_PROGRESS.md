@@ -6,55 +6,63 @@ Phase 2 — `@nabla/workspace`
 
 ## Task ID
 
-`P2-011` — workspace fixture regression
+`P2-012` — workspace fixture shape alignment
 
 ## Branch
 
-`phase-2-workspace-core`
+`p2-012-workspace-shape-alignment`
 
 ## Status
 
-P2-011 completed: workspace fixture regression coverage.
+P2-012 completed: fixture-facing workspace shape alignment.
 
-### Workspace Fixture Regression Tests
+### Fixture Shape Alignment
 
-Added `packages/workspace/tests/workspace-fixtures.test.mjs` that runs `createWorkspace`
-against all 5 real spec fixture groups and validates current behavior:
+Added `toWorkspaceFixtureShape(result)` in `packages/workspace/src/workspace.ts`
+and exported it from `packages/workspace/src/index.ts`. The transformer preserves
+the existing flat `workspace.index` API and adds a fixture-facing grouped shape for
+comparisons.
+
+Also added `ownerType` to block index entries so grouped block output can match the
+fixture shape without changing parser behavior.
+
+Updated `packages/workspace/tests/workspace-fixtures.test.mjs` and added
+`packages/workspace/tests/workspace-shape.test.mjs` to cover grouped output.
 
 | Fixture | Status | What is tested | Deferred |
 |---|---|---|---|
-| `resolution-basic` | PASSABLE | wiki link resolutions (heading + block), transclusion (block), heading index, block index, backlinks (2 kinds), empty diagnostics | per-document grouping (documents[]), ownerType in blocks |
-| `missing-target` | PASSABLE (partial) | unresolved wiki link, `LINK_MISSING_TARGET` diagnostic, inline transclusion `INLINE_UNSUPPORTED` diagnostic | `TRANSCLUSION_MISSING_TARGET` (inline transclusion unsupported by parser), per-document grouping, missingLinks/missingTransclusions arrays, diagnostic message text |
-| `backlink-position-optional` | PASSABLE | resolved wiki link, note-kind backlink, heading index | per-document grouping, sourcePositionPolicy field |
-| `transclusion-cycle` | PASSABLE | cycle diagnostic emission, preserved resolutions | cycle path array (`["a.md", "b.md", "a.md"]`) |
-| `transclusion-depth-limit` | PASSABLE | depth-limit diagnostic, resolution count (5 of 6 edges) | maxDepth as output field, stoppedAt tracking |
+| `resolution-basic` | PASSABLE | grouped `documents[]`, resolved `links`, resolved `transclusions`, headings, blocks with `ownerType`, backlinks | none for covered fields |
+| `missing-target` | PASSABLE (partial) | grouped `missingLinks[]` from unresolved wiki links | `missingTransclusions[]` for this fixture because inline transclusion is parser-blocked; exact diagnostic message text |
+| `backlink-position-optional` | PASSABLE | grouped `documents[]`, resolved note link, headings, backlinks | `sourcePositionPolicy` |
+| `transclusion-cycle` | PASSABLE | existing cycle diagnostic emission, preserved resolutions | cycle path array (`["a.md", "b.md", "a.md"]`) |
+| `transclusion-depth-limit` | PASSABLE | existing depth-limit diagnostic, resolution count (5 of 6 edges) | `maxDepth` output, `stoppedAt` |
+
+### Focused Transformer Coverage
+
+- `toWorkspaceFixtureShape` groups output per document.
+- Resolved heading/block targets are mapped back from normalized workspace paths to
+  original fixture file paths (for example `analyse` -> `analyse.md`).
+- `missingLinks[]` is extracted from unresolved wiki link resolutions.
+- `missingTransclusions[]` is extracted from unresolved transclusion resolutions when
+  the resolver sees a transclusion node.
 
 ### Path Convention Note
 
-Heading/block index entries store `filePath` as the normalized path (no `.md` extension).
-Wiki link and transclusion resolutions that resolve to headings/blocks carry the same
-normalized path.  This differs from the fixture `expected-index.json` which uses paths
-with `.md` extension.  A future comparator or a small fix to store original paths in
-heading/block entries would bridge the gap.
+Flat heading/block index entries still store normalized `filePath` values (no `.md`
+extension). The fixture transformer bridges that by mapping normalized paths back to
+original file paths in grouped fixture output.
 
 ### Deferred Behaviours (Exact Reasons)
 
-1. **per-document grouping** (`documents[]`): WorkspaceResult produces flat indices
-   (files[], headings[], blocks[], backlinks[]).  No transformer groups them into the
-   per-document shape that all fixture expected-index.json files expect.
-2. **ownerType in blocks**: BlockIndexEntry has no `ownerType` field — the owning
-   node type (e.g. "paragraph") is never recorded.
-3. **missingLinks / missingTransclusions arrays**: Unresolved wiki link and transclusion
-   targets exist in the resolution arrays but are not extracted into dedicated arrays.
-4. **sourcePositionPolicy**: Not present in any output type or options interface.
-5. **cycle path array**: Cycle detection emits a diagnostic but does not record the
+1. **sourcePositionPolicy**: Not present in any output type or options interface.
+2. **cycle path array**: Cycle detection emits a diagnostic but does not record the
    cycle path (`["a.md", "b.md", "a.md"]`).
-6. **maxDepth output / stoppedAt**: maxDepth is configurable as input but not exposed
+3. **maxDepth output / stoppedAt**: maxDepth is configurable as input but not exposed
    as output; the file stopped at is not tracked.
-7. **inline transclusion resolution**: The parser emits `TRANSCLUSION_INLINE_UNSUPPORTED`
+4. **inline transclusion resolution**: The parser emits `TRANSCLUSION_INLINE_UNSUPPORTED`
    for inline transclusions and never produces a transclusion node, so the resolver
    cannot process them.
-8. **diagnostic message text**: Actual messages include the target name
+5. **diagnostic message text**: Actual messages include the target name
    ("Note target not found: missing") while fixture messages are generic
    ("Wiki link target does not exist.").
 
@@ -67,20 +75,20 @@ heading/block entries would bridge the gap.
 
 ## Verification Summary
 
-- `pnpm test` — all markup + workspace tests pass (69 total)
-- `pnpm test:workspace` — passes (128 tests, including 5 new fixture regression tests)
-- `pnpm test:markup` — passes
-- `pnpm typecheck` — passed
-- `pnpm build` — passed
-- `pnpm validate:fixtures` — passed
-- `pnpm validate:spec-version` — passed
-- `pnpm check:boundaries` — passed
+- `pnpm test` — PASS
+- `pnpm test:workspace` — PASS
+- `pnpm test:markup` — PASS
+- `pnpm typecheck` — PASS
+- `pnpm build` — PASS
+- `pnpm validate:fixtures` — PASS
+- `pnpm validate:spec-version` — PASS
+- `pnpm check:boundaries` — PASS
 - `pnpm lint` — unavailable (expected)
 
 ## Active Blockers
 
-None — all deferred fixtures have documented reasons.
+None.
 
 ## Next Recommended Task
 
-P2-012 — <next task per project roadmap>
+Next Phase 2 workspace task per project roadmap.

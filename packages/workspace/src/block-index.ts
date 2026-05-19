@@ -49,7 +49,7 @@ export function buildBlockIndex(
       const blockId = getNablaBlockId(node);
       if (blockId) {
         const position = getPosition(node);
-        entries.push({ filePath, blockId, position });
+        entries.push({ filePath, blockId, ownerType: node.type as string, position });
 
         const existingPos = seenIds.get(blockId);
         if (existingPos) {
