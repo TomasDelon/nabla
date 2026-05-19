@@ -1,0 +1,9 @@
+.nabla-emoji {
+  font-family: var(--nabla-font-family);
+  font-size: var(--nabla-font-size-md);
+  line-height: var(--nabla-line-height);
+}
+
+.nabla-emoji--unknown {
+  color: var(--nabla-color-text-muted);
+}

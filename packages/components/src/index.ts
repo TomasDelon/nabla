@@ -18,6 +18,8 @@ export { Tag, getTagDisplay } from "./tag.js";
 
 export { Highlight, getHighlightStyle } from "./highlight.js";
 
+export { Emoji, getEmojiDisplay } from "./emoji.js";
+
 export type { NablaComponentTheme } from "./theme.js";
 
 export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
@@ -29,3 +31,4 @@ export type { TaskStateValue } from "./types.js";
 export type { WikiLinkDisplay } from "./wiki-link.js";
 export type { TagDisplay } from "./tag.js";
 export type { HighlightStyle } from "./highlight.js";
+export type { EmojiDisplay } from "./emoji.js";

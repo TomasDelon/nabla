@@ -34,11 +34,17 @@ test("Tag and Highlight are exported from public API", async () => {
   assert.equal(typeof mod.getHighlightStyle, "function");
 });
 
+test("Emoji is exported from public API", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.Emoji, "function");
+  assert.equal(typeof mod.getEmojiDisplay, "function");
+});
+
 test("no forbidden visual components are exported", async () => {
   const mod = await load();
   const keys = Object.keys(mod);
 
-  assert.equal(keys.includes("Emoji"), false);
   assert.equal(keys.includes("Footnote"), false);
   assert.equal(keys.includes("Comment"), false);
   assert.equal(keys.includes("Callout"), false);
