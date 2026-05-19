@@ -1,8 +1,8 @@
 # Audit Bundle
 
-Reviewed range: `c327551..83db762`
-Current branch: `p2-012-workspace-shape-alignment`
-Current HEAD at generation time: `83db762ce563b4deb4a3627dc7c26d2388745d05`
+Reviewed range: `c327551..0bb23318b88ab359fd5903b1166613bed2a80795`
+Current branch: `phase-2-workspace-core`
+Current HEAD at generation time: `0bb23318b88ab359fd5903b1166613bed2a80795`
 
 Review source of truth: use the audit bundle commit hash to read `reports/audit/latest/*`.
 
