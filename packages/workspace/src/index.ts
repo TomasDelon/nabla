@@ -64,3 +64,6 @@ export type Workspace = {
   index: WorkspaceIndex;
   options: WorkspaceOptions;
 };
+
+export { createSlug, deduplicateSlugs } from "./slug.js";
+export { buildHeadingIndex } from "./heading-index.js";
