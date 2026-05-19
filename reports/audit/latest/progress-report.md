@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-004` — Task State Visual Component
+`P4-005` — Wiki Link Visual Component
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -223,6 +223,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - Browser DOM rendering tests deferred to P4-014 (no DOM/jsdom setup in repo).
 - No editor/markup/workspace source changes.
 
+### P4-005 Notes
+
+- Created `packages/components/src/wiki-link.tsx` with `WikiLink` component.
+- Pure helper: `getWikiLinkDisplay` — resolves display text (alias over target) and metadata flags.
+- Created `packages/components/src/wiki-link.css` using `--nabla-*` token variables.
+- Resolved links styled with primary color solid underline; unresolved links with muted color dashed underline.
+- Created tests: `tests/wiki-link.test.mjs` (6 tests); updated `tests/public-api.test.mjs`.
+- Public API consistency: `WikiLink` and `getWikiLinkDisplay` exported; no other visual components leak.
+- No workspace resolver integration — component receives resolved/unresolved state as props.
+- No dependencies added.
+- No editor/markup/workspace source changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -241,4 +253,4 @@ None.
 
 ## Next Recommended Task
 
-P4-005 — Wiki Link Visual Component — implement a React component for wiki links.
+P4-006 — Tag and Highlight Visual Components — implement React components for tags and highlights.

@@ -1,406 +1,230 @@
-diff --git a/packages/components/package.json b/packages/components/package.json
-index a57b714..8e92f50 100644
---- a/packages/components/package.json
-+++ b/packages/components/package.json
-@@ -19,6 +19,8 @@
-     "typecheck": "tsc -p tsconfig.json --noEmit"
-   },
-   "dependencies": {
--    "@nabla/markup": "workspace:*"
-+    "@nabla/markup": "workspace:*",
-+    "react": "^18.3.1",
-+    "@types/react": "^18.3.0"
-   }
- }
 diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-index 7f8473f..133dac0 100644
+index 133dac0..f728e2e 100644
 --- a/packages/components/src/index.ts
 +++ b/packages/components/src/index.ts
-@@ -4,10 +4,19 @@ export { NABLA_COMPONENT_RENDERING_CONTRACT } from "./types.js";
+@@ -12,6 +12,8 @@ export {
+   TASK_STATE_LABELS,
+ } from "./task-state.js";
  
- export { NABLA_COMPONENT_THEME } from "./theme.js";
- 
-+export {
-+  TaskStateCheckbox,
-+  getNextTaskState,
-+  TASK_STATE_ORDER,
-+  TASK_STATE_MARKERS,
-+  TASK_STATE_LABELS,
-+} from "./task-state.js";
++export { WikiLink, getWikiLinkDisplay } from "./wiki-link.js";
 +
  export type { NablaComponentTheme } from "./theme.js";
  
  export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
- export type { NablaComponentContext, NablaComponentProps, NablaComponentRegistry } from "./types.js";
- export type { TaskStateProps, WikiLinkProps, TagProps, HighlightProps, EmojiProps } from "./types.js";
+@@ -20,3 +22,4 @@ export type { TaskStateProps, WikiLinkProps, TagProps, HighlightProps, EmojiProp
  export type { FootnoteProps, CommentProps, CalloutProps, ToggleProps, FoldedHeadingProps } from "./types.js";
-+export type { TaskStateCheckboxProps } from "./task-state.js";
+ export type { TaskStateCheckboxProps } from "./task-state.js";
  export type { TaskStateValue } from "./types.js";
-diff --git a/packages/components/src/task-state.css b/packages/components/src/task-state.css
++export type { WikiLinkDisplay } from "./wiki-link.js";
+diff --git a/packages/components/src/wiki-link.css b/packages/components/src/wiki-link.css
 new file mode 100644
-index 0000000..3db10cb
+index 0000000..3f122bc
 --- /dev/null
-+++ b/packages/components/src/task-state.css
-@@ -0,0 +1,41 @@
-+.nabla-task-state {
++++ b/packages/components/src/wiki-link.css
+@@ -0,0 +1,28 @@
++.nabla-wiki-link {
 +  display: inline-flex;
-+  align-items: center;
++  align-items: baseline;
 +  gap: var(--nabla-spacing-xs);
 +  cursor: pointer;
 +  line-height: var(--nabla-line-height);
 +  font-family: var(--nabla-font-family);
 +  font-size: var(--nabla-font-size-md);
++  color: var(--nabla-color-primary);
++  text-decoration: underline;
++  text-underline-offset: 2px;
++  text-decoration-thickness: 1px;
 +}
 +
-+.nabla-task-state__input {
-+  width: 1.125rem;
-+  height: 1.125rem;
-+  cursor: pointer;
-+  accent-color: var(--nabla-color-primary);
-+}
-+
-+.nabla-task-state__input[data-task-state="unchecked"] {
-+  opacity: 0.6;
-+}
-+
-+.nabla-task-state__input[data-task-state="checked"] {
-+  accent-color: var(--nabla-color-success);
-+}
-+
-+.nabla-task-state__input[data-task-state="cancelled"] {
-+  accent-color: var(--nabla-color-text-muted);
-+}
-+
-+.nabla-task-state__input[data-task-state="important"] {
-+  accent-color: var(--nabla-color-danger);
-+}
-+
-+.nabla-task-state__text {
-+  user-select: none;
-+}
-+
-+.nabla-task-state__input[data-task-state="cancelled"] ~ .nabla-task-state__text {
-+  text-decoration: line-through;
++.nabla-wiki-link[data-unresolved] {
 +  color: var(--nabla-color-text-muted);
++  text-decoration-style: dashed;
 +}
-diff --git a/packages/components/src/task-state.tsx b/packages/components/src/task-state.tsx
++
++.nabla-wiki-link__text {
++  white-space: nowrap;
++}
++
++.nabla-wiki-link__meta {
++  font-size: var(--nabla-font-size-sm);
++  opacity: 0.7;
++  white-space: nowrap;
++}
+diff --git a/packages/components/src/wiki-link.tsx b/packages/components/src/wiki-link.tsx
 new file mode 100644
-index 0000000..1343283
+index 0000000..15429ec
 --- /dev/null
-+++ b/packages/components/src/task-state.tsx
-@@ -0,0 +1,58 @@
-+import type { TaskStateValue } from "./types.js";
-+
-+export const TASK_STATE_ORDER: readonly TaskStateValue[] = [
-+  "unchecked",
-+  "checked",
-+  "cancelled",
-+  "important",
-+];
-+Object.freeze(TASK_STATE_ORDER);
-+
-+export const TASK_STATE_MARKERS: Record<TaskStateValue, string> = {
-+  unchecked: " ",
-+  checked: "x",
-+  cancelled: "-",
-+  important: "!",
-+};
-+Object.freeze(TASK_STATE_MARKERS);
-+
-+export const TASK_STATE_LABELS: Record<TaskStateValue, string> = {
-+  unchecked: "Unchecked",
-+  checked: "Checked",
-+  cancelled: "Cancelled",
-+  important: "Important",
-+};
-+Object.freeze(TASK_STATE_LABELS);
-+
-+export function getNextTaskState(current: TaskStateValue): TaskStateValue {
-+  const index = TASK_STATE_ORDER.indexOf(current);
-+  return TASK_STATE_ORDER[(index + 1) % TASK_STATE_ORDER.length];
++++ b/packages/components/src/wiki-link.tsx
+@@ -0,0 +1,55 @@
++export interface WikiLinkDisplay {
++  readonly displayText: string;
++  readonly hasAlias: boolean;
++  readonly hasHeading: boolean;
++  readonly hasBlockId: boolean;
 +}
 +
-+export interface TaskStateCheckboxProps {
-+  readonly state: TaskStateValue;
-+  readonly text: string;
-+  readonly onChange: (newState: TaskStateValue) => void;
++export function getWikiLinkDisplay(props: {
++  readonly target: string;
++  readonly alias?: string;
++  readonly heading?: string;
++  readonly blockId?: string;
++}): WikiLinkDisplay {
++  return {
++    displayText: props.alias ?? props.target,
++    hasAlias: props.alias !== undefined,
++    hasHeading: props.heading !== undefined,
++    hasBlockId: props.blockId !== undefined,
++  };
 +}
 +
-+export function TaskStateCheckbox({
-+  state,
-+  text,
-+  onChange,
-+}: TaskStateCheckboxProps) {
-+  const nextState = getNextTaskState(state);
++export interface WikiLinkProps {
++  readonly target: string;
++  readonly alias?: string;
++  readonly heading?: string;
++  readonly blockId?: string;
++  readonly unresolved: boolean;
++  readonly raw: string;
++}
++
++export function WikiLink({
++  target,
++  alias,
++  heading,
++  blockId,
++  unresolved,
++}: WikiLinkProps) {
++  const display = getWikiLinkDisplay({ target, alias, heading, blockId });
 +
 +  return (
-+    <label className="nabla-task-state">
-+      <input
-+        type="checkbox"
-+        className="nabla-task-state__input"
-+        checked={state === "checked"}
-+        data-task-state={state}
-+        onChange={() => onChange(nextState)}
-+        aria-label={`${TASK_STATE_LABELS[state]}: ${text}`}
-+      />
-+      <span className="nabla-task-state__text">{text}</span>
-+    </label>
++    <span
++      className="nabla-wiki-link"
++      data-unresolved={unresolved ? "" : undefined}
++      title={unresolved ? `Missing note: ${target}` : target}
++    >
++      <span className="nabla-wiki-link__text">{display.displayText}</span>
++      {display.hasHeading && (
++        <span className="nabla-wiki-link__meta">#{heading}</span>
++      )}
++      {display.hasBlockId && (
++        <span className="nabla-wiki-link__meta">^{blockId}</span>
++      )}
++    </span>
 +  );
 +}
 diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
-new file mode 100644
-index 0000000..7a4185b
---- /dev/null
+index 7a4185b..894c170 100644
+--- a/packages/components/tests/public-api.test.mjs
 +++ b/packages/components/tests/public-api.test.mjs
-@@ -0,0 +1,50 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+
-+async function load() {
-+  return import(new URL("../dist/index.js", import.meta.url));
-+}
-+
-+test("NABLA_COMPONENTS_PACKAGE constant is exported", async () => {
+@@ -18,11 +18,17 @@ test("TaskStateCheckbox is exported from public API", async () => {
+   assert.equal(typeof mod.getNextTaskState, "function");
+ });
+ 
++test("WikiLink is exported from public API", async () => {
 +  const mod = await load();
 +
-+  assert.equal(mod.NABLA_COMPONENTS_PACKAGE, "@nabla/components");
++  assert.equal(typeof mod.WikiLink, "function");
++  assert.equal(typeof mod.getWikiLinkDisplay, "function");
 +});
 +
-+test("TaskStateCheckbox is exported from public API", async () => {
-+  const mod = await load();
-+
-+  assert.equal(typeof mod.TaskStateCheckbox, "function");
-+  assert.equal(typeof mod.getNextTaskState, "function");
-+});
-+
-+test("no forbidden visual components are exported", async () => {
-+  const mod = await load();
-+  const keys = Object.keys(mod);
-+
-+  assert.equal(keys.includes("WikiLink"), false);
-+  assert.equal(keys.includes("Tag"), false);
-+  assert.equal(keys.includes("Highlight"), false);
-+  assert.equal(keys.includes("Emoji"), false);
-+  assert.equal(keys.includes("Footnote"), false);
-+  assert.equal(keys.includes("Comment"), false);
-+  assert.equal(keys.includes("Callout"), false);
-+  assert.equal(keys.includes("Toggle"), false);
-+  assert.equal(keys.includes("FoldedHeading"), false);
-+});
-+
-+test("NABLA_COMPONENT_THEME is exported", async () => {
-+  const mod = await load();
-+
-+  assert.equal(typeof mod.NABLA_COMPONENT_THEME, "object");
-+  assert.equal(typeof mod.NABLA_COMPONENT_THEME.colors, "object");
-+});
-+
-+test("NABLA_COMPONENT_RENDERING_CONTRACT is exported", async () => {
-+  const mod = await load();
-+
-+  assert.equal(
-+    mod.NABLA_COMPONENT_RENDERING_CONTRACT,
-+    "nabla-component-rendering-contract",
-+  );
-+});
-diff --git a/packages/components/tests/task-state.test.mjs b/packages/components/tests/task-state.test.mjs
+ test("no forbidden visual components are exported", async () => {
+   const mod = await load();
+   const keys = Object.keys(mod);
+ 
+-  assert.equal(keys.includes("WikiLink"), false);
+   assert.equal(keys.includes("Tag"), false);
+   assert.equal(keys.includes("Highlight"), false);
+   assert.equal(keys.includes("Emoji"), false);
+diff --git a/packages/components/tests/wiki-link.test.mjs b/packages/components/tests/wiki-link.test.mjs
 new file mode 100644
-index 0000000..6717abb
+index 0000000..1e9b54e
 --- /dev/null
-+++ b/packages/components/tests/task-state.test.mjs
-@@ -0,0 +1,61 @@
++++ b/packages/components/tests/wiki-link.test.mjs
+@@ -0,0 +1,75 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
 +async function load() {
-+  return import(new URL("../dist/task-state.js", import.meta.url));
++  return import(new URL("../dist/wiki-link.js", import.meta.url));
 +}
 +
-+test("TASK_STATE_ORDER contains all four states in cycle order", async () => {
++test("getWikiLinkDisplay uses alias when provided", async () => {
 +  const mod = await load();
 +
-+  assert.deepEqual(mod.TASK_STATE_ORDER, [
-+    "unchecked",
-+    "checked",
-+    "cancelled",
-+    "important",
-+  ]);
++  const result = mod.getWikiLinkDisplay({
++    target: "TargetPage",
++    alias: "Custom Alias",
++  });
++
++  assert.equal(result.displayText, "Custom Alias");
++  assert.equal(result.hasAlias, true);
 +});
 +
-+test("getNextTaskState cycles deterministically", async () => {
++test("getWikiLinkDisplay falls back to target when no alias", async () => {
 +  const mod = await load();
 +
-+  assert.equal(mod.getNextTaskState("unchecked"), "checked");
-+  assert.equal(mod.getNextTaskState("checked"), "cancelled");
-+  assert.equal(mod.getNextTaskState("cancelled"), "important");
-+  assert.equal(mod.getNextTaskState("important"), "unchecked");
++  const result = mod.getWikiLinkDisplay({
++    target: "TargetPage",
++  });
++
++  assert.equal(result.displayText, "TargetPage");
++  assert.equal(result.hasAlias, false);
 +});
 +
-+test("getNextTaskState cycles through full loop", async () => {
++test("getWikiLinkDisplay detects heading reference", async () => {
 +  const mod = await load();
 +
-+  let state = "unchecked";
-+  for (let i = 0; i < 4; i++) {
-+    state = mod.getNextTaskState(state);
-+  }
++  const result = mod.getWikiLinkDisplay({
++    target: "TargetPage",
++    heading: "Section",
++  });
 +
-+  assert.equal(state, "unchecked");
++  assert.equal(result.hasHeading, true);
++  assert.equal(result.hasBlockId, false);
 +});
 +
-+test("TASK_STATE_MARKERS maps each state to its bracket marker", async () => {
++test("getWikiLinkDisplay detects block reference", async () => {
 +  const mod = await load();
 +
-+  assert.equal(mod.TASK_STATE_MARKERS.unchecked, " ");
-+  assert.equal(mod.TASK_STATE_MARKERS.checked, "x");
-+  assert.equal(mod.TASK_STATE_MARKERS.cancelled, "-");
-+  assert.equal(mod.TASK_STATE_MARKERS.important, "!");
++  const result = mod.getWikiLinkDisplay({
++    target: "TargetPage",
++    blockId: "abc123",
++  });
++
++  assert.equal(result.hasBlockId, true);
++  assert.equal(result.hasHeading, false);
 +});
 +
-+test("TASK_STATE_LABELS maps each state to a human-readable label", async () => {
++test("getWikiLinkDisplay combines alias, heading, and block metadata", async () => {
 +  const mod = await load();
 +
-+  assert.equal(mod.TASK_STATE_LABELS.unchecked, "Unchecked");
-+  assert.equal(mod.TASK_STATE_LABELS.checked, "Checked");
-+  assert.equal(mod.TASK_STATE_LABELS.cancelled, "Cancelled");
-+  assert.equal(mod.TASK_STATE_LABELS.important, "Important");
++  const result = mod.getWikiLinkDisplay({
++    target: "Target",
++    alias: "Alias",
++    heading: "Head",
++    blockId: "block1",
++  });
++
++  assert.equal(result.displayText, "Alias");
++  assert.equal(result.hasAlias, true);
++  assert.equal(result.hasHeading, true);
++  assert.equal(result.hasBlockId, true);
 +});
 +
-+test("TaskStateCheckbox is a function", async () => {
++test("WikiLink is a function", async () => {
 +  const mod = await load();
 +
-+  assert.equal(typeof mod.TaskStateCheckbox, "function");
++  assert.equal(typeof mod.WikiLink, "function");
 +});
-diff --git a/packages/components/tsconfig.json b/packages/components/tsconfig.json
-index cf9e1b1..6d2a23a 100644
---- a/packages/components/tsconfig.json
-+++ b/packages/components/tsconfig.json
-@@ -2,9 +2,12 @@
-   "extends": "../../tsconfig.base.json",
-   "compilerOptions": {
-     "rootDir": "src",
--    "outDir": "dist"
-+    "outDir": "dist",
-+    "jsx": "react-jsx",
-+    "jsxImportSource": "react"
-   },
-   "include": [
--    "src/**/*.ts"
-+    "src/**/*.ts",
-+    "src/**/*.tsx"
-   ]
- }
-diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
-index f88e7e7..9a2a860 100644
---- a/pnpm-lock.yaml
-+++ b/pnpm-lock.yaml
-@@ -17,6 +17,12 @@ importers:
-       '@nabla/markup':
-         specifier: workspace:*
-         version: link:../markup
-+      '@types/react':
-+        specifier: ^18.3.0
-+        version: 18.3.28
-+      react:
-+        specifier: ^18.3.1
-+        version: 18.3.1
- 
-   packages/editor:
-     dependencies:
-@@ -53,16 +59,32 @@ packages:
-   '@types/mdurl@2.0.0':
-     resolution: {integrity: sha512-RGdgjQUZba5p6QEFAVx2OGb8rQDL/cPRG7GiedRzMcJ1tYnUANBncjbSB1NRGwbvjcPeikRABz2nshyPk1bhWg==}
- 
-+  '@types/prop-types@15.7.15':
-+    resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
-+
-+  '@types/react@18.3.28':
-+    resolution: {integrity: sha512-z9VXpC7MWrhfWipitjNdgCauoMLRdIILQsAEV+ZesIzBq/oUlxk0m3ApZuMFCXdnS4U7KrI+l3WRUEGQ8K1QKw==}
-+
-   argparse@2.0.1:
-     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
- 
-+  csstype@3.2.3:
-+    resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
-+
-   entities@4.5.0:
-     resolution: {integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==}
-     engines: {node: '>=0.12'}
- 
-+  js-tokens@4.0.0:
-+    resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
-+
-   linkify-it@5.0.0:
-     resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
- 
-+  loose-envify@1.4.0:
-+    resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
-+    hasBin: true
-+
-   markdown-it@14.1.1:
-     resolution: {integrity: sha512-BuU2qnTti9YKgK5N+IeMubp14ZUKUUw7yeJbkjtosvHiP0AZ5c8IAgEMk79D0eC8F23r4Ac/q8cAIFdm2FtyoA==}
-     hasBin: true
-@@ -92,6 +114,10 @@ packages:
-     resolution: {integrity: sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==}
-     engines: {node: '>=6'}
- 
-+  react@18.3.1:
-+    resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
-+    engines: {node: '>=0.10.0'}
-+
-   typescript@5.9.3:
-     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
-     engines: {node: '>=14.17'}
-@@ -116,14 +142,29 @@ snapshots:
- 
-   '@types/mdurl@2.0.0': {}
- 
-+  '@types/prop-types@15.7.15': {}
-+
-+  '@types/react@18.3.28':
-+    dependencies:
-+      '@types/prop-types': 15.7.15
-+      csstype: 3.2.3
-+
-   argparse@2.0.1: {}
- 
-+  csstype@3.2.3: {}
-+
-   entities@4.5.0: {}
- 
-+  js-tokens@4.0.0: {}
-+
-   linkify-it@5.0.0:
-     dependencies:
-       uc.micro: 2.1.0
- 
-+  loose-envify@1.4.0:
-+    dependencies:
-+      js-tokens: 4.0.0
-+
-   markdown-it@14.1.1:
-     dependencies:
-       argparse: 2.0.1
-@@ -165,6 +206,10 @@ snapshots:
- 
-   punycode.js@2.3.1: {}
- 
-+  react@18.3.1:
-+    dependencies:
-+      loose-envify: 1.4.0
-+
-   typescript@5.9.3: {}
- 
-   uc.micro@2.1.0: {}
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 8c8e270..063ab9a 100644
+index 063ab9a..56e7177 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-003` — Visual Design Tokens and Minimal Styling Boundary
-+`P4-004` — Task State Visual Component
+-`P4-004` — Task State Visual Component
++`P4-005` — Wiki Link Visual Component
  
  ## Branch
  
@@ -408,33 +232,33 @@ index 8c8e270..063ab9a 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -211,6 +211,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
- - No visual components implemented.
+@@ -223,6 +223,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+ - Browser DOM rendering tests deferred to P4-014 (no DOM/jsdom setup in repo).
  - No editor/markup/workspace source changes.
  
-+### P4-004 Notes
++### P4-005 Notes
 +
-+- Created `packages/components/src/task-state.tsx` with `TaskStateCheckbox` component.
-+- Pure helpers: `getNextTaskState`, `TASK_STATE_ORDER`, `TASK_STATE_MARKERS`, `TASK_STATE_LABELS`.
-+- Created `packages/components/src/task-state.css` using `--nabla-*` token variables.
-+- Added React 18 as dependency in `packages/components/package.json`.
-+- Updated `packages/components/tsconfig.json` to support TSX with `jsx: "react-jsx"`.
-+- Created tests: `tests/task-state.test.mjs` (7 tests) and `tests/public-api.test.mjs` (5 tests).
-+- Public API consistency: only task-state component exported; no other visual components leak.
-+- Browser DOM rendering tests deferred to P4-014 (no DOM/jsdom setup in repo).
++- Created `packages/components/src/wiki-link.tsx` with `WikiLink` component.
++- Pure helper: `getWikiLinkDisplay` — resolves display text (alias over target) and metadata flags.
++- Created `packages/components/src/wiki-link.css` using `--nabla-*` token variables.
++- Resolved links styled with primary color solid underline; unresolved links with muted color dashed underline.
++- Created tests: `tests/wiki-link.test.mjs` (6 tests); updated `tests/public-api.test.mjs`.
++- Public API consistency: `WikiLink` and `getWikiLinkDisplay` exported; no other visual components leak.
++- No workspace resolver integration — component receives resolved/unresolved state as props.
++- No dependencies added.
 +- No editor/markup/workspace source changes.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -229,4 +241,4 @@ None.
+@@ -241,4 +253,4 @@ None.
  
  ## Next Recommended Task
  
--P4-004 — Task State Visual Component — implement a React component for task state list items.
-+P4-005 — Wiki Link Visual Component — implement a React component for wiki links.
+-P4-005 — Wiki Link Visual Component — implement a React component for wiki links.
++P4-006 — Tag and Highlight Visual Components — implement React components for tags and highlights.

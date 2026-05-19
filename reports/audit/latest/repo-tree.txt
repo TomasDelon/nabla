@@ -10,8 +10,11 @@ packages/components/src/task-state.tsx
 packages/components/src/theme.ts
 packages/components/src/tokens.css
 packages/components/src/types.ts
+packages/components/src/wiki-link.css
+packages/components/src/wiki-link.tsx
 packages/components/tests/public-api.test.mjs
 packages/components/tests/task-state.test.mjs
+packages/components/tests/wiki-link.test.mjs
 packages/components/tsconfig.json
 packages/editor/fixtures/emoji-preserve/expected.md
 packages/editor/fixtures/emoji-preserve/input.md
