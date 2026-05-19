@@ -16,7 +16,9 @@ test("public editor exports exist", async () => {
   assert.equal(typeof mod.replaceSource, "function");
   assert.equal(typeof mod.insertMarkdownBlock, "function");
   assert.equal(typeof mod.getDocumentBlockSummary, "function");
+  assert.equal(typeof mod.getHighlights, "function");
   assert.equal(typeof mod.getTaskStates, "function");
+  assert.equal(typeof mod.getTags, "function");
   assert.equal(typeof mod.getWikiLinks, "function");
   assert.equal(typeof mod.setTaskState, "function");
   assert.equal(typeof mod.setWikiLinkAlias, "function");
@@ -113,11 +115,13 @@ test("block summary identifies standard markdown block node types", async () => 
   ]);
 });
 
-test("only task-state and wiki-link node view adapters are registered", async () => {
+test("only accepted node view adapters are registered", async () => {
   const mod = await load();
   const editor = mod.createEditor();
 
   assert.deepEqual(editor.nodeViews, {
+    highlight: "node-safe-adapter",
+    tag: "node-safe-adapter",
     taskState: "node-safe-adapter",
     wikiLink: "node-safe-adapter",
   });

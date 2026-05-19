@@ -34,6 +34,8 @@ test("editor runtime exports are wired", async () => {
   assert.equal(typeof mod.replaceSource, "function");
   assert.equal(typeof mod.insertMarkdownBlock, "function");
   assert.equal(typeof mod.getDocumentBlockSummary, "function");
+  assert.equal(typeof mod.getHighlights, "function");
+  assert.equal(typeof mod.getTags, "function");
   assert.equal(typeof mod.getTaskStates, "function");
   assert.equal(typeof mod.getWikiLinks, "function");
   assert.equal(typeof mod.setTaskState, "function");
@@ -61,6 +63,17 @@ test("wiki link runtime exports are wired", async () => {
   assert.equal(typeof mod.getWikiLinkNodeViews, "function");
   assert.equal(typeof mod.getWikiLinksFromMarkdown, "function");
   assert.equal(typeof mod.setWikiLinkAliasInMarkdown, "function");
+});
+
+test("tag and highlight runtime exports are wired", async () => {
+  const mod = await load();
+
+  assert.equal(mod.NABLA_TAG_NODE_VIEW, "node-safe-adapter");
+  assert.equal(mod.NABLA_HIGHLIGHT_NODE_VIEW, "node-safe-adapter");
+  assert.equal(typeof mod.getTagNodeViews, "function");
+  assert.equal(typeof mod.getTagsFromMarkdown, "function");
+  assert.equal(typeof mod.getHighlightNodeViews, "function");
+  assert.equal(typeof mod.getHighlightsFromMarkdown, "function");
 });
 
 test("position runtime exports are wired", async () => {

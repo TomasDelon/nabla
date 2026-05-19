@@ -3,7 +3,9 @@ export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
 export {
   createEditor,
   getDocumentBlockSummary,
+  getHighlights,
   getSource,
+  getTags,
   getTaskStates,
   getWikiLinks,
   insertMarkdownBlock,
@@ -13,6 +15,16 @@ export {
   setWikiLinkAlias,
   toggleTaskState,
 } from "./editor.js";
+export {
+  getHighlightNodeViews,
+  getHighlightsFromMarkdown,
+  NABLA_HIGHLIGHT_NODE_VIEW,
+} from "./nodes/highlight.js";
+export {
+  getTagNodeViews,
+  getTagsFromMarkdown,
+  NABLA_TAG_NODE_VIEW,
+} from "./nodes/tag.js";
 export {
   cycleTaskState,
   getTaskStateNodeViews,
@@ -43,6 +55,8 @@ export {
 export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
 
 export type { Editor, EditorBlockSummary } from "./editor.js";
+export type { EditorHighlight } from "./nodes/highlight.js";
+export type { EditorTag } from "./nodes/tag.js";
 export type { EditorTaskState } from "./nodes/task-state.js";
 export type { EditorWikiLink } from "./nodes/wiki-link.js";
 export type { EditorPosition, SourcePosition } from "./position.js";

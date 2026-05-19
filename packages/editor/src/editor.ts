@@ -7,6 +7,8 @@ import {
   setTaskStateInMarkdown,
   toggleTaskStateInMarkdown,
 } from "./nodes/task-state.js";
+import { getHighlightNodeViews, getHighlightsFromMarkdown } from "./nodes/highlight.js";
+import { getTagNodeViews, getTagsFromMarkdown } from "./nodes/tag.js";
 import {
   getWikiLinkNodeViews,
   getWikiLinksFromMarkdown,
@@ -14,6 +16,8 @@ import {
 } from "./nodes/wiki-link.js";
 
 import type { TaskState } from "@nabla/markup";
+import type { EditorHighlight } from "./nodes/highlight.js";
+import type { EditorTag } from "./nodes/tag.js";
 import type { EditorTaskState } from "./nodes/task-state.js";
 import type { EditorWikiLink } from "./nodes/wiki-link.js";
 
@@ -21,6 +25,8 @@ export interface Editor {
   state: ProseMirrorEditorState;
   source: string;
   readonly nodeViews: Readonly<{
+    readonly highlight: string;
+    readonly tag: string;
     readonly taskState: string;
     readonly wikiLink: string;
   }>;
@@ -61,6 +67,8 @@ function normalizeExportedMarkdown(markdown: string): string {
 
 function shouldPreserveSource(editor: Editor): boolean {
   return (
+    getHighlightsFromMarkdown(editor.source).length > 0 ||
+    getTagsFromMarkdown(editor.source).length > 0 ||
     getTaskStatesFromMarkdown(editor.source).length > 0 ||
     getWikiLinksFromMarkdown(editor.source).length > 0
   );
@@ -71,6 +79,8 @@ export function createEditor(): Editor {
     state: createState(""),
     source: "",
     nodeViews: Object.freeze({
+      ...getHighlightNodeViews(),
+      ...getTagNodeViews(),
       ...getTaskStateNodeViews(),
       ...getWikiLinkNodeViews(),
     }),
@@ -115,6 +125,14 @@ export function toggleTaskState(editor: Editor, index: number): Editor {
 
 export function getWikiLinks(editor: Editor): readonly EditorWikiLink[] {
   return getWikiLinksFromMarkdown(editor.source);
+}
+
+export function getTags(editor: Editor): readonly EditorTag[] {
+  return getTagsFromMarkdown(editor.source);
+}
+
+export function getHighlights(editor: Editor): readonly EditorHighlight[] {
+  return getHighlightsFromMarkdown(editor.source);
 }
 
 export function setWikiLinkAlias(editor: Editor, index: number, alias?: string): Editor {
