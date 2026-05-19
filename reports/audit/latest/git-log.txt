@@ -1,1 +1,1 @@
-47031a4 feat(components): add rendering contract types
+8c39cfc feat(components): add design tokens

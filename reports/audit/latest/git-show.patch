@@ -1,230 +1,193 @@
 diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-index c541f56..9cdd7fb 100644
+index 9cdd7fb..7f8473f 100644
 --- a/packages/components/src/index.ts
 +++ b/packages/components/src/index.ts
-@@ -1 +1,9 @@
- export const NABLA_COMPONENTS_PACKAGE = "@nabla/components";
+@@ -2,6 +2,10 @@ export const NABLA_COMPONENTS_PACKAGE = "@nabla/components";
+ 
+ export { NABLA_COMPONENT_RENDERING_CONTRACT } from "./types.js";
+ 
++export { NABLA_COMPONENT_THEME } from "./theme.js";
 +
-+export { NABLA_COMPONENT_RENDERING_CONTRACT } from "./types.js";
++export type { NablaComponentTheme } from "./theme.js";
 +
-+export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
-+export type { NablaComponentContext, NablaComponentProps, NablaComponentRegistry } from "./types.js";
-+export type { TaskStateProps, WikiLinkProps, TagProps, HighlightProps, EmojiProps } from "./types.js";
-+export type { FootnoteProps, CommentProps, CalloutProps, ToggleProps, FoldedHeadingProps } from "./types.js";
-+export type { TaskStateValue } from "./types.js";
-diff --git a/packages/components/src/types.ts b/packages/components/src/types.ts
+ export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
+ export type { NablaComponentContext, NablaComponentProps, NablaComponentRegistry } from "./types.js";
+ export type { TaskStateProps, WikiLinkProps, TagProps, HighlightProps, EmojiProps } from "./types.js";
+diff --git a/packages/components/src/theme.ts b/packages/components/src/theme.ts
 new file mode 100644
-index 0000000..87fca18
+index 0000000..2353c74
 --- /dev/null
-+++ b/packages/components/src/types.ts
-@@ -0,0 +1,175 @@
-+/**
-+ * Nabla Component Rendering Contract
-+ *
-+ * Components are the rendering/view layer only.
-+ * Markdown/Nabla Markdown+ remains the only persistent source of truth.
-+ * No hidden JSON, no stored HTML, no serialized component state as source of truth.
-+ * Components must not mutate parser/serializer/workspace state.
-+ */
-+
-+/**
-+ * Discriminated union of all Nabla component kinds that Phase 4
-+ * may implement. Blocked or deferred features are excluded.
-+ */
-+export type NablaComponentKind =
-+  | "taskState"
-+  | "wikiLink"
-+  | "tag"
-+  | "highlight"
-+  | "emoji"
-+  | "footnote"
-+  | "comment"
-+  | "callout"
-+  | "toggle"
-+  | "foldedHeading";
-+
-+/**
-+ * Features explicitly BLOCKED or DEFERRED from Phase 4 scope.
-+ *
-+ * - "transclusion": DEFERRED. Requires stable editor-to-components bridge
-+ *   and workspace resolver integration. Do not implement until explicitly tasked.
-+ *
-+ * - "tooltip": BLOCKED. Tooltip markup extension
-+ *   (packages/markup/src/extensions/tooltips.ts) is not implemented.
-+ *   Do not implement tooltip rendering until the extension exists.
-+ */
-+export type NablaDeferredComponentKind = "transclusion" | "tooltip";
-+
-+/**
-+ * Rendering mode for the component context.
-+ */
-+export type NablaRenderMode = "reading" | "editing";
-+
-+/**
-+ * Shared rendering context passed to all components.
-+ */
-+export interface NablaComponentContext {
-+  readonly mode: NablaRenderMode;
++++ b/packages/components/src/theme.ts
+@@ -0,0 +1,91 @@
++export interface NablaComponentTheme {
++  readonly colors: {
++    readonly text: string;
++    readonly textMuted: string;
++    readonly background: string;
++    readonly surface: string;
++    readonly border: string;
++    readonly primary: string;
++    readonly primaryMuted: string;
++    readonly danger: string;
++    readonly warning: string;
++    readonly success: string;
++    readonly codeBackground: string;
++  };
++  readonly spacing: {
++    readonly xs: string;
++    readonly sm: string;
++    readonly md: string;
++    readonly lg: string;
++    readonly xl: string;
++  };
++  readonly radius: {
++    readonly sm: string;
++    readonly md: string;
++    readonly lg: string;
++    readonly full: string;
++  };
++  readonly typography: {
++    readonly fontFamily: string;
++    readonly fontFamilyMono: string;
++    readonly fontSizeSm: string;
++    readonly fontSizeMd: string;
++    readonly fontSizeLg: string;
++    readonly lineHeight: string;
++  };
++  readonly borders: {
++    readonly width: string;
++    readonly style: string;
++  };
++  readonly shadows: {
++    readonly sm: string;
++    readonly md: string;
++  };
 +}
 +
-+/**
-+ * Task state value mapped from the editor adapter metadata.
-+ * Mirrors TaskState from @nabla/markup.
-+ */
-+export type TaskStateValue =
-+  | "unchecked"
-+  | "checked"
-+  | "cancelled"
-+  | "important";
++export const NABLA_COMPONENT_THEME: NablaComponentTheme = {
++  colors: {
++    text: "#1a1a1a",
++    textMuted: "#6b7280",
++    background: "#ffffff",
++    surface: "#f9fafb",
++    border: "#e5e7eb",
++    primary: "#3b82f6",
++    primaryMuted: "#dbeafe",
++    danger: "#ef4444",
++    warning: "#f59e0b",
++    success: "#22c55e",
++    codeBackground: "#f3f4f6",
++  },
++  spacing: {
++    xs: "0.25rem",
++    sm: "0.5rem",
++    md: "1rem",
++    lg: "1.5rem",
++    xl: "2rem",
++  },
++  radius: {
++    sm: "0.25rem",
++    md: "0.375rem",
++    lg: "0.5rem",
++    full: "9999px",
++  },
++  typography: {
++    fontFamily:
++      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
++    fontFamilyMono:
++      '"SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace',
++    fontSizeSm: "0.875rem",
++    fontSizeMd: "1rem",
++    fontSizeLg: "1.25rem",
++    lineHeight: "1.6",
++  },
++  borders: {
++    width: "1px",
++    style: "solid",
++  },
++  shadows: {
++    sm: "0 1px 2px rgba(0,0,0,0.05)",
++    md: "0 4px 6px rgba(0,0,0,0.1)",
++  },
++};
+diff --git a/packages/components/src/tokens.css b/packages/components/src/tokens.css
+new file mode 100644
+index 0000000..bcd4313
+--- /dev/null
++++ b/packages/components/src/tokens.css
+@@ -0,0 +1,39 @@
++:root {
++  --nabla-color-text: #1a1a1a;
++  --nabla-color-text-muted: #6b7280;
++  --nabla-color-background: #ffffff;
++  --nabla-color-surface: #f9fafb;
++  --nabla-color-border: #e5e7eb;
++  --nabla-color-primary: #3b82f6;
++  --nabla-color-primary-muted: #dbeafe;
++  --nabla-color-danger: #ef4444;
++  --nabla-color-warning: #f59e0b;
++  --nabla-color-success: #22c55e;
++  --nabla-color-code-background: #f3f4f6;
 +
-+export interface TaskStateProps {
-+  readonly kind: "taskState";
-+  readonly state: TaskStateValue;
-+  readonly text: string;
-+  readonly onChange: (newState: TaskStateValue) => void;
++  --nabla-spacing-xs: 0.25rem;
++  --nabla-spacing-sm: 0.5rem;
++  --nabla-spacing-md: 1rem;
++  --nabla-spacing-lg: 1.5rem;
++  --nabla-spacing-xl: 2rem;
++
++  --nabla-radius-sm: 0.25rem;
++  --nabla-radius-md: 0.375rem;
++  --nabla-radius-lg: 0.5rem;
++  --nabla-radius-full: 9999px;
++
++  --nabla-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
++    "Helvetica Neue", Arial, sans-serif;
++  --nabla-font-family-mono: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas,
++    monospace;
++  --nabla-font-size-sm: 0.875rem;
++  --nabla-font-size-md: 1rem;
++  --nabla-font-size-lg: 1.25rem;
++  --nabla-line-height: 1.6;
++
++  --nabla-border-width: 1px;
++  --nabla-border-style: solid;
++
++  --nabla-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
++  --nabla-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
 +}
-+
-+export interface WikiLinkProps {
-+  readonly kind: "wikiLink";
-+  readonly target: string;
-+  readonly alias?: string;
-+  readonly heading?: string;
-+  readonly blockId?: string;
-+  readonly unresolved: boolean;
-+  readonly raw: string;
-+}
-+
-+export interface TagProps {
-+  readonly kind: "tag";
-+  readonly value: string;
-+  readonly segments: readonly string[];
-+  readonly raw: string;
-+}
-+
-+export interface HighlightProps {
-+  readonly kind: "highlight";
-+  readonly text: string;
-+  readonly color?: string;
-+  readonly raw: string;
-+}
-+
-+export interface EmojiProps {
-+  readonly kind: "emoji";
-+  readonly name: string;
-+  readonly value: string;
-+  readonly raw: string;
-+}
-+
-+export interface FootnoteProps {
-+  readonly kind: "footnote";
-+  readonly footnoteKind: "reference" | "definition";
-+  readonly id: string;
-+  readonly text?: string;
-+  readonly raw: string;
-+}
-+
-+export interface CommentProps {
-+  readonly kind: "comment";
-+  readonly text: string;
-+  readonly multiline: boolean;
-+  readonly raw: string;
-+}
-+
-+export interface CalloutProps {
-+  readonly kind: "callout";
-+  readonly calloutType: string;
-+  readonly foldState: "open" | "closed";
-+  readonly children?: never;
-+  readonly onToggleFold: () => void;
-+}
-+
-+export interface ToggleProps {
-+  readonly kind: "toggle";
-+  readonly foldState: "open" | "closed";
-+  readonly children?: never;
-+  readonly onToggleFold: () => void;
-+}
-+
-+export interface FoldedHeadingProps {
-+  readonly kind: "foldedHeading";
-+  readonly level: number;
-+  readonly foldState: "open" | "closed";
-+  readonly children?: never;
-+  readonly onToggleFold: () => void;
-+}
-+
-+/**
-+ * Discriminated union of all component props.
-+ */
-+export type NablaComponentProps =
-+  | TaskStateProps
-+  | WikiLinkProps
-+  | TagProps
-+  | HighlightProps
-+  | EmojiProps
-+  | FootnoteProps
-+  | CommentProps
-+  | CalloutProps
-+  | ToggleProps
-+  | FoldedHeadingProps;
-+
-+/**
-+ * Component registry mapping each NablaComponentKind to its
-+ * rendering function or component class.
-+ *
-+ * The editor-to-components bridge (P4-012) will use this registry
-+ * to resolve node view implementations.
-+ */
-+export interface NablaComponentRegistry {
-+  readonly taskState: (props: TaskStateProps) => unknown;
-+  readonly wikiLink: (props: WikiLinkProps) => unknown;
-+  readonly tag: (props: TagProps) => unknown;
-+  readonly highlight: (props: HighlightProps) => unknown;
-+  readonly emoji: (props: EmojiProps) => unknown;
-+  readonly footnote: (props: FootnoteProps) => unknown;
-+  readonly comment: (props: CommentProps) => unknown;
-+  readonly callout: (props: CalloutProps) => unknown;
-+  readonly toggle: (props: ToggleProps) => unknown;
-+  readonly foldedHeading: (props: FoldedHeadingProps) => unknown;
-+}
-+
-+/**
-+ * Contract identifier for runtime wiring validation.
-+ */
-+export const NABLA_COMPONENT_RENDERING_CONTRACT =
-+  "nabla-component-rendering-contract";
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 44f22ee..07360b6 100644
+index 07360b6..8c8e270 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
-@@ -14,12 +14,12 @@ Phase 4 — `@nabla/components`
+@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
+ 
+ ## Last Task
+ 
+-`P4-000` — Phase 4 Kickoff and Components Backlog Extraction
++`P4-003` — Visual Design Tokens and Minimal Styling Boundary
+ 
+ ## Branch
+ 
+@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
- Phase 3 (`@nabla/editor`) — ACCEPTED.
--Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created.
-+Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created; rendering contract types defined.
+@@ -200,6 +200,17 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+ - No visual components implemented.
+ - No editor/markup/workspace source changes.
  
- ### Repairs Applied
- 
-@@ -187,6 +187,19 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
- - No parser/serializer or workspace changes.
- - Only dependency: `@nabla/markup` (workspace).
- 
-+### P4-002 Notes
++### P4-003 Notes
 +
-+- Created `packages/components/src/types.ts` with full rendering contract types.
-+- Defined `NablaComponentKind` union for all 10 implementable component kinds (taskState, wikiLink, tag, highlight, emoji, footnote, comment, callout, toggle, foldedHeading).
-+- Defined `NablaDeferredComponentKind` marking transclusion (DEFERRED) and tooltip (BLOCKED).
-+- Defined per-kind prop interfaces: `TaskStateProps`, `WikiLinkProps`, `TagProps`, `HighlightProps`, `EmojiProps`, `FootnoteProps`, `CommentProps`, `CalloutProps`, `ToggleProps`, `FoldedHeadingProps`.
-+- Defined `NablaComponentRegistry` interface for editor bridge resolution.
-+- Added `NABLA_COMPONENT_RENDERING_CONTRACT` constant.
-+- Re-exported all types from `packages/components/src/index.ts`.
++- Created `packages/components/src/theme.ts` with typed `NablaComponentTheme` interface and `NABLA_COMPONENT_THEME` default object.
++- Token categories: colors (text, surface, primary, danger, warning, success, code background), spacing (xs-xl), radius (sm-full), typography (font families, sizes, line height), borders (width, style), shadows (sm, md).
++- Created `packages/components/src/tokens.css` with CSS custom properties under `:root` using `--nabla-*` naming convention.
++- Re-exported theme from `packages/components/src/index.ts`.
++- No component-specific styling implemented (no task state, wiki link, tag, highlight, emoji, footnote, comment, callout, toggle, or folded heading styling).
 +- No React dependency added.
 +- No visual components implemented.
 +- No editor/markup/workspace source changes.
@@ -232,3 +195,9 @@ index 44f22ee..07360b6 100644
  ## Verification Summary
  
  - `pnpm test` — PASS
+@@ -218,4 +229,4 @@ None.
+ 
+ ## Next Recommended Task
+ 
+-P4-002 — Component Rendering Contract and Types — define TypeScript interfaces for the component rendering contract.
++P4-004 — Task State Visual Component — implement a React component for task state list items.

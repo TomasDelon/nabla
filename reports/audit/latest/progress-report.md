@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-000` — Phase 4 Kickoff and Components Backlog Extraction
+`P4-003` — Visual Design Tokens and Minimal Styling Boundary
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -200,6 +200,17 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No visual components implemented.
 - No editor/markup/workspace source changes.
 
+### P4-003 Notes
+
+- Created `packages/components/src/theme.ts` with typed `NablaComponentTheme` interface and `NABLA_COMPONENT_THEME` default object.
+- Token categories: colors (text, surface, primary, danger, warning, success, code background), spacing (xs-xl), radius (sm-full), typography (font families, sizes, line height), borders (width, style), shadows (sm, md).
+- Created `packages/components/src/tokens.css` with CSS custom properties under `:root` using `--nabla-*` naming convention.
+- Re-exported theme from `packages/components/src/index.ts`.
+- No component-specific styling implemented (no task state, wiki link, tag, highlight, emoji, footnote, comment, callout, toggle, or folded heading styling).
+- No React dependency added.
+- No visual components implemented.
+- No editor/markup/workspace source changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -218,4 +229,4 @@ None.
 
 ## Next Recommended Task
 
-P4-002 — Component Rendering Contract and Types — define TypeScript interfaces for the component rendering contract.
+P4-004 — Task State Visual Component — implement a React component for task state list items.
