@@ -1,4 +1,4 @@
-import type { CalloutNode, FoldState, SyntaxStatus, MarkdownNode, NablaBlockNode } from "../ast.js";
+import type { CalloutNode, ToggleNode, FoldState, SyntaxStatus, MarkdownNode, NablaBlockNode } from "../ast.js";
 
 const CALLOUT_CANONICAL_RE = /^\[!([A-Za-z][A-Za-z0-9_-]*)](\>|v)?[ \t]*(.*)$/;
 const CALLOUT_COMPATIBLE_RE = /^> \[!([A-Za-z][A-Za-z0-9_-]*)]\s*(.*)$/;
@@ -144,6 +144,22 @@ export function serializeCallout(node: CalloutNode): string {
   return `\n${header}\n${childOutputs.join("\n\n")}`;
 }
 
+export function serializeToggle(node: ToggleNode): string {
+  const title = node.title.map((child) => (child as { value?: string }).value ?? "").join("");
+  const header = `${node.rawMarker} ${title}`;
+
+  if (node.children.length === 0) {
+    return `\n${header}`;
+  }
+
+  const childOutputs: string[] = [];
+  for (const child of node.children) {
+    childOutputs.push(serializeChildBlock(child as MarkdownNode | NablaBlockNode));
+  }
+
+  return `\n${header}\n${childOutputs.join("\n\n")}`;
+}
+
 function serializeChildBlock(node: MarkdownNode | NablaBlockNode): string {
   if (node.type === "paragraph" && Array.isArray(node.children)) {
     const text = node.children.map((child) => (child as { value?: string }).value ?? "").join("");
@@ -160,6 +176,15 @@ function serializeChildBlock(node: MarkdownNode | NablaBlockNode): string {
 
   if (node.type === "callout") {
     const inner = serializeCallout(node as CalloutNode);
+    return inner
+      .replace(/^\n/, "")
+      .split("\n")
+      .map((l) => `\t${l}`)
+      .join("\n");
+  }
+
+  if (node.type === "toggle") {
+    const inner = serializeToggle(node as ToggleNode);
     return inner
       .replace(/^\n/, "")
       .split("\n")

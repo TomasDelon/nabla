@@ -41,7 +41,16 @@ const calloutFixtureIds = [
   "callouts/fold-states",
   "callouts/empty",
   "callouts/blank-child",
-  "callouts/fenced-child"
+  "callouts/fenced-child",
+  "callouts/nested-child"
+];
+
+const toggleFixtureIds = [
+  "toggles/basic",
+  "toggles/empty",
+  "toggles/blank-child",
+  "toggles/fenced-child",
+  "toggles/nested-child"
 ];
 
 let parserModulePromise;
@@ -138,6 +147,26 @@ test("callout fixtures parse and serialize according to the checked-in contracts
   } = await loadFixturesModule();
 
   for (const fixtureId of calloutFixtureIds) {
+    const fixture = await loadParserFixture(fixtureId);
+    const parsed = parse(fixture.input);
+
+    compareFixtureAst(parsed, fixture.ast);
+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
+    compareFixtureOutput(serialize(parsed), fixture.output);
+  }
+});
+
+test("toggle fixtures parse and serialize according to the checked-in contracts", async () => {
+  const { parse } = await loadParserModule();
+  const { serialize } = await loadSerializerModule();
+  const {
+    compareFixtureAst,
+    compareFixtureDiagnostics,
+    compareFixtureOutput,
+    loadParserFixture
+  } = await loadFixturesModule();
+
+  for (const fixtureId of toggleFixtureIds) {
     const fixture = await loadParserFixture(fixtureId);
     const parsed = parse(fixture.input);
 
