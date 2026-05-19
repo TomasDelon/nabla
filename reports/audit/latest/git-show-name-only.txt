@@ -1,3 +1,2 @@
-packages/app/src/index.ts
-packages/app/tests/api-consistency.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md
+reports/PHASE_5_VALIDATION.md

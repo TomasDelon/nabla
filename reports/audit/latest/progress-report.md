@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-009` — App Fixture/Regression Coverage
+`P5-011` — Phase 5 Validation Report
 
 ## Branch
 
@@ -14,13 +14,13 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed. P5-009 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-005-REPAIR completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed. P5-009 completed. P5-010 completed. P5-011 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
 Phase 3 (`@nabla/editor`) — ACCEPTED.
 Phase 4 (`@nabla/components`) — ACCEPTED.
-Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet created.
+Phase 5 (`@nabla/app`) — MVP COMPLETED. PASS WITH DEFERRED SCOPE.
 
 ### Repairs Applied
 
@@ -489,6 +489,11 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - `pnpm validate:spec-version` — PASS
 - `pnpm check:boundaries` — PASS
 - `pnpm lint` — PASS as documented unavailable placeholder
+- `node --test packages/app/tests/**/*.test.mjs` — PASS (89/89)
+- `node --test packages/components/tests/**/*.test.mjs` — PASS (129/129)
+- `node --test packages/editor/tests/**/*.test.mjs` — PASS (93/93)
+- `pnpm --dir packages/components build` — PASS
+- `pnpm --dir packages/app build` — PASS
 
 ### P5-005 Notes
 
@@ -617,10 +622,22 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - No dependencies added.
 - No final validation report created (P5-011 deferred).
 
+### P5-011 Notes
+
+- Created `reports/PHASE_5_VALIDATION.md` — official Phase 5 validation report.
+- Documents completion of all 11 core Phase 5 tasks plus kickoff and repairs.
+- All quality gates pass.
+- MVP capabilities verified: browser dev server, app shell, sample document loading, render pipeline, component previews, source editing, canonical export, workspace index, bounded public API.
+- Deferred scope documented: rich-text node views, automatic metadata extraction, tooltip (BLOCKED), transclusion (DEFERRED), DOM tests, file system loading, production deployment.
+- Explicit confirmations: no Phase 1–4 source changes, no new phase started, source-of-truth invariant preserved.
+- Phase verdict: PASS WITH DEFERRED SCOPE.
+- No source files, tests, fixtures, or package metadata modified.
+- No dependencies added.
+
 ## Active Blockers
 
 None.
 
 ## Next Recommended Task
 
-P5-011 — Phase 5 Validation Report
+External audit/approval for Phase 5 closure, then P5-CLOSE — Phase 5 closure merge. Do not start a new phase until P5-011 and P5-CLOSE are externally accepted.
