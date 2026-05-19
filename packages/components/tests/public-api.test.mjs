@@ -25,12 +25,19 @@ test("WikiLink is exported from public API", async () => {
   assert.equal(typeof mod.getWikiLinkDisplay, "function");
 });
 
+test("Tag and Highlight are exported from public API", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.Tag, "function");
+  assert.equal(typeof mod.getTagDisplay, "function");
+  assert.equal(typeof mod.Highlight, "function");
+  assert.equal(typeof mod.getHighlightStyle, "function");
+});
+
 test("no forbidden visual components are exported", async () => {
   const mod = await load();
   const keys = Object.keys(mod);
 
-  assert.equal(keys.includes("Tag"), false);
-  assert.equal(keys.includes("Highlight"), false);
   assert.equal(keys.includes("Emoji"), false);
   assert.equal(keys.includes("Footnote"), false);
   assert.equal(keys.includes("Comment"), false);

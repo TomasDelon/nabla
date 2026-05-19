@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-005` — Wiki Link Visual Component
+`P4-006` — Tag and Highlight Visual Components
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -235,6 +235,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No dependencies added.
 - No editor/markup/workspace source changes.
 
+### P4-006 Notes
+
+- Created `packages/components/src/tag.tsx` with `Tag` component and `getTagDisplay` helper.
+- Created `packages/components/src/tag.css` — pill-style rendering using `--nabla-*` tokens.
+- Created `packages/components/src/highlight.tsx` with `Highlight` component and `getHighlightStyle` helper.
+- Created `packages/components/src/highlight.css` — default yellow highlight; color highlights use inline `style` with provided hex color.
+- Created tests: `tests/tag-highlight.test.mjs` (6 tests); updated `tests/public-api.test.mjs`.
+- Public API consistency: `Tag`, `Highlight`, and helpers exported; no future components leak.
+- No color picker or tag suggestion UI implemented.
+- No dependencies added.
+- No editor/markup/workspace source changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -253,4 +265,4 @@ None.
 
 ## Next Recommended Task
 
-P4-006 — Tag and Highlight Visual Components — implement React components for tags and highlights.
+P4-007 — Emoji Visual Component — implement a React component for emoji shortcodes.

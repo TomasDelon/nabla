@@ -1,0 +1,9 @@
+.nabla-highlight {
+  background-color: #ffff0066;
+  color: inherit;
+  padding: 0 0.125rem;
+  border-radius: var(--nabla-radius-sm);
+  font-family: var(--nabla-font-family);
+  font-size: var(--nabla-font-size-md);
+  line-height: var(--nabla-line-height);
+}

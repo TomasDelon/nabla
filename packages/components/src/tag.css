@@ -1,0 +1,12 @@
+.nabla-tag {
+  display: inline-block;
+  padding: 0.0625rem var(--nabla-spacing-sm);
+  font-family: var(--nabla-font-family);
+  font-size: var(--nabla-font-size-sm);
+  line-height: var(--nabla-line-height);
+  color: var(--nabla-color-primary);
+  background-color: var(--nabla-color-primary-muted);
+  border-radius: var(--nabla-radius-full);
+  white-space: nowrap;
+  user-select: none;
+}
