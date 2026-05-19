@@ -1,0 +1,12 @@
+.nabla-comment {
+  font-family: var(--nabla-font-family);
+  font-size: var(--nabla-font-size-md);
+  line-height: var(--nabla-line-height);
+  color: var(--nabla-color-text-muted);
+  opacity: 0.6;
+  user-select: none;
+}
+
+.nabla-comment[data-multiline] {
+  display: block;
+}

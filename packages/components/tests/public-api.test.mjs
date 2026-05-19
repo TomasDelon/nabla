@@ -41,12 +41,20 @@ test("Emoji is exported from public API", async () => {
   assert.equal(typeof mod.getEmojiDisplay, "function");
 });
 
+test("Footnote and Comment are exported from public API", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.FootnoteReference, "function");
+  assert.equal(typeof mod.FootnoteDefinition, "function");
+  assert.equal(typeof mod.getFootnoteDisplay, "function");
+  assert.equal(typeof mod.Comment, "function");
+  assert.equal(typeof mod.getCommentDisplay, "function");
+});
+
 test("no forbidden visual components are exported", async () => {
   const mod = await load();
   const keys = Object.keys(mod);
 
-  assert.equal(keys.includes("Footnote"), false);
-  assert.equal(keys.includes("Comment"), false);
   assert.equal(keys.includes("Callout"), false);
   assert.equal(keys.includes("Toggle"), false);
   assert.equal(keys.includes("FoldedHeading"), false);

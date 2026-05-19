@@ -1,0 +1,19 @@
+.nabla-footnote-reference {
+  font-size: var(--nabla-font-size-sm);
+  color: var(--nabla-color-primary);
+  cursor: pointer;
+  vertical-align: super;
+  line-height: 1;
+  user-select: none;
+}
+
+.nabla-footnote-definition {
+  font-family: var(--nabla-font-family);
+  font-size: var(--nabla-font-size-md);
+  line-height: var(--nabla-line-height);
+  color: var(--nabla-color-text-muted);
+}
+
+.nabla-footnote-definition__id {
+  color: var(--nabla-color-primary);
+}
