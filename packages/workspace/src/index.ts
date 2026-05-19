@@ -66,3 +66,5 @@ export type Workspace = {
 };
 
 export { normalizeWorkspacePath } from "./path-utils.js";
+export { createSlug, deduplicateSlugs } from "./slug.js";
+export { buildHeadingIndex } from "./heading-index.js";
