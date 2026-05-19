@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-005` — Component Rendering Integration
+`P5-006` — Editor Source Editing MVP
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -503,10 +503,29 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - No dependencies added to `packages/app/package.json`.
 - `@nabla/components` symlinked in `packages/app/node_modules/` for workspace resolution.
 
+### P5-006 Notes
+
+- Added `packages/app/src/editor-integration.ts` with `createSourceEditor()`, `getEditableSource()`, `exportCanonicalSource()`, and `getEditorIntegrationSummary()`.
+- Uses only public `@nabla/editor` APIs: `createEditor`, `loadSource`, `getSource`.
+- Canonical export reuses existing `canonicalizeSampleSource` from the app render pipeline (which centralizes `@nabla/markup` parse/serialize).
+- Updated `packages/app/src/main.tsx`:
+  - Added editable source textarea initialized from `SAMPLE_DOCUMENT_SOURCE`.
+  - Canonical export textarea now follows the edited source (updates on every change).
+  - Editor integration summary displayed: source length, exported length, diagnostics count.
+  - Note added: "This is plain source editing MVP. Rich-text editor node views are deferred."
+  - Visual components preview, status card, and source-of-truth reminder preserved.
+- Source-of-truth rules maintained: edited text source is the working document source; canonical export is derived through the save pipeline; no hidden JSON/HTML/editorState.
+- Created `packages/app/tests/editor-integration.test.mjs` with 15 tests: can load sample source, editable source retrieval, canonical export non-empty, deterministic export changes on edit, summary fields (sourceLength, exportedLength, diagnosticsCount, hasExportedSource), no hidden JSON/HTML/editorState/jsonState/serializedState keys.
+- No rich-text ProseMirror node views implemented.
+- No workspace integration.
+- No automatic component metadata extraction.
+- No dependencies added to `packages/app/package.json`.
+- `@nabla/editor` symlinked in `packages/app/node_modules/` for workspace resolution.
+
 ## Active Blockers
 
 None.
 
 ## Next Recommended Task
 
-P5-006 — Editor Source Editing MVP — integrate @nabla/editor to allow editing the loaded document source and exporting canonical Markdown through the save pipeline.
+P5-007 — Workspace Integration — integrate @nabla/workspace resolver and backlink tracking into the app document model.

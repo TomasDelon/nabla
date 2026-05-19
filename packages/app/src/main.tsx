@@ -7,6 +7,12 @@ import {
   getComponentRenderingSummary,
 } from "./component-rendering.js";
 import {
+  createSourceEditor,
+  getEditableSource,
+  exportCanonicalSource,
+  getEditorIntegrationSummary,
+} from "./editor-integration.js";
+import {
   TaskStateCheckbox,
   getNextTaskState,
   WikiLink,
@@ -23,8 +29,11 @@ import {
 import "./app.css";
 
 function App() {
-  const [source] = useState(SAMPLE_DOCUMENT_SOURCE);
-  const summary = getRenderPipelineSummary(source);
+  const [editedSource, setEditedSource] = useState(SAMPLE_DOCUMENT_SOURCE);
+
+  const pipelineSummary = getRenderPipelineSummary(SAMPLE_DOCUMENT_SOURCE);
+  const editedSummary = getRenderPipelineSummary(editedSource);
+  const editorSummary = getEditorIntegrationSummary(editedSource);
 
   const componentSummary = getComponentRenderingSummary();
 
@@ -85,10 +94,38 @@ function App() {
         <div className="status-card">
           <h2 className="status-card__title">Render pipeline connected</h2>
           <div className="status-card__stats">
-            <span>Original length: {summary.originalLength}</span>
-            <span>Canonical length: {summary.canonicalLength}</span>
-            <span>Diagnostics: {summary.diagnosticsCount}</span>
+            <span>Original length: {pipelineSummary.originalLength}</span>
+            <span>Canonical length: {pipelineSummary.canonicalLength}</span>
+            <span>Diagnostics: {pipelineSummary.diagnosticsCount}</span>
           </div>
+        </div>
+
+        <section className="editor-section">
+          <h2 className="section-title">Editor</h2>
+          <p className="section-note">
+            This is plain source editing MVP. Rich-text editor node views are deferred.
+          </p>
+          <div className="editor-summary">
+            <span>Edited length: {editorSummary.sourceLength}</span>
+            <span>Exported length: {editorSummary.exportedLength}</span>
+            <span>Diagnostics: {editorSummary.diagnosticsCount}</span>
+          </div>
+          <textarea
+            className="editor-textarea"
+            value={editedSource}
+            onChange={(e) => setEditedSource(e.target.value)}
+            rows={12}
+          />
+        </section>
+
+        <div className="sample-section">
+          <h2 className="section-title">Canonical export</h2>
+          <textarea
+            className="source-view"
+            readOnly
+            value={editedSummary.canonicalSource}
+            rows={10}
+          />
         </div>
 
         <section className="component-preview">
@@ -265,26 +302,6 @@ function App() {
             </div>
           </div>
         </section>
-
-        <div className="sample-section">
-          <h2 className="section-title">Original source</h2>
-          <textarea
-            className="source-view"
-            readOnly
-            value={source}
-            rows={10}
-          />
-        </div>
-
-        <div className="sample-section">
-          <h2 className="section-title">Canonical output</h2>
-          <textarea
-            className="source-view"
-            readOnly
-            value={summary.canonicalSource}
-            rows={10}
-          />
-        </div>
 
         <p className="app-reminder">
           Markdown/Nabla Markdown+ remains the source of truth.
