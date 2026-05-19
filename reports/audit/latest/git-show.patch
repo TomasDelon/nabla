@@ -1,124 +1,115 @@
-diff --git a/package.json b/package.json
-index 2b276c1..7f0eb58 100644
---- a/package.json
-+++ b/package.json
-@@ -4,14 +4,14 @@
-   "private": true,
-   "packageManager": "pnpm@11.1.3",
-   "scripts": {
--    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json",
-+    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json",
-     "audit:bundle": "node scripts/create-audit-bundle.mjs",
-     "check:boundaries": "node scripts/check-boundaries.mjs",
-     "lint": "node scripts/report-unavailable.mjs lint --silent \"Lint tooling is not bootstrapped in P1-001\"",
-     "test": "node --test packages/markup/tests/**/*.test.mjs",
-     "test:markup": "node --test packages/markup/tests/**/*.test.mjs",
-     "test:workspace": "node -e \"const fs=require('fs');const p=require('path');const d=p.join(process.cwd(),'packages/workspace/tests');if(fs.existsSync(d)){require('child_process').execSync('node --test '+d+'/**/*.test.mjs',{cwd:process.cwd(),stdio:'inherit',shell:true})}else{console.log('test:workspace: no tests yet');process.exit(0)}\"",
--    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json",
-+    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json",
-     "validate:fixtures": "node scripts/validate-fixtures.mjs",
-     "validate:spec-version": "node scripts/validate-spec-version.mjs"
-   },
-diff --git a/packages/editor/package.json b/packages/editor/package.json
-new file mode 100644
-index 0000000..19b90bd
---- /dev/null
-+++ b/packages/editor/package.json
-@@ -0,0 +1,24 @@
-+{
-+  "name": "@nabla/editor",
-+  "version": "0.0.0",
-+  "private": true,
-+  "type": "module",
-+  "main": "./dist/index.js",
-+  "types": "./dist/index.d.ts",
-+  "exports": {
-+    ".": {
-+      "types": "./dist/index.d.ts",
-+      "default": "./dist/index.js"
-+    }
-+  },
-+  "files": [
-+    "dist"
-+  ],
-+  "scripts": {
-+    "build": "tsc -p tsconfig.json",
-+    "typecheck": "tsc -p tsconfig.json --noEmit"
-+  },
-+  "dependencies": {
-+    "@nabla/markup": "workspace:*"
-+  }
-+}
 diff --git a/packages/editor/src/index.ts b/packages/editor/src/index.ts
-new file mode 100644
-index 0000000..e6e82a9
---- /dev/null
+index e6e82a9..4ab2943 100644
+--- a/packages/editor/src/index.ts
 +++ b/packages/editor/src/index.ts
-@@ -0,0 +1 @@
-+export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
+@@ -1 +1,15 @@
+ export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
++
++export {
++  NABLA_EDITOR_CANONICAL_SAVE_PATH,
++  NABLA_EDITOR_SOURCE_OF_TRUTH,
++} from "./model.js";
++
++export type {
++  EditorAdapter,
++  EditorDiagnostic,
++  EditorLoadResult,
++  EditorSaveResult,
++  EditorSource,
++  EditorState,
++} from "./model.js";
+diff --git a/packages/editor/src/model.ts b/packages/editor/src/model.ts
+new file mode 100644
+index 0000000..71a5139
+--- /dev/null
++++ b/packages/editor/src/model.ts
+@@ -0,0 +1,58 @@
++export const NABLA_EDITOR_SOURCE_OF_TRUTH = "markdown";
++
++export const NABLA_EDITOR_CANONICAL_SAVE_PATH =
++  "editor state -> Markdown string -> @nabla/markup parser -> @nabla/markup serializer -> saved Markdown source";
++
++/**
++ * Markdown/Nabla Markdown+ source is the only persistent source of truth.
++ * Editor state is ephemeral and must always originate from source text.
++ */
++export interface EditorSource {
++  readonly markdown: string;
++}
++
++/**
++ * Ephemeral editor document state. Runtime implementations are deferred.
++ * Hidden JSON, stored HTML, and serialized editor state are forbidden.
++ */
++export interface EditorState {
++  readonly document: unknown;
++}
++
++export interface EditorDiagnostic {
++  readonly code: string;
++  readonly message: string;
++  readonly severity: "error" | "warning";
++  readonly phase: "load" | "save";
++}
++
++export interface EditorLoadResult {
++  readonly source: EditorSource;
++  readonly state: EditorState;
++  readonly diagnostics: readonly EditorDiagnostic[];
++}
++
++/**
++ * Adapters first export a Markdown string from editor state, then the save
++ * pipeline reparses and reserializes it before writing the final source.
++ */
++export interface EditorSaveResult {
++  readonly markdown: string;
++  readonly diagnostics: readonly EditorDiagnostic[];
++}
++
++/**
++ * Type-level boundary for future editor runtimes.
++ *
++ * Canonical save path:
++ * editor state -> Markdown string -> @nabla/markup parser ->
++ * @nabla/markup serializer -> saved Markdown source
++ *
++ * Markdown/Nabla Markdown+ remains the only persistent source of truth.
++ * Hidden JSON, stored HTML, and serialized editor state are forbidden.
++ * Runtime editor behavior is intentionally deferred to later tasks.
++ */
++export interface EditorAdapter {
++  loadSource(source: string): EditorLoadResult;
++  saveState(state: EditorState): EditorSaveResult;
++}
 diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
-new file mode 100644
-index 0000000..925b795
---- /dev/null
+index 925b795..3f630fc 100644
+--- a/packages/editor/tests/public-api.test.mjs
 +++ b/packages/editor/tests/public-api.test.mjs
-@@ -0,0 +1,14 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+import { loadTsModule } from "../../workspace/tests/helpers/load-ts-module.mjs";
+@@ -12,3 +12,13 @@ test("NABLA_EDITOR_PACKAGE constant is exported", async () => {
+   const mod = await load();
+   assert.equal(mod.NABLA_EDITOR_PACKAGE, "@nabla/editor");
+ });
 +
-+const indexUrl = new URL("../src/index.ts", import.meta.url);
-+
-+async function load() {
-+  return loadTsModule(indexUrl);
-+}
-+
-+test("NABLA_EDITOR_PACKAGE constant is exported", async () => {
++test("editor model runtime constants are exported", async () => {
 +  const mod = await load();
-+  assert.equal(mod.NABLA_EDITOR_PACKAGE, "@nabla/editor");
-+});
-diff --git a/packages/editor/tsconfig.json b/packages/editor/tsconfig.json
-new file mode 100644
-index 0000000..cf9e1b1
---- /dev/null
-+++ b/packages/editor/tsconfig.json
-@@ -0,0 +1,10 @@
-+{
-+  "extends": "../../tsconfig.base.json",
-+  "compilerOptions": {
-+    "rootDir": "src",
-+    "outDir": "dist"
-+  },
-+  "include": [
-+    "src/**/*.ts"
-+  ]
-+}
-diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
-index 80517c5..fd62d84 100644
---- a/pnpm-lock.yaml
-+++ b/pnpm-lock.yaml
-@@ -12,6 +12,12 @@ importers:
-         specifier: ^5.6.3
-         version: 5.9.3
- 
-+  packages/editor:
-+    dependencies:
-+      '@nabla/markup':
-+        specifier: workspace:*
-+        version: link:../markup
 +
-   packages/markup:
-     dependencies:
-       yaml:
++  assert.equal(mod.NABLA_EDITOR_SOURCE_OF_TRUTH, "markdown");
++  assert.equal(
++    mod.NABLA_EDITOR_CANONICAL_SAVE_PATH,
++    "editor state -> Markdown string -> @nabla/markup parser -> @nabla/markup serializer -> saved Markdown source",
++  );
++});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 46eb3a0..b8c6f8d 100644
+index b8c6f8d..265eb86 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
  
  ## Last Task
  
--`P3-000-REPAIR` — Repair Phase 3 kickoff and backlog control docs
-+`P3-001` — Editor Package Skeleton
+-`P3-001` — Editor Package Skeleton
++`P3-002` — Editor Document Model Boundary
  
  ## Branch
  
@@ -126,34 +117,33 @@ index 46eb3a0..b8c6f8d 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — kickoff and backlog repaired and ready for implementation.
-+Phase 3 (`@nabla/editor`) — editor package skeleton created.
+-Phase 3 (`@nabla/editor`) — editor package skeleton created.
++Phase 3 (`@nabla/editor`) — editor package skeleton and adapter model contracts created.
  
  ### Repairs Applied
  
-@@ -28,7 +28,13 @@ Phase 3 (`@nabla/editor`) — kickoff and backlog repaired and ready for impleme
- 4. **P3-009/P3-014 aligned**: fixture/regression plan (now P3-014) scoped to only features implemented before it; fold state commands (P3-012) added as explicit prerequisite for fold roundtrip tests.
- 5. **Phase 3 scope kept clean**: no Phase 4/5 work, no parser/serializer changes, no specs/fixtures modifications.
+@@ -34,6 +34,13 @@ Phase 3 (`@nabla/editor`) — editor package skeleton created.
+ - No editor behavior implemented.
+ - Minimal package skeleton created: `packages/editor/` with package.json, tsconfig.json, src/index.ts, and test.
  
--### Verification Summary
-+### P3-001 Notes
++### P3-002 Notes
 +
++- Added type-level editor adapter contracts in `packages/editor/src/model.ts`.
 +- No Milkdown or ProseMirror dependencies added.
-+- No editor behavior implemented.
-+- Minimal package skeleton created: `packages/editor/` with package.json, tsconfig.json, src/index.ts, and test.
++- No runtime editor behavior implemented.
++- Save-pipeline runtime work remains deferred; this task defines contracts only.
 +
-+## Verification Summary
+ ## Verification Summary
  
  - `pnpm test` — PASS
- - `pnpm test:workspace` — PASS
-@@ -46,4 +52,4 @@ None.
+@@ -52,4 +59,4 @@ None.
  
  ## Next Recommended Task
  
--P3-001 (editor package skeleton) — after P3-000-REPAIR is committed and audit-bundled.
-+P3-002 (editor adapter contracts) — define adapter interfaces in `@nabla/editor`.
+-P3-002 (editor adapter contracts) — define adapter interfaces in `@nabla/editor`.
++P3-003 (save pipeline contract wiring) — implement canonical editor export validation around the new model boundary.

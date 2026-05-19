@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-001` — Editor Package Skeleton
+`P3-002` — Editor Document Model Boundary
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton created.
+Phase 3 (`@nabla/editor`) — editor package skeleton and adapter model contracts created.
 
 ### Repairs Applied
 
@@ -33,6 +33,13 @@ Phase 3 (`@nabla/editor`) — editor package skeleton created.
 - No Milkdown or ProseMirror dependencies added.
 - No editor behavior implemented.
 - Minimal package skeleton created: `packages/editor/` with package.json, tsconfig.json, src/index.ts, and test.
+
+### P3-002 Notes
+
+- Added type-level editor adapter contracts in `packages/editor/src/model.ts`.
+- No Milkdown or ProseMirror dependencies added.
+- No runtime editor behavior implemented.
+- Save-pipeline runtime work remains deferred; this task defines contracts only.
 
 ## Verification Summary
 
@@ -52,4 +59,4 @@ None.
 
 ## Next Recommended Task
 
-P3-002 (editor adapter contracts) — define adapter interfaces in `@nabla/editor`.
+P3-003 (save pipeline contract wiring) — implement canonical editor export validation around the new model boundary.

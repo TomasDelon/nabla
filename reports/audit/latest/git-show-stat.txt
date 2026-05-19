@@ -1,8 +1,5 @@
- package.json                              |  4 ++--
- packages/editor/package.json              | 24 ++++++++++++++++++++++++
- packages/editor/src/index.ts              |  1 +
- packages/editor/tests/public-api.test.mjs | 14 ++++++++++++++
- packages/editor/tsconfig.json             | 10 ++++++++++
- pnpm-lock.yaml                            |  6 ++++++
- reports/IMPLEMENTATION_PROGRESS.md        | 16 +++++++++++-----
- 7 files changed, 68 insertions(+), 7 deletions(-)
+ packages/editor/src/index.ts              | 14 ++++++++
+ packages/editor/src/model.ts              | 58 +++++++++++++++++++++++++++++++
+ packages/editor/tests/public-api.test.mjs | 10 ++++++
+ reports/IMPLEMENTATION_PROGRESS.md        | 15 +++++---
+ 4 files changed, 93 insertions(+), 4 deletions(-)

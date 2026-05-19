@@ -1,1 +1,1 @@
-1884331 feat(editor): add editor package skeleton
+7157c9c feat(editor): add editor adapter model contracts
