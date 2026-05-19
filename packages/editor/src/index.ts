@@ -19,6 +19,14 @@ export {
   toggleTaskState,
 } from "./editor.js";
 export {
+  toggleCalloutFold,
+  toggleCalloutFoldInMarkdown,
+  toggleFoldedHeadingFold,
+  toggleFoldedHeadingFoldInMarkdown,
+  toggleToggleFold,
+  toggleToggleFoldInMarkdown,
+} from "./commands/fold.js";
+export {
   getCommentNodeViews,
   getCommentsFromMarkdown,
   NABLA_COMMENT_NODE_VIEW,

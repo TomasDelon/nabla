@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-011` — Footnotes and Comments Node Views
+`P3-012` — Fold State Commands
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, and footnote/comment helpers created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, and fold state commands created.
 
 ### Repairs Applied
 
@@ -116,6 +116,13 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No other Nabla node views added.
 - No dependencies added.
 
+### P3-012 Notes
+
+- Added fold state commands only in `packages/editor/src/commands/fold.ts`.
+- Supported source markers: callouts `[!Type]>`/`[!Type]v`, toggles `]>`/`]v`, and folded headings `#>`/`#v`.
+- No visual rendering for callouts, toggles, or folded headings was added.
+- No dependencies added.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -134,4 +141,4 @@ None.
 
 ## Next Recommended Task
 
-P3-012 (fold state commands) — add the next accepted editor-side behavior without broadening into unrelated node views.
+P3-013 (block id editing) — add the next accepted editor-side source manipulation behavior without broadening into unrelated node views.

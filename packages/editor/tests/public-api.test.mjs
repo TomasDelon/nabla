@@ -43,9 +43,20 @@ test("editor runtime exports are wired", async () => {
   assert.equal(typeof mod.getWikiLinks, "function");
   assert.equal(typeof mod.setTaskState, "function");
   assert.equal(typeof mod.setWikiLinkAlias, "function");
+  assert.equal(typeof mod.toggleCalloutFold, "function");
+  assert.equal(typeof mod.toggleToggleFold, "function");
+  assert.equal(typeof mod.toggleFoldedHeadingFold, "function");
   assert.equal(typeof mod.toggleTaskState, "function");
   assert.equal(typeof mod.loadSource, "function");
   assert.equal(typeof mod.getSource, "function");
+});
+
+test("fold command runtime exports are wired", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.toggleCalloutFoldInMarkdown, "function");
+  assert.equal(typeof mod.toggleToggleFoldInMarkdown, "function");
+  assert.equal(typeof mod.toggleFoldedHeadingFoldInMarkdown, "function");
 });
 
 test("task state runtime exports are wired", async () => {

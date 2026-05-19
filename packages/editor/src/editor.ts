@@ -72,6 +72,8 @@ type SummaryNode = {
   forEach(callback: (child: SummaryNode) => void): void;
 };
 
+const SOURCE_FOLD_MARKER_RE = /^(#{1,6}(?:>|v) |\[![A-Za-z][A-Za-z0-9_-]*](?:>|v)|](?:>|v))/m;
+
 function createState(markdown: string) {
   return ProseMirrorEditorState.create({
     schema: defaultMarkdownParser.schema,
@@ -85,6 +87,7 @@ function normalizeExportedMarkdown(markdown: string): string {
 
 function shouldPreserveSource(editor: Editor): boolean {
   return (
+    SOURCE_FOLD_MARKER_RE.test(editor.source) ||
     getCommentsFromMarkdown(editor.source).length > 0 ||
     getEmojiShortcodesFromMarkdown(editor.source).length > 0 ||
     getFootnotesFromMarkdown(editor.source).length > 0 ||
