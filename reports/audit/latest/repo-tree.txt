@@ -3,6 +3,9 @@ README.md
 nabla_complete_project_documentation_pack_v1_final.zip
 nabla_complete_project_documentation_pack_v1_final.zip.sha256
 package.json
+packages/app/package.json
+packages/app/src/index.ts
+packages/app/tsconfig.json
 packages/components/fixtures/bridge-folded-heading-text/expected.json
 packages/components/fixtures/bridge-folded-heading-text/input.json
 packages/components/fixtures/bridge-task-state/expected.json

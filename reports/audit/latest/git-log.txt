@@ -1,1 +1,1 @@
-3fa9169 docs: add Phase 5 kickoff and backlog
+bbab647 feat(app): add app package skeleton
