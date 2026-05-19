@@ -1,4 +1,4 @@
- packages/workspace/tests/diagnostics.test.mjs | 87 +++++++++++++++++++++++++++
- packages/workspace/tests/public-api.test.mjs  | 67 +++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md            | 62 +++++++++----------
- 3 files changed, 185 insertions(+), 31 deletions(-)
+ packages/workspace/src/transclusion-resolver.ts    |  62 ++++++++++
+ .../workspace/tests/transclusion-cycle.test.mjs    | 137 +++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md                 |  49 +++-----
+ 3 files changed, 218 insertions(+), 30 deletions(-)

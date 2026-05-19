@@ -6,7 +6,7 @@ Phase 2 — `@nabla/workspace`
 
 ## Task ID
 
-`P2-008` — diagnostics and public API consistency
+`P2-009` — transclusion cycle detection
 
 ## Branch
 
@@ -14,42 +14,31 @@ Phase 2 — `@nabla/workspace`
 
 ## Status
 
-P2-008 completed: diagnostics and public API consistency consolidation.
+P2-009 completed: transclusion cycle detection.
 
-### Diagnostic Consistency
+### Cycle Detection
 
-- Wiki link missing-target diagnostics verified consistent:
-  - Missing note file → `NABLA_LINK_MISSING_TARGET`
-  - Missing heading on existing file → `NABLA_HEADING_MISSING_TARGET`
-  - Missing block on existing file → `NABLA_BLOCK_MISSING_TARGET`
-- Transclusion missing-target diagnostics verified consistent:
-  - Missing note/heading/block target → `NABLA_TRANSCLUSION_MISSING_TARGET`
-- `createWorkspace` aggregates diagnostics in stable order: fileIndex → wikiLinks → transclusions
+- Added `detectTransclusionCycles` internal function in `transclusion-resolver.ts`
+- Builds directed graph from resolved transclusion edges
+- Uses DFS with recursion-stack tracking to detect back edges
+- Node identity includes file path, `path#slug` for headings, `path^blockId` for blocks
+- Emits `NABLA_TRANSCLUSION_CYCLE` (severity `"error"`) per cycle found
+- Runs after all direct transclusion resolutions are collected
 
-### Public API Consistency
+### Cycles Detected
 
-- All required exports verified:
-  - `buildFileIndex`, `resolveWikiLinks`, `buildBacklinkIndex`, `resolveTransclusions`, `createWorkspace`
-  - All relevant result/types exported
-- `createWorkspace` return shape verified
+- Self-cycle: A transcludes A directly
+- Two-node cycle: A → B → A
+- Longer cycle: A → B → C → A
+- No false positives for acyclic chains or diamond dependencies
 
-### Tests Added
-
-- `packages/workspace/tests/diagnostics.test.mjs` — integration tests for:
-  - Diagnostic aggregation order (fileIndex → wikiLinks → transclusions)
-  - Wiki link missing-target diagnostic codes
-  - Transclusion missing-target diagnostic codes
-  - All diagnostics severity warning
-- `packages/workspace/tests/public-api.test.mjs` — import/export inventory tests for:
-  - All expected function exports
-  - All expected type exports
-  - `createWorkspace` return shape verification
-
-## Scope Guardrails
+### Scope Guardrails
 
 - No `@nabla/markup` behavior changes
 - No spec or fixture modifications
-- No cycle detection, depth limit, or transclusion expansion
+- No depth limit / `maxTransclusionDepth`
+- No transclusion rendering/expansion
+- No backlink changes
 - No broad refactor
 
 ## Verification Summary
@@ -70,4 +59,4 @@ None.
 
 ## Next Recommended Task
 
-P2-009 — workspace consolidation follow-up
+P2-010 — workspace consolidation follow-up

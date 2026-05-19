@@ -58,6 +58,7 @@ packages/workspace/tests/heading-slugs.test.mjs
 packages/workspace/tests/helpers/load-ts-module.mjs
 packages/workspace/tests/path-utils.test.mjs
 packages/workspace/tests/public-api.test.mjs
+packages/workspace/tests/transclusion-cycle.test.mjs
 packages/workspace/tests/transclusion-resolver.test.mjs
 packages/workspace/tests/wiki-link-resolver.test.mjs
 packages/workspace/tsconfig.json

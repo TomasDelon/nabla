@@ -1,270 +1,299 @@
-diff --git a/packages/workspace/tests/diagnostics.test.mjs b/packages/workspace/tests/diagnostics.test.mjs
+diff --git a/packages/workspace/src/transclusion-resolver.ts b/packages/workspace/src/transclusion-resolver.ts
+index d37db31..0a90353 100644
+--- a/packages/workspace/src/transclusion-resolver.ts
++++ b/packages/workspace/src/transclusion-resolver.ts
+@@ -84,6 +84,8 @@ export function resolveTransclusions(
+     }
+   }
+ 
++  detectTransclusionCycles(resolutions, diagnostics);
++
+   return { resolutions, diagnostics };
+ }
+ 
+@@ -255,3 +257,63 @@ function resolveBlockTransclusion(
+     }
+   }
+ }
++
++function detectTransclusionCycles(
++  resolutions: TransclusionResolution[],
++  diagnostics: Diagnostic[],
++): void {
++  const graph = new Map<string, string[]>();
++
++  for (const res of resolutions) {
++    if (!res.resolved || !res.resolvedFilePath) continue;
++
++    const sourceId = normalizeWorkspacePath(res.filePath);
++
++    let targetId: string;
++    if (res.heading) {
++      targetId = `${normalizeWorkspacePath(res.resolvedFilePath)}#${createSlug(res.heading)}`;
++    } else if (res.blockId) {
++      targetId = `${normalizeWorkspacePath(res.resolvedFilePath)}^${res.blockId}`;
++    } else {
++      targetId = normalizeWorkspacePath(res.resolvedFilePath);
++    }
++
++    if (!graph.has(sourceId)) {
++      graph.set(sourceId, []);
++    }
++    graph.get(sourceId)!.push(targetId);
++  }
++
++  const visited = new Set<string>();
++  const recursionStack = new Set<string>();
++
++  const dfs = (node: string): void => {
++    if (recursionStack.has(node)) {
++      diagnostics.push({
++        severity: "error",
++        code: DIAGNOSTIC_CODES.TRANSCLUSION_CYCLE,
++        message: "Transclusion cycle detected.",
++      });
++      return;
++    }
++    if (visited.has(node)) return;
++
++    visited.add(node);
++    recursionStack.add(node);
++
++    const neighbors = graph.get(node);
++    if (neighbors) {
++      for (const neighbor of neighbors) {
++        dfs(neighbor);
++      }
++    }
++
++    recursionStack.delete(node);
++  };
++
++  for (const node of graph.keys()) {
++    if (!visited.has(node)) {
++      dfs(node);
++    }
++  }
++}
+diff --git a/packages/workspace/tests/transclusion-cycle.test.mjs b/packages/workspace/tests/transclusion-cycle.test.mjs
 new file mode 100644
-index 0000000..61f5dac
+index 0000000..af79b82
 --- /dev/null
-+++ b/packages/workspace/tests/diagnostics.test.mjs
-@@ -0,0 +1,87 @@
++++ b/packages/workspace/tests/transclusion-cycle.test.mjs
+@@ -0,0 +1,137 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +import { DIAGNOSTIC_CODES } from "@nabla/markup";
 +import { loadTsModule } from "./helpers/load-ts-module.mjs";
 +
-+const workspaceUrl = new URL("../src/workspace.ts", import.meta.url);
++const fileIndexUrl = new URL("../src/file-index.ts", import.meta.url);
++const resolverUrl = new URL("../src/transclusion-resolver.ts", import.meta.url);
 +
-+async function load() {
-+  return loadTsModule(workspaceUrl);
++const TRANSCLUSION_CYCLE = DIAGNOSTIC_CODES.TRANSCLUSION_CYCLE;
++
++async function loadFileIndex() {
++  return loadTsModule(fileIndexUrl);
 +}
 +
-+test("createWorkspace aggregates diagnostics in stable order: fileIndex, wikiLinks, transclusions", async () => {
-+  const { createWorkspace } = await load();
-+
-+  const files = [
-+    { path: "dup.md", source: "First ^dup\n\nSecond ^dup\n" },
-+    { path: "links.md", source: "[[missing]]" },
-+    { path: "trans.md", source: "![[missing]]" },
-+  ];
-+
-+  const result = createWorkspace(files);
-+
-+  const codes = result.diagnostics.map(d => d.code);
-+  const fileIdx = codes.findIndex(c => c === DIAGNOSTIC_CODES.BLOCK_ID_DUPLICATE);
-+  const wikiIdx = codes.findIndex(c => c === DIAGNOSTIC_CODES.LINK_MISSING_TARGET);
-+  const transIdx = codes.findIndex(c => c === DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET);
-+
-+  assert.notEqual(fileIdx, -1, "BLOCK_ID_DUPLICATE diagnostic should be present");
-+  assert.notEqual(wikiIdx, -1, "LINK_MISSING_TARGET diagnostic should be present");
-+  assert.notEqual(transIdx, -1, "TRANSCLUSION_MISSING_TARGET diagnostic should be present");
-+  assert.ok(fileIdx < wikiIdx, "fileIndex diagnostics should come before wikiLink diagnostics");
-+  assert.ok(wikiIdx < transIdx, "wikiLink diagnostics should come before transclusion diagnostics");
-+});
-+
-+test("createWorkspace wiki-link missing-target diagnostics use correct codes", async () => {
-+  const { createWorkspace } = await load();
-+
-+  const files = [
-+    { path: "exists.md", source: "# Heading\n\nParagraph ^block1\n" },
-+    { path: "source.md", source: "[[missing]]\n[[exists#NoHeading]]\n[[exists^noblock]]" },
-+  ];
-+
-+  const result = createWorkspace(files);
-+
-+  const linkMissing = result.diagnostics.filter(d => d.code === DIAGNOSTIC_CODES.LINK_MISSING_TARGET);
-+  const headingMissing = result.diagnostics.filter(d => d.code === DIAGNOSTIC_CODES.HEADING_MISSING_TARGET);
-+  const blockMissing = result.diagnostics.filter(d => d.code === DIAGNOSTIC_CODES.BLOCK_MISSING_TARGET);
-+
-+  assert.equal(linkMissing.length, 1, "missing note file should produce LINK_MISSING_TARGET");
-+  assert.equal(headingMissing.length, 1, "missing heading should produce HEADING_MISSING_TARGET");
-+  assert.equal(blockMissing.length, 1, "missing block should produce BLOCK_MISSING_TARGET");
-+});
-+
-+test("createWorkspace transclusion missing-target diagnostics use correct code", async () => {
-+  const { createWorkspace } = await load();
-+
-+  const files = [
-+    { path: "exists.md", source: "# Heading\n\nParagraph ^block1\n" },
-+    { path: "source.md", source: "![[missing]]\n![[exists#NoHeading]]\n![[exists^noblock]]" },
-+  ];
-+
-+  const result = createWorkspace(files);
-+
-+  const transMissing = result.diagnostics.filter(d => d.code === DIAGNOSTIC_CODES.TRANSCLUSION_MISSING_TARGET);
-+
-+  assert.equal(transMissing.length, 3, "all three missing transclusion targets should produce TRANSCLUSION_MISSING_TARGET");
-+  transMissing.forEach(d => {
-+    assert.equal(d.severity, "warning");
-+  });
-+});
-+
-+test("createWorkspace returns all diagnostics with severity warning", async () => {
-+  const { createWorkspace } = await load();
-+
-+  const files = [
-+    { path: "dup.md", source: "First ^dup\n\nSecond ^dup\n" },
-+    { path: "links.md", source: "[[missing]]" },
-+    { path: "trans.md", source: "![[missing]]" },
-+  ];
-+
-+  const result = createWorkspace(files);
-+
-+  assert.ok(result.diagnostics.length > 0);
-+  result.diagnostics.forEach(d => {
-+    assert.equal(d.severity, "warning");
-+  });
-+});
-diff --git a/packages/workspace/tests/public-api.test.mjs b/packages/workspace/tests/public-api.test.mjs
-new file mode 100644
-index 0000000..e1d6b2d
---- /dev/null
-+++ b/packages/workspace/tests/public-api.test.mjs
-@@ -0,0 +1,67 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+import { loadTsModule } from "./helpers/load-ts-module.mjs";
-+
-+const indexUrl = new URL("../src/index.ts", import.meta.url);
-+
-+async function load() {
-+  return loadTsModule(indexUrl);
++async function loadResolver() {
++  return loadTsModule(resolverUrl);
 +}
 +
-+const EXPECTED_FUNCTIONS = [
-+  "buildBlockIndex",
-+  "buildFileIndex",
-+  "resolveWikiLinks",
-+  "resolveTransclusions",
-+  "createWorkspace",
-+  "buildBacklinkIndex",
-+  "normalizeWorkspacePath",
-+  "createSlug",
-+  "deduplicateSlugs",
-+  "buildHeadingIndex",
-+];
-+
-+test("all expected function exports are present and callable", async () => {
-+  const mod = await load();
-+
-+  for (const name of EXPECTED_FUNCTIONS) {
-+    assert.ok(name in mod, `expected export "${name}" to exist`);
-+    assert.equal(typeof mod[name], "function", `expected "${name}" to be a function`);
-+  }
-+});
-+
-+test("createWorkspace returns correct shape", async () => {
-+  const { createWorkspace } = await load();
++test("detects self-cycle: A transcludes A", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
 +
 +  const files = [
-+    { path: "a.md", source: "# Heading\n\nSee [[b]]." },
-+    { path: "b.md", source: "Content." },
++    { path: "a.md", source: "![[a]]\n" },
 +  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
 +
-+  const result = createWorkspace(files);
-+
-+  assert.ok(result.workspace, "should have workspace");
-+  assert.ok(result.fileIndex, "should have fileIndex");
-+  assert.ok(result.wikiLinks, "should have wikiLinks");
-+  assert.ok(result.transclusions, "should have transclusions");
-+  assert.ok(Array.isArray(result.diagnostics), "should have diagnostics array");
-+
-+  assert.ok(result.workspace.index, "workspace should have index");
-+  assert.ok(Array.isArray(result.workspace.index.files), "index should have files");
-+  assert.ok(Array.isArray(result.workspace.index.headings), "index should have headings");
-+  assert.ok(Array.isArray(result.workspace.index.blocks), "index should have blocks");
-+  assert.ok(Array.isArray(result.workspace.index.backlinks), "index should have backlinks");
-+
-+  assert.equal(result.workspace.index.files.length, 2);
-+  assert.equal(result.workspace.index.headings.length, 1);
-+  assert.equal(result.workspace.index.backlinks.length, 1);
-+
-+  assert.ok(Array.isArray(result.fileIndex.entries), "fileIndex should have entries");
-+  assert.ok(Array.isArray(result.wikiLinks.resolutions), "wikiLinks should have resolutions");
-+  assert.ok(Array.isArray(result.transclusions.resolutions), "transclusions should have resolutions");
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.diagnostics.length, 1);
++  assert.equal(result.diagnostics[0].code, TRANSCLUSION_CYCLE);
++  assert.equal(result.diagnostics[0].severity, "error");
++  assert.equal(result.diagnostics[0].message, "Transclusion cycle detected.");
 +});
 +
-+test("NABLA_WORKSPACE_PACKAGE constant is exported", async () => {
-+  const mod = await load();
-+  assert.equal(mod.NABLA_WORKSPACE_PACKAGE, "@nabla/workspace");
++test("detects two-node cycle: A -> B -> A", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "a.md", source: "![[b]]\n" },
++    { path: "b.md", source: "![[a]]\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 2);
++  assert.ok(result.diagnostics.length >= 1);
++  assert.equal(result.diagnostics[0].code, TRANSCLUSION_CYCLE);
++  assert.equal(result.diagnostics[0].severity, "error");
++});
++
++test("detects longer cycle: A -> B -> C -> A", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "a.md", source: "![[b]]\n" },
++    { path: "b.md", source: "![[c]]\n" },
++    { path: "c.md", source: "![[a]]\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 3);
++  assert.equal(result.diagnostics.length, 1);
++  assert.equal(result.diagnostics[0].code, TRANSCLUSION_CYCLE);
++});
++
++test("does not emit cycle for acyclic chain", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "a.md", source: "![[b]]\n" },
++    { path: "b.md", source: "![[c]]\n" },
++    { path: "c.md", source: "No transclusions here.\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 2);
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("does not emit cycle for diamond dependency", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "a.md", source: "![[b]]\n![[c]]\n" },
++    { path: "b.md", source: "![[d]]\n" },
++    { path: "c.md", source: "![[d]]\n" },
++    { path: "d.md", source: "No transclusions.\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("preserves existing direct transclusion resolution for acyclic graphs", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "source.md", source: "![[target]]\n" },
++    { path: "target.md", source: "Content.\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  assert.equal(result.resolutions.length, 1);
++  assert.equal(result.resolutions[0].resolved, true);
++  assert.equal(result.diagnostics.length, 0);
++});
++
++test("cycle detection coexists with valid resolutions", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "a.md", source: "![[b]]\n![[valid]]\n" },
++    { path: "b.md", source: "![[a]]\n" },
++    { path: "valid.md", source: "Valid content.\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++
++  const cycleDiags = result.diagnostics.filter(d => d.code === TRANSCLUSION_CYCLE);
++  assert.equal(result.resolutions.length, 3);
++  assert.ok(cycleDiags.length >= 1);
++
++  const validRes = result.resolutions.find(r => r.target === "valid");
++  assert.ok(validRes);
++  assert.equal(validRes.resolved, true);
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index d085339..ac298db 100644
+index ac298db..d81af51 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 2 — `@nabla/workspace`
  
  ## Task ID
  
--`P2-002 / P2-003 / P2-004` — parallel sprint merged
-+`P2-008` — diagnostics and public API consistency
+-`P2-008` — diagnostics and public API consistency
++`P2-009` — transclusion cycle detection
  
  ## Branch
  
-@@ -14,55 +14,55 @@ Phase 2 — `@nabla/workspace`
+@@ -14,42 +14,31 @@ Phase 2 — `@nabla/workspace`
  
  ## Status
  
--Three parallel P2 tasks implemented and merged:
-+P2-008 completed: diagnostics and public API consistency consolidation.
+-P2-008 completed: diagnostics and public API consistency consolidation.
++P2-009 completed: transclusion cycle detection.
  
--### P2-002 — Path normalization
-+### Diagnostic Consistency
+-### Diagnostic Consistency
++### Cycle Detection
  
--- `packages/workspace/src/path-utils.ts` — `normalizeWorkspacePath`: NFC, preserve case, `.md`/`.mp` stripping, candidate matching (target, target.md, target.mp, target/index.md, target/index.mp)
--- `packages/workspace/tests/path-utils.test.mjs` — path normalization tests
-+- Wiki link missing-target diagnostics verified consistent:
-+  - Missing note file → `NABLA_LINK_MISSING_TARGET`
-+  - Missing heading on existing file → `NABLA_HEADING_MISSING_TARGET`
-+  - Missing block on existing file → `NABLA_BLOCK_MISSING_TARGET`
-+- Transclusion missing-target diagnostics verified consistent:
-+  - Missing note/heading/block target → `NABLA_TRANSCLUSION_MISSING_TARGET`
-+- `createWorkspace` aggregates diagnostics in stable order: fileIndex → wikiLinks → transclusions
+-- Wiki link missing-target diagnostics verified consistent:
+-  - Missing note file → `NABLA_LINK_MISSING_TARGET`
+-  - Missing heading on existing file → `NABLA_HEADING_MISSING_TARGET`
+-  - Missing block on existing file → `NABLA_BLOCK_MISSING_TARGET`
+-- Transclusion missing-target diagnostics verified consistent:
+-  - Missing note/heading/block target → `NABLA_TRANSCLUSION_MISSING_TARGET`
+-- `createWorkspace` aggregates diagnostics in stable order: fileIndex → wikiLinks → transclusions
++- Added `detectTransclusionCycles` internal function in `transclusion-resolver.ts`
++- Builds directed graph from resolved transclusion edges
++- Uses DFS with recursion-stack tracking to detect back edges
++- Node identity includes file path, `path#slug` for headings, `path^blockId` for blocks
++- Emits `NABLA_TRANSCLUSION_CYCLE` (severity `"error"`) per cycle found
++- Runs after all direct transclusion resolutions are collected
  
--### P2-003 — Heading slug index
-+### Public API Consistency
+-### Public API Consistency
++### Cycles Detected
  
--- `packages/workspace/src/slug.ts` — `createSlug` algorithm (NFC, lowercase, trim, accent removal, whitespace→`-`, punctuation removal, collapse `-`, trim `-`); `deduplicateSlugs` for slug/slug-2/slug-3 dedup
--- `packages/workspace/src/heading-index.ts` — `buildHeadingIndex` extracts `heading` and `foldableHeading` nodes from `NablaDocument`
--- `packages/workspace/tests/heading-slugs.test.mjs` — 15 tests
-+- All required exports verified:
-+  - `buildFileIndex`, `resolveWikiLinks`, `buildBacklinkIndex`, `resolveTransclusions`, `createWorkspace`
-+  - All relevant result/types exported
-+- `createWorkspace` return shape verified
+-- All required exports verified:
+-  - `buildFileIndex`, `resolveWikiLinks`, `buildBacklinkIndex`, `resolveTransclusions`, `createWorkspace`
+-  - All relevant result/types exported
+-- `createWorkspace` return shape verified
++- Self-cycle: A transcludes A directly
++- Two-node cycle: A → B → A
++- Longer cycle: A → B → C → A
++- No false positives for acyclic chains or diamond dependencies
  
--### P2-004 — Block ID index
-+### Tests Added
- 
--- `packages/workspace/src/block-index.ts` — `buildBlockIndex` extracts `data.nablaBlockId` from block-level AST nodes with recursive nested traversal and duplicate detection
--- `packages/workspace/tests/block-id.test.mjs` — 13 tests
+-### Tests Added
 -
--## Files Created
+-- `packages/workspace/tests/diagnostics.test.mjs` — integration tests for:
+-  - Diagnostic aggregation order (fileIndex → wikiLinks → transclusions)
+-  - Wiki link missing-target diagnostic codes
+-  - Transclusion missing-target diagnostic codes
+-  - All diagnostics severity warning
+-- `packages/workspace/tests/public-api.test.mjs` — import/export inventory tests for:
+-  - All expected function exports
+-  - All expected type exports
+-  - `createWorkspace` return shape verification
 -
--- `packages/workspace/src/path-utils.ts`
--- `packages/workspace/src/slug.ts`
--- `packages/workspace/src/heading-index.ts`
--- `packages/workspace/src/block-index.ts`
--- `packages/workspace/tests/path-utils.test.mjs`
--- `packages/workspace/tests/heading-slugs.test.mjs`
--- `packages/workspace/tests/block-id.test.mjs`
--
--## Files Modified
--
--- `packages/workspace/src/index.ts` — exports for all new modules
--- `reports/IMPLEMENTATION_PROGRESS.md` — this report
-+- `packages/workspace/tests/diagnostics.test.mjs` — integration tests for:
-+  - Diagnostic aggregation order (fileIndex → wikiLinks → transclusions)
-+  - Wiki link missing-target diagnostic codes
-+  - Transclusion missing-target diagnostic codes
-+  - All diagnostics severity warning
-+- `packages/workspace/tests/public-api.test.mjs` — import/export inventory tests for:
-+  - All expected function exports
-+  - All expected type exports
-+  - `createWorkspace` return shape verification
- 
- ## Scope Guardrails
+-## Scope Guardrails
++### Scope Guardrails
  
  - No `@nabla/markup` behavior changes
  - No spec or fixture modifications
--- No backlink or transclusion code started
-+- No cycle detection, depth limit, or transclusion expansion
-+- No broad refactor
+-- No cycle detection, depth limit, or transclusion expansion
++- No depth limit / `maxTransclusionDepth`
++- No transclusion rendering/expansion
++- No backlink changes
+ - No broad refactor
  
  ## Verification Summary
- 
--- `pnpm test` — all markup (69) + workspace tests pass
-+- `pnpm test` — all markup + workspace tests pass
-+- `pnpm test:workspace` — passes
-+- `pnpm test:markup` — passes
- - `pnpm typecheck` — passed
- - `pnpm build` — passed
- - `pnpm validate:fixtures` — passed
- - `pnpm validate:spec-version` — passed
- - `pnpm check:boundaries` — passed
- - `pnpm lint` — unavailable (expected)
--- `git status --short` — clean
- 
- ## Active Blockers
- 
-@@ -70,4 +70,4 @@ None.
+@@ -70,4 +59,4 @@ None.
  
  ## Next Recommended Task
  
--P2-005 — file index and wiki link resolver
-+P2-009 — workspace consolidation follow-up
+-P2-009 — workspace consolidation follow-up
++P2-010 — workspace consolidation follow-up

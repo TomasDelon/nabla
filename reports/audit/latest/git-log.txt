@@ -1,1 +1,1 @@
-8dac9f5 test(workspace): consolidate diagnostics and public API
+aff7ed8 feat(workspace): add transclusion cycle detection

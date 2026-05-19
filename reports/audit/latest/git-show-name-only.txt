@@ -1,3 +1,3 @@
-packages/workspace/tests/diagnostics.test.mjs
-packages/workspace/tests/public-api.test.mjs
+packages/workspace/src/transclusion-resolver.ts
+packages/workspace/tests/transclusion-cycle.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md
