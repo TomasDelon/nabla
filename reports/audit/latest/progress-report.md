@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-014` — Components Fixture/Regression Plan
+`P4-015` — Phase 4 Validation Report
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -410,6 +410,19 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No dependencies added.
 - No editor/markup/workspace source changes.
 
+### P4-015 Notes
+
+- Phase 4 validation report created: `reports/PHASE_4_VALIDATION.md`.
+- Documents completion of all 15 Phase 4 core tasks plus P4-008A, P4-008B.
+- Components implemented: 11 visual components for all accepted Nabla syntax surfaces.
+- Bridge/contracts implemented: rendering contract, theme tokens, bridge descriptor helpers, deferred/blocked constants.
+- Test coverage: 129 tests across 12 test files (component helpers, public API, bridge, API consistency, fixture regression).
+- Quality gate results: all pass.
+- Deferred scope documented: tooltip (BLOCKED), transclusion (DEFERRED), DOM snapshot tests, editor runtime node views, design system polish.
+- Phase verdict: PASS WITH DEFERRED SCOPE.
+- No source/test/fixture/package changes made.
+- No app/Phase 5 work started.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -428,4 +441,5 @@ None.
 
 ## Next Recommended Task
 
-P4-015 — Phase 4 Validation Report — write a validation report covering all Phase 4 tasks.
+External audit/approval for Phase 4 closure, then P4-CLOSE — Phase 4 closure merge.
+Do not start Phase 5 until P4-015 and P4-CLOSE are externally accepted.
