@@ -1,2 +1,2 @@
-reports/IMPLEMENTATION_PROGRESS.md
 reports/PHASE_1_VALIDATION.md
+scripts/create-audit-bundle.mjs

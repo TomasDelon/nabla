@@ -1,38 +1,39 @@
 {
-  "taskId": "P1-025",
-  "baseCommit": "21e1af7",
-  "headCommit": "813ba88",
+  "taskId": "PHASE-1-AUDIT-FIXES",
+  "baseCommit": "47277ae",
+  "headCommit": "bf3a90624875c03015ea0d418619a5e77bf73a2b",
   "currentBranch": "phase-1-markup-core",
-  "timestamp": "2026-05-19T02:42:12.327Z",
-  "currentHead": "813ba88811ed7c21c904b11fb56376875e55824d",
+  "timestamp": "2026-05-19T02:59:37.873Z",
+  "currentHead": "bf3a90624875c03015ea0d418619a5e77bf73a2b",
   "currentWorkingTreeStatus": "",
   "changedFiles": [
-    "reports/IMPLEMENTATION_PROGRESS.md",
-    "reports/PHASE_1_VALIDATION.md"
+    "reports/PHASE_1_VALIDATION.md",
+    "scripts/create-audit-bundle.mjs"
   ],
   "commandsUsed": [
     "git branch --show-current",
     "git rev-parse HEAD",
     "git status --short",
-    "git diff --name-only 21e1af7..813ba88",
-    "git diff --stat 21e1af7..813ba88",
-    "git diff 21e1af7..813ba88",
-    "git log --oneline 21e1af7..813ba88",
-    "git ls-tree -r --name-only 813ba88",
+    "git diff --name-only 47277ae..bf3a90624875c03015ea0d418619a5e77bf73a2b",
+    "git diff --stat 47277ae..bf3a90624875c03015ea0d418619a5e77bf73a2b",
+    "git diff 47277ae..bf3a90624875c03015ea0d418619a5e77bf73a2b",
+    "git log --oneline 47277ae..bf3a90624875c03015ea0d418619a5e77bf73a2b",
+    "git ls-tree -r --name-only bf3a90624875c03015ea0d418619a5e77bf73a2b",
     "git remote get-url origin"
   ],
-  "rawUrls": {
-    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/AUDIT_INDEX.md",
-    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/audit.json",
-    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/git-show.patch",
-    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/git-show-name-only.txt",
-    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/git-status.txt",
-    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/git-log.txt",
-    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/git-branch.txt",
-    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/git-show-stat.txt",
-    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/package-json.txt",
-    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/813ba88/reports/audit/latest/progress-report.md"
+  "reviewedHeadRawUrls": {
+    "AUDIT_INDEX_MD": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/AUDIT_INDEX.md",
+    "audit_json": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/audit.json",
+    "git_show_patch": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/git-show.patch",
+    "git_show_name_only": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/git-show-name-only.txt",
+    "git_status": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/git-status.txt",
+    "git_log": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/git-log.txt",
+    "git_branch": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/git-branch.txt",
+    "git_show_stat": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/git-show-stat.txt",
+    "package_json": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/package-json.txt",
+    "progress_report": "https://raw.githubusercontent.com/TomasDelon/nabla/bf3a90624875c03015ea0d418619a5e77bf73a2b/reports/audit/latest/progress-report.md"
   },
+  "auditBundleCommitKnownAfterCommit": true,
   "reviewAnchor": "commit",
-  "reviewInstruction": "Use the audit bundle commit hash, not branch raw URLs, as source of truth."
+  "reviewInstruction": "Use the audit bundle commit hash to read reports/audit/latest/*. reviewedHeadRawUrls point to the reviewed implementation commit and are not the source of truth for the new bundle."
 }

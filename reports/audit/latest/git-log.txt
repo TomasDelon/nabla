@@ -1,1 +1,1 @@
-813ba88 docs: add Phase 1 validation report
+bf3a906 fix(infra): apply Phase 1 final audit fixes
