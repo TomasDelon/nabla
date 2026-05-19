@@ -1,5 +1,8 @@
 export const NABLA_WORKSPACE_PACKAGE = "@nabla/workspace";
 
+export { buildBlockIndex } from "./block-index.js";
+export type { BlockIndexResult } from "./block-index.js";
+
 export type WorkspaceFile = {
   path: string;
 };

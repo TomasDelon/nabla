@@ -2,74 +2,67 @@
 
 ## Phase
 
-Phase 1 - `@nabla/markup`
+Phase 2 — `@nabla/workspace`
 
 ## Task ID
 
-`P1-025 Phase 1 validation`
+`P2-004` — block ID index
 
 ## Branch
 
-`phase-1-markup-core`
+`p2-004-block-id-index`
 
 ## Status
 
-Phase 1 validation complete. See `reports/PHASE_1_VALIDATION.md` for full report.
+Block ID index extraction implemented.
 
-All 25 Phase 1 tasks are complete. 69 tests pass. All quality gates pass.
+### What was done
 
-### Fixture Coverage Summary
-
-| Feature | Fixtures | Status |
-|---|---|---|
-| wiki-links | 8/8 | covered |
-| tags | 1/1 | covered |
-| highlights | 5/5 | covered |
-| comments | 3/3 | covered |
-| callouts | 7/7 | covered |
-| toggles | 5/5 | covered |
-| folded-headings | 3/3 | covered |
-| block-ids | 8/8 | covered |
-| transclusions | 5/5 | covered |
-| emoji-shortcodes | 2/2 | covered |
-| gfm-tables | 1/1 | covered |
-| task-states | 2/2 | covered |
-| frontmatter | 3/3 | covered |
-| footnotes | 3/3 | covered |
-| conflicts:protected-regions | 1/1 | covered |
-| **tooltips** | **4/4** | **deferred** |
-| **conflicts:inline-html** | **1/1** | **deferred** |
-| **conflicts:tooltip-vs-footnote** | **1/1** | **deferred** |
-
-## Scope Guardrails
-
-- No workspace/editor/components/app
-- No workspace-level file resolution
-- No actual embedded rendering
-- No fixture changes
-- No spec changes
+- Created `packages/workspace/src/block-index.ts` — `buildBlockIndex()` function that:
+  - Walks parsed AST children to extract `data.nablaBlockId` from block-level nodes
+  - Supports paragraphs, headings, foldable headings, list items, callouts, toggles, transclusions, tables
+  - Recursively traverses nested structures (callouts > toggles > paragraphs, etc.)
+  - Detects duplicate block IDs within the input and emits `NABLA_BLOCK_ID_DUPLICATE` diagnostics
+- Updated `packages/workspace/src/index.ts` — re-exports `buildBlockIndex` and `BlockIndexResult`
+- Created `packages/workspace/tests/block-id.test.mjs` — 13 tests covering:
+  - All supported block-level node types
+  - Nested traversal
+  - Duplicate detection (single and multiple)
+  - Edge cases (empty input, non-attachable types, nodes without IDs)
 
 ## Files Created
 
-- `reports/PHASE_1_VALIDATION.md` — full validation report
+- `packages/workspace/src/block-index.ts` — block ID index implementation
+- `packages/workspace/tests/block-id.test.mjs` — block ID index tests
+- `packages/workspace/tests/helpers/load-ts-module.mjs` — test helper (copied from markup)
 
-## Verification Summary
+## Files Modified
 
-- `node --test packages/markup/tests/**/*.test.mjs` — 69 tests pass
-- `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
-- `tsc -b packages/markup/tsconfig.json` — build passed
-- `node scripts/validate-fixtures.mjs` — fixture validation passed
-- `node scripts/validate-spec-version.mjs` — spec version validation passed
-- `node scripts/check-boundaries.mjs` — boundary check passed
+- `packages/workspace/src/index.ts` — added exports for block index
+- `reports/IMPLEMENTATION_PROGRESS.md` — this report
 
-## Active Blockers
+## Scope Guardrails
 
-None.
+- No `@nabla/markup` behavior changes
+- No spec or fixture modifications
+- No changes to forbidden files
 
-## Phase 1 Verdict
+## Verification
 
-**PASS** — pending phase-final mega audit.
+- `pnpm test` — markup tests pass
+- `pnpm test:workspace` — workspace tests pass
+- `pnpm test:markup` — markup tests pass
+- `pnpm typecheck` — type check passes
+- `pnpm build` — build passes
+- `pnpm validate:fixtures` — fixture validation passes
+- `pnpm validate:spec-version` — spec version validation passes
+- `pnpm check:boundaries` — boundary check passes
+- `pnpm lint` — lint passes
+
+## Audit Bundle
+
+See `audit-bundles/P2-004/` for the full audit bundle.
 
 ## Next Recommended Task
 
-Phase 2 — `@nabla/workspace`
+P2-005 — heading index
