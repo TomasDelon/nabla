@@ -77,16 +77,16 @@ async function main() {
   ];
 
   const rawUrls = {
-    AUDIT_INDEX_MD: rawUrlFor(branch, "reports/audit/latest/AUDIT_INDEX.md"),
-    audit_json: rawUrlFor(branch, "reports/audit/latest/audit.json"),
-    git_show_patch: rawUrlFor(branch, "reports/audit/latest/git-show.patch"),
-    git_show_name_only: rawUrlFor(branch, "reports/audit/latest/git-show-name-only.txt"),
-    git_status: rawUrlFor(branch, "reports/audit/latest/git-status.txt"),
-    git_log: rawUrlFor(branch, "reports/audit/latest/git-log.txt"),
-    git_branch: rawUrlFor(branch, "reports/audit/latest/git-branch.txt"),
-    git_show_stat: rawUrlFor(branch, "reports/audit/latest/git-show-stat.txt"),
-    package_json: rawUrlFor(branch, "reports/audit/latest/package-json.txt"),
-    progress_report: rawUrlFor(branch, "reports/audit/latest/progress-report.md")
+    AUDIT_INDEX_MD: rawUrlFor(head, "reports/audit/latest/AUDIT_INDEX.md"),
+    audit_json: rawUrlFor(head, "reports/audit/latest/audit.json"),
+    git_show_patch: rawUrlFor(head, "reports/audit/latest/git-show.patch"),
+    git_show_name_only: rawUrlFor(head, "reports/audit/latest/git-show-name-only.txt"),
+    git_status: rawUrlFor(head, "reports/audit/latest/git-status.txt"),
+    git_log: rawUrlFor(head, "reports/audit/latest/git-log.txt"),
+    git_branch: rawUrlFor(head, "reports/audit/latest/git-branch.txt"),
+    git_show_stat: rawUrlFor(head, "reports/audit/latest/git-show-stat.txt"),
+    package_json: rawUrlFor(head, "reports/audit/latest/package-json.txt"),
+    progress_report: rawUrlFor(head, "reports/audit/latest/progress-report.md")
   };
 
   const auditJson = {
@@ -99,7 +99,9 @@ async function main() {
     currentWorkingTreeStatus,
     changedFiles: nameOnly ? nameOnly.split("\n") : [],
     commandsUsed,
-    rawUrls
+    rawUrls,
+    reviewAnchor: "commit",
+    reviewInstruction: "Use the audit bundle commit hash, not branch raw URLs, as source of truth."
   };
 
   const auditIndex = `# Audit Bundle\n\nReviewed range: \`${reviewedRange}\`\nCurrent branch: \`${branch}\`\nCurrent HEAD at generation time: \`${currentHead}\`\n\nStart with this order:\n1. \`audit.json\` for task, branch, reviewed range, current HEAD, working tree status, and raw URLs.\n2. \`git-status.txt\` for current working tree state at generation time.\n3. \`git-log.txt\` for the commit slice under review.\n4. \`git-show-name-only.txt\` and \`git-show.patch\` for the actual reviewed diff.\n5. \`repo-tree.txt\` and \`package-json.txt\` for repository context.\n\nThis bundle is text-only and is intended for review from GitHub without manual uploads.\n`;
