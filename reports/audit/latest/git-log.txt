@@ -1,1 +1,37 @@
+e59b66d docs: add audit bundle for P2-012 Phase 2 validation
 f6ec0c2 docs: add Phase 2 validation report
+8fba5ba docs: add audit bundle for P2-011A merge
+0bb2331 merge: integrate P2-011A workspace shape alignment
+e720ac2 docs: add audit bundle for P2-011A workspace shape alignment
+83db762 docs: reclassify workspace shape alignment as P2-011A
+7b9eaf5 docs: add audit bundle for P2-012 workspace shape alignment
+2ed92d6 feat(workspace): align workspace fixture output shape
+c327551 docs: add audit bundle for P2-011 workspace fixture regression
+cee7823 test(workspace): add workspace fixture regression coverage
+f0aaaf2 docs: add audit bundle for P2-010 transclusion depth limit
+ccd7610 feat(workspace): add transclusion depth limit
+74127d3 docs: add audit bundle for P2-009 transclusion cycles
+aff7ed8 feat(workspace): add transclusion cycle detection
+45ea770 docs: add audit bundle for P2-008 diagnostics consistency
+8dac9f5 test(workspace): consolidate diagnostics and public API
+6051f81 docs: add audit bundle for P2-006-007 merge
+3a98a64 merge: integrate P2-007 transclusion resolver
+e941d26 merge: integrate P2-006 backlink index
+c671590 docs: add audit bundle for P2-006 backlink index
+4362c2a feat(workspace): add backlink index
+b011b1a docs: add audit bundle for P2-007 transclusion resolver
+67036f6 feat(workspace): add transclusion resolver
+db7d8c8 docs: add audit bundle for P2-005 file index and wiki links
+d858fb4 feat(workspace): add file index and wiki link resolver
+826f4c8 docs: add audit bundle for P2 parallel merge
+7721b7d merge: integrate P2-004 block ID index
+f61f002 merge: integrate P2-003 heading slug index
+10535dd merge: integrate P2-002 path normalization
+b0404bd docs: add audit bundle for P2-003 heading slug index
+4ded6bf feat(workspace): add heading slug index
+4d24b6c docs: add audit bundle for P2-004 block ID index
+66989ae feat(workspace): add block ID index
+538bdff docs: add audit bundle for P2-002 path normalization
+2e3dc73 feat(workspace): add path normalization utilities
+e3b836e docs: add audit bundle for P2-001 workspace skeleton
+8e777dd chore(workspace): add workspace package skeleton
