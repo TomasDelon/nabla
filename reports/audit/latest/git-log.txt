@@ -1,1 +1,1 @@
-8b2f842 feat(editor): add save pipeline canonicalization
+22f8c2a feat(editor): add plain markdown editor skeleton

@@ -1,6 +1,8 @@
- packages/editor/src/index.ts                 |  7 +++
- packages/editor/src/save-pipeline.ts         | 62 ++++++++++++++++++++++
- packages/editor/tests/public-api.test.mjs    |  7 +++
- packages/editor/tests/save-pipeline.test.mjs | 77 ++++++++++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md           | 16 ++++--
- 5 files changed, 165 insertions(+), 4 deletions(-)
+ packages/editor/package.json              |   4 +-
+ packages/editor/src/editor.ts             |  30 ++++++++
+ packages/editor/src/index.ts              |   2 +
+ packages/editor/tests/editor.test.mjs     |  30 ++++++++
+ packages/editor/tests/public-api.test.mjs |  13 +++-
+ pnpm-lock.yaml                            | 117 ++++++++++++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md        |  16 +++-
+ 7 files changed, 203 insertions(+), 9 deletions(-)

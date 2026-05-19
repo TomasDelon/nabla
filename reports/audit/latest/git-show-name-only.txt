@@ -1,5 +1,7 @@
+packages/editor/package.json
+packages/editor/src/editor.ts
 packages/editor/src/index.ts
-packages/editor/src/save-pipeline.ts
+packages/editor/tests/editor.test.mjs
 packages/editor/tests/public-api.test.mjs
-packages/editor/tests/save-pipeline.test.mjs
+pnpm-lock.yaml
 reports/IMPLEMENTATION_PROGRESS.md
