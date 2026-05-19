@@ -32,6 +32,15 @@ export { Callout, getCalloutDisplay } from "./callout.js";
 
 export { Toggle, getToggleDisplay } from "./toggle.js";
 
+export {
+  toComponentKind,
+  toComponentProps,
+  createComponentDescriptor,
+  isBridgeKindSupported,
+  BRIDGE_DEFERRED_KINDS,
+  BRIDGE_BLOCKED_KINDS,
+} from "./bridge.js";
+
 export { FoldedHeading, getFoldedHeadingDisplay } from "./folded-heading.js";
 
 export type { NablaComponentTheme } from "./theme.js";
@@ -51,3 +60,4 @@ export type { CommentDisplay } from "./comment.js";
 export type { CalloutDisplay } from "./callout.js";
 export type { ToggleDisplay } from "./toggle.js";
 export type { FoldedHeadingDisplay } from "./folded-heading.js";
+export type { BridgeComponentMetadata, NablaComponentDescriptor } from "./bridge.js";

@@ -72,6 +72,17 @@ test("FoldedHeading is exported from public API", async () => {
   assert.equal(typeof mod.getFoldedHeadingDisplay, "function");
 });
 
+test("bridge functions are exported from public API", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.toComponentKind, "function");
+  assert.equal(typeof mod.toComponentProps, "function");
+  assert.equal(typeof mod.createComponentDescriptor, "function");
+  assert.equal(typeof mod.isBridgeKindSupported, "function");
+  assert.ok(Array.isArray(mod.BRIDGE_DEFERRED_KINDS));
+  assert.ok(Array.isArray(mod.BRIDGE_BLOCKED_KINDS));
+});
+
 test("no forbidden visual components are exported", async () => {
   const mod = await load();
   const keys = Object.keys(mod);
