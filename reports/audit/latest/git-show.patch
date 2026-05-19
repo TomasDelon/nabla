@@ -1,27 +1,143 @@
 diff --git a/packages/workspace/src/transclusion-resolver.ts b/packages/workspace/src/transclusion-resolver.ts
-index d37db31..0a90353 100644
+index 0a90353..78c69ea 100644
 --- a/packages/workspace/src/transclusion-resolver.ts
 +++ b/packages/workspace/src/transclusion-resolver.ts
-@@ -84,6 +84,8 @@ export function resolveTransclusions(
+@@ -43,6 +43,7 @@ export function resolveTransclusions(
+   fileIndex: FileIndexEntry[],
+   headingIndex: HeadingIndexEntry[],
+   blockIndex: BlockIndexEntry[],
++  maxDepth?: number,
+ ): TransclusionResolverResult {
+   const resolutions: TransclusionResolution[] = [];
+   const diagnostics: Diagnostic[] = [];
+@@ -84,7 +85,7 @@ export function resolveTransclusions(
      }
    }
  
-+  detectTransclusionCycles(resolutions, diagnostics);
-+
+-  detectTransclusionCycles(resolutions, diagnostics);
++  detectTransclusionIssues(resolutions, diagnostics, maxDepth);
+ 
    return { resolutions, diagnostics };
  }
- 
-@@ -255,3 +257,63 @@ function resolveBlockTransclusion(
-     }
+@@ -258,13 +259,15 @@ function resolveBlockTransclusion(
    }
  }
+ 
+-function detectTransclusionCycles(
++function detectTransclusionIssues(
+   resolutions: TransclusionResolution[],
+   diagnostics: Diagnostic[],
++  maxDepth?: number,
+ ): void {
+-  const graph = new Map<string, string[]>();
++  const graph = new Map<string, Map<string, number>>();
+ 
+-  for (const res of resolutions) {
++  for (let i = 0; i < resolutions.length; i++) {
++    const res = resolutions[i];
+     if (!res.resolved || !res.resolvedFilePath) continue;
+ 
+     const sourceId = normalizeWorkspacePath(res.filePath);
+@@ -279,15 +282,125 @@ function detectTransclusionCycles(
+     }
+ 
+     if (!graph.has(sourceId)) {
+-      graph.set(sourceId, []);
++      graph.set(sourceId, new Map());
++    }
++    graph.get(sourceId)!.set(targetId, i);
++  }
 +
-+function detectTransclusionCycles(
-+  resolutions: TransclusionResolution[],
-+  diagnostics: Diagnostic[],
-+): void {
-+  const graph = new Map<string, string[]>();
++  const allTargets = new Set<string>();
++  for (const [, edges] of graph) {
++    for (const target of edges.keys()) {
++      allTargets.add(target);
++    }
++  }
 +
++  const toRemove = new Set<number>();
++
++  if (maxDepth !== undefined) {
++    const depthVisited = new Set<string>();
++
++    const dfsDepth = (node: string, depth: number): void => {
++      if (depthVisited.has(node)) return;
++
++      depthVisited.add(node);
++
++      const edges = graph.get(node);
++      if (edges) {
++        for (const [target, resIdx] of edges) {
++          if (depth + 1 > maxDepth) {
++            toRemove.add(resIdx);
++            diagnostics.push({
++              severity: "warning",
++              code: DIAGNOSTIC_CODES.TRANSCLUSION_DEPTH_LIMIT,
++              message: "Transclusion depth limit reached.",
++            });
++            continue;
++          }
++          dfsDepth(target, depth + 1);
++        }
++      }
++    };
++
++    for (const node of graph.keys()) {
++      if (!allTargets.has(node) && !depthVisited.has(node)) {
++        dfsDepth(node, 0);
++      }
++    }
++
++    const reverseGraph = new Map<string, Set<string>>();
++    for (const [source, edges] of graph) {
++      for (const target of edges.keys()) {
++        if (!reverseGraph.has(target)) reverseGraph.set(target, new Set());
++        reverseGraph.get(target)!.add(source);
++      }
++    }
++
++    const depthLimited = new Set<string>();
++    const queue: string[] = [];
++
++    for (const node of graph.keys()) {
++      if (!depthVisited.has(node)) {
++        const parents = reverseGraph.get(node);
++        if (parents && [...parents].some(p => depthVisited.has(p))) {
++          depthLimited.add(node);
++          queue.push(node);
++        }
++      }
++    }
++
++    while (queue.length > 0) {
++      const node = queue.shift()!;
++      const edges = graph.get(node);
++      if (edges) {
++        for (const target of edges.keys()) {
++          if (!depthVisited.has(target) && !depthLimited.has(target)) {
++            depthLimited.add(target);
++            queue.push(target);
++          }
++        }
++      }
++    }
++
++    for (const node of depthLimited) {
++      const edges = graph.get(node);
++      if (edges) {
++        for (const resIdx of edges.values()) {
++          toRemove.add(resIdx);
++        }
++      }
++    }
++
++    const sorted = [...toRemove].sort((a, b) => b - a);
++    for (const idx of sorted) {
++      resolutions.splice(idx, 1);
++    }
++  }
++
++  const cycleGraph = new Map<string, string[]>();
 +  for (const res of resolutions) {
 +    if (!res.resolved || !res.resolvedFilePath) continue;
 +
@@ -36,51 +152,78 @@ index d37db31..0a90353 100644
 +      targetId = normalizeWorkspacePath(res.resolvedFilePath);
 +    }
 +
-+    if (!graph.has(sourceId)) {
-+      graph.set(sourceId, []);
-+    }
-+    graph.get(sourceId)!.push(targetId);
-+  }
-+
-+  const visited = new Set<string>();
-+  const recursionStack = new Set<string>();
-+
-+  const dfs = (node: string): void => {
-+    if (recursionStack.has(node)) {
-+      diagnostics.push({
-+        severity: "error",
-+        code: DIAGNOSTIC_CODES.TRANSCLUSION_CYCLE,
-+        message: "Transclusion cycle detected.",
-+      });
-+      return;
-+    }
-+    if (visited.has(node)) return;
-+
-+    visited.add(node);
-+    recursionStack.add(node);
-+
-+    const neighbors = graph.get(node);
-+    if (neighbors) {
-+      for (const neighbor of neighbors) {
-+        dfs(neighbor);
-+      }
-+    }
-+
-+    recursionStack.delete(node);
-+  };
-+
-+  for (const node of graph.keys()) {
-+    if (!visited.has(node)) {
-+      dfs(node);
-+    }
-+  }
-+}
-diff --git a/packages/workspace/tests/transclusion-cycle.test.mjs b/packages/workspace/tests/transclusion-cycle.test.mjs
++    if (!cycleGraph.has(sourceId)) {
++      cycleGraph.set(sourceId, []);
+     }
+-    graph.get(sourceId)!.push(targetId);
++    cycleGraph.get(sourceId)!.push(targetId);
+   }
+ 
+-  const visited = new Set<string>();
++  const cycleVisited = new Set<string>();
+   const recursionStack = new Set<string>();
+ 
+-  const dfs = (node: string): void => {
++  const dfsCycle = (node: string): void => {
+     if (recursionStack.has(node)) {
+       diagnostics.push({
+         severity: "error",
+@@ -296,24 +409,24 @@ function detectTransclusionCycles(
+       });
+       return;
+     }
+-    if (visited.has(node)) return;
++    if (cycleVisited.has(node)) return;
+ 
+-    visited.add(node);
++    cycleVisited.add(node);
+     recursionStack.add(node);
+ 
+-    const neighbors = graph.get(node);
++    const neighbors = cycleGraph.get(node);
+     if (neighbors) {
+       for (const neighbor of neighbors) {
+-        dfs(neighbor);
++        dfsCycle(neighbor);
+       }
+     }
+ 
+     recursionStack.delete(node);
+   };
+ 
+-  for (const node of graph.keys()) {
+-    if (!visited.has(node)) {
+-      dfs(node);
++  for (const node of cycleGraph.keys()) {
++    if (!cycleVisited.has(node)) {
++      dfsCycle(node);
+     }
+   }
+ }
+diff --git a/packages/workspace/src/workspace.ts b/packages/workspace/src/workspace.ts
+index 8d92cd1..2204e35 100644
+--- a/packages/workspace/src/workspace.ts
++++ b/packages/workspace/src/workspace.ts
+@@ -24,11 +24,13 @@ export function createWorkspace(files: FileIndexInput[], options: WorkspaceOptio
+     fileIndexResult.headings,
+     fileIndexResult.blocks,
+   );
++  const maxDepth = options.maxTransclusionDepth ?? 5;
+   const transclusionResult = resolveTransclusions(
+     files,
+     fileIndexResult.entries,
+     fileIndexResult.headings,
+     fileIndexResult.blocks,
++    maxDepth,
+   );
+ 
+   const index: WorkspaceIndex = {
+diff --git a/packages/workspace/tests/transclusion-depth.test.mjs b/packages/workspace/tests/transclusion-depth.test.mjs
 new file mode 100644
-index 0000000..af79b82
+index 0000000..9789a91
 --- /dev/null
-+++ b/packages/workspace/tests/transclusion-cycle.test.mjs
-@@ -0,0 +1,137 @@
++++ b/packages/workspace/tests/transclusion-depth.test.mjs
+@@ -0,0 +1,188 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +import { DIAGNOSTIC_CODES } from "@nabla/markup";
@@ -88,7 +231,9 @@ index 0000000..af79b82
 +
 +const fileIndexUrl = new URL("../src/file-index.ts", import.meta.url);
 +const resolverUrl = new URL("../src/transclusion-resolver.ts", import.meta.url);
++const workspaceUrl = new URL("../src/workspace.ts", import.meta.url);
 +
++const TRANSCLUSION_DEPTH_LIMIT = DIAGNOSTIC_CODES.TRANSCLUSION_DEPTH_LIMIT;
 +const TRANSCLUSION_CYCLE = DIAGNOSTIC_CODES.TRANSCLUSION_CYCLE;
 +
 +async function loadFileIndex() {
@@ -99,41 +244,93 @@ index 0000000..af79b82
 +  return loadTsModule(resolverUrl);
 +}
 +
-+test("detects self-cycle: A transcludes A", async () => {
++async function loadWorkspace() {
++  return loadTsModule(workspaceUrl);
++}
++
++function chain(...names) {
++  return names.map((name, i) => {
++    const isLast = i === names.length - 1;
++    return {
++      path: `${name}.md`,
++      source: isLast ? "Leaf.\n" : `![[${names[i + 1]}]]\n`,
++    };
++  });
++}
++
++test("default max depth: chain of 6 emits depth-limit for 7th file", async () => {
 +  const { buildFileIndex } = await loadFileIndex();
 +  const { resolveTransclusions } = await loadResolver();
 +
-+  const files = [
-+    { path: "a.md", source: "![[a]]\n" },
-+  ];
++  const files = chain("a", "b", "c", "d", "e", "f", "g");
 +  const index = buildFileIndex(files);
-+  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks, 5);
 +
-+  assert.equal(result.resolutions.length, 1);
-+  assert.equal(result.diagnostics.length, 1);
-+  assert.equal(result.diagnostics[0].code, TRANSCLUSION_CYCLE);
-+  assert.equal(result.diagnostics[0].severity, "error");
-+  assert.equal(result.diagnostics[0].message, "Transclusion cycle detected.");
++  const diags = result.diagnostics.filter(d => d.code === TRANSCLUSION_DEPTH_LIMIT);
++  assert.equal(diags.length, 1);
++  assert.equal(diags[0].severity, "warning");
++  assert.equal(diags[0].message, "Transclusion depth limit reached.");
++  assert.equal(result.resolutions.length, 5);
 +});
 +
-+test("detects two-node cycle: A -> B -> A", async () => {
++test("custom max depth via createWorkspace limits chain", async () => {
++  const { createWorkspace } = await loadWorkspace();
++
++  const files = chain("a", "b", "c", "d", "e", "f");
++  const result = createWorkspace(files, { maxTransclusionDepth: 3 });
++
++  const diags = result.diagnostics.filter(d => d.code === TRANSCLUSION_DEPTH_LIMIT);
++  assert.equal(diags.length, 1);
++  assert.equal(result.transclusions.resolutions.length, 3);
++});
++
++test("short acyclic chain does not emit depth-limit diagnostic", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = chain("a", "b", "c");
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks, 5);
++
++  const diags = result.diagnostics.filter(d => d.code === TRANSCLUSION_DEPTH_LIMIT);
++  assert.equal(diags.length, 0);
++  assert.equal(result.resolutions.length, 2);
++});
++
++test("single transclusion within maxDepth=1 does not emit depth-limit", async () => {
 +  const { buildFileIndex } = await loadFileIndex();
 +  const { resolveTransclusions } = await loadResolver();
 +
 +  const files = [
 +    { path: "a.md", source: "![[b]]\n" },
-+    { path: "b.md", source: "![[a]]\n" },
++    { path: "b.md", source: "Leaf.\n" },
 +  ];
 +  const index = buildFileIndex(files);
-+  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks, 1);
 +
-+  assert.equal(result.resolutions.length, 2);
-+  assert.ok(result.diagnostics.length >= 1);
-+  assert.equal(result.diagnostics[0].code, TRANSCLUSION_CYCLE);
-+  assert.equal(result.diagnostics[0].severity, "error");
++  const diags = result.diagnostics.filter(d => d.code === TRANSCLUSION_DEPTH_LIMIT);
++  assert.equal(diags.length, 0);
++  assert.equal(result.resolutions.length, 1);
 +});
 +
-+test("detects longer cycle: A -> B -> C -> A", async () => {
++test("diamond dependency does not emit depth-limit", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "a.md", source: "![[b]]\n![[c]]\n" },
++    { path: "b.md", source: "![[d]]\n" },
++    { path: "c.md", source: "![[d]]\n" },
++    { path: "d.md", source: "Leaf.\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks, 10);
++
++  const diags = result.diagnostics.filter(d => d.code === TRANSCLUSION_DEPTH_LIMIT);
++  assert.equal(diags.length, 0);
++});
++
++test("cycle detection still works alongside depth limit", async () => {
 +  const { buildFileIndex } = await loadFileIndex();
 +  const { resolveTransclusions } = await loadResolver();
 +
@@ -143,46 +340,64 @@ index 0000000..af79b82
 +    { path: "c.md", source: "![[a]]\n" },
 +  ];
 +  const index = buildFileIndex(files);
-+  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks, 10);
 +
-+  assert.equal(result.resolutions.length, 3);
-+  assert.equal(result.diagnostics.length, 1);
-+  assert.equal(result.diagnostics[0].code, TRANSCLUSION_CYCLE);
++  const cycleDiags = result.diagnostics.filter(d => d.code === TRANSCLUSION_CYCLE);
++  const depthDiags = result.diagnostics.filter(d => d.code === TRANSCLUSION_DEPTH_LIMIT);
++  assert.ok(cycleDiags.length >= 1, "cycle still detected with maxDepth");
++  assert.equal(depthDiags.length, 0, "depth limit not exceeded");
 +});
 +
-+test("does not emit cycle for acyclic chain", async () => {
++test("depth limit stops before cycle when root leads into cycle", async () => {
++  const { buildFileIndex } = await loadFileIndex();
++  const { resolveTransclusions } = await loadResolver();
++
++  const files = [
++    { path: "root.md", source: "![[a]]\n" },
++    { path: "a.md", source: "![[b]]\n" },
++    { path: "b.md", source: "![[c]]\n" },
++    { path: "c.md", source: "![[a]]\n" },
++  ];
++  const index = buildFileIndex(files);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks, 2);
++
++  const cycleDiags = result.diagnostics.filter(d => d.code === TRANSCLUSION_CYCLE);
++  const depthDiags = result.diagnostics.filter(d => d.code === TRANSCLUSION_DEPTH_LIMIT);
++  assert.equal(cycleDiags.length, 0, "cycle not reached before depth limit");
++  assert.equal(depthDiags.length, 1, "depth limit halts before cycle");
++  assert.equal(result.resolutions.length, 2);
++});
++
++test("closed cycle still detected when depth limit is high", async () => {
 +  const { buildFileIndex } = await loadFileIndex();
 +  const { resolveTransclusions } = await loadResolver();
 +
 +  const files = [
 +    { path: "a.md", source: "![[b]]\n" },
 +    { path: "b.md", source: "![[c]]\n" },
-+    { path: "c.md", source: "No transclusions here.\n" },
++    { path: "c.md", source: "![[a]]\n" },
 +  ];
 +  const index = buildFileIndex(files);
-+  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks, 10);
 +
-+  assert.equal(result.resolutions.length, 2);
-+  assert.equal(result.diagnostics.length, 0);
++  const cycleDiags = result.diagnostics.filter(d => d.code === TRANSCLUSION_CYCLE);
++  const depthDiags = result.diagnostics.filter(d => d.code === TRANSCLUSION_DEPTH_LIMIT);
++  assert.equal(cycleDiags.length, 1, "closed cycle detected with depth limit");
++  assert.equal(depthDiags.length, 0, "no depth limit for closed cycle");
 +});
 +
-+test("does not emit cycle for diamond dependency", async () => {
-+  const { buildFileIndex } = await loadFileIndex();
-+  const { resolveTransclusions } = await loadResolver();
++test("acyclic chain still passes with default createWorkspace", async () => {
++  const { createWorkspace } = await loadWorkspace();
 +
-+  const files = [
-+    { path: "a.md", source: "![[b]]\n![[c]]\n" },
-+    { path: "b.md", source: "![[d]]\n" },
-+    { path: "c.md", source: "![[d]]\n" },
-+    { path: "d.md", source: "No transclusions.\n" },
-+  ];
-+  const index = buildFileIndex(files);
-+  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++  const files = chain("a", "b", "c");
++  const result = createWorkspace(files);
 +
-+  assert.equal(result.diagnostics.length, 0);
++  const depthDiags = result.diagnostics.filter(d => d.code === TRANSCLUSION_DEPTH_LIMIT);
++  assert.equal(depthDiags.length, 0);
++  assert.equal(result.transclusions.resolutions.length, 2);
 +});
 +
-+test("preserves existing direct transclusion resolution for acyclic graphs", async () => {
++test("direct transclusion resolution still works", async () => {
 +  const { buildFileIndex } = await loadFileIndex();
 +  const { resolveTransclusions } = await loadResolver();
 +
@@ -191,109 +406,74 @@ index 0000000..af79b82
 +    { path: "target.md", source: "Content.\n" },
 +  ];
 +  const index = buildFileIndex(files);
-+  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
++  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks, 5);
 +
 +  assert.equal(result.resolutions.length, 1);
 +  assert.equal(result.resolutions[0].resolved, true);
 +  assert.equal(result.diagnostics.length, 0);
 +});
-+
-+test("cycle detection coexists with valid resolutions", async () => {
-+  const { buildFileIndex } = await loadFileIndex();
-+  const { resolveTransclusions } = await loadResolver();
-+
-+  const files = [
-+    { path: "a.md", source: "![[b]]\n![[valid]]\n" },
-+    { path: "b.md", source: "![[a]]\n" },
-+    { path: "valid.md", source: "Valid content.\n" },
-+  ];
-+  const index = buildFileIndex(files);
-+  const result = resolveTransclusions(files, index.entries, index.headings, index.blocks);
-+
-+  const cycleDiags = result.diagnostics.filter(d => d.code === TRANSCLUSION_CYCLE);
-+  assert.equal(result.resolutions.length, 3);
-+  assert.ok(cycleDiags.length >= 1);
-+
-+  const validRes = result.resolutions.find(r => r.target === "valid");
-+  assert.ok(validRes);
-+  assert.equal(validRes.resolved, true);
-+});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index ac298db..d81af51 100644
+index d81af51..9e02787 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 2 — `@nabla/workspace`
  
  ## Task ID
  
--`P2-008` — diagnostics and public API consistency
-+`P2-009` — transclusion cycle detection
+-`P2-009` — transclusion cycle detection
++`P2-010` — transclusion depth limit
  
  ## Branch
  
-@@ -14,42 +14,31 @@ Phase 2 — `@nabla/workspace`
+@@ -14,29 +14,31 @@ Phase 2 — `@nabla/workspace`
  
  ## Status
  
--P2-008 completed: diagnostics and public API consistency consolidation.
-+P2-009 completed: transclusion cycle detection.
+-P2-009 completed: transclusion cycle detection.
++P2-010 completed: transclusion depth limit.
  
--### Diagnostic Consistency
-+### Cycle Detection
+-### Cycle Detection
++### Depth Limit Detection
  
--- Wiki link missing-target diagnostics verified consistent:
--  - Missing note file → `NABLA_LINK_MISSING_TARGET`
--  - Missing heading on existing file → `NABLA_HEADING_MISSING_TARGET`
--  - Missing block on existing file → `NABLA_BLOCK_MISSING_TARGET`
--- Transclusion missing-target diagnostics verified consistent:
--  - Missing note/heading/block target → `NABLA_TRANSCLUSION_MISSING_TARGET`
--- `createWorkspace` aggregates diagnostics in stable order: fileIndex → wikiLinks → transclusions
-+- Added `detectTransclusionCycles` internal function in `transclusion-resolver.ts`
-+- Builds directed graph from resolved transclusion edges
-+- Uses DFS with recursion-stack tracking to detect back edges
-+- Node identity includes file path, `path#slug` for headings, `path^blockId` for blocks
-+- Emits `NABLA_TRANSCLUSION_CYCLE` (severity `"error"`) per cycle found
-+- Runs after all direct transclusion resolutions are collected
+-- Added `detectTransclusionCycles` internal function in `transclusion-resolver.ts`
+-- Builds directed graph from resolved transclusion edges
+-- Uses DFS with recursion-stack tracking to detect back edges
+-- Node identity includes file path, `path#slug` for headings, `path^blockId` for blocks
+-- Emits `NABLA_TRANSCLUSION_CYCLE` (severity `"error"`) per cycle found
+-- Runs after all direct transclusion resolutions are collected
++- Added `maxDepth` parameter to `resolveTransclusions` in `transclusion-resolver.ts`
++- Renamed `detectTransclusionCycles` to `detectTransclusionIssues` — handles both cycles and depth limit
++- Graph traversal tracks depth from root nodes during DFS
++- When `depth + 1 > maxDepth`, the edge is removed and `NABLA_TRANSCLUSION_DEPTH_LIMIT` (severity `"warning"`) is emitted
++- Depth counting: root node depth = 0, each transclusion hop increments by 1
++- Exceeding resolution edges are spliced from the resolutions array after traversal
++- `createWorkspace` passes `options.maxTransclusionDepth` (default `5`) to the resolver
  
--### Public API Consistency
-+### Cycles Detected
+-### Cycles Detected
++### Depth Limit Behavior
  
--- All required exports verified:
--  - `buildFileIndex`, `resolveWikiLinks`, `buildBacklinkIndex`, `resolveTransclusions`, `createWorkspace`
--  - All relevant result/types exported
--- `createWorkspace` return shape verified
-+- Self-cycle: A transcludes A directly
-+- Two-node cycle: A → B → A
-+- Longer cycle: A → B → C → A
-+- No false positives for acyclic chains or diamond dependencies
+-- Self-cycle: A transcludes A directly
+-- Two-node cycle: A → B → A
+-- Longer cycle: A → B → C → A
+-- No false positives for acyclic chains or diamond dependencies
++- Default max depth: 5 (per spec `expected-index.json`)
++- Custom `maxTransclusionDepth` works through `createWorkspace` options
++- Short acyclic chains do not emit depth-limit diagnostics
++- Cycle detection still passes alongside depth limit
++- Depth limit can stop traversal before a cycle is reached
++- Direct transclusion resolution behavior unchanged
  
--### Tests Added
--
--- `packages/workspace/tests/diagnostics.test.mjs` — integration tests for:
--  - Diagnostic aggregation order (fileIndex → wikiLinks → transclusions)
--  - Wiki link missing-target diagnostic codes
--  - Transclusion missing-target diagnostic codes
--  - All diagnostics severity warning
--- `packages/workspace/tests/public-api.test.mjs` — import/export inventory tests for:
--  - All expected function exports
--  - All expected type exports
--  - `createWorkspace` return shape verification
--
--## Scope Guardrails
-+### Scope Guardrails
+ ### Scope Guardrails
  
  - No `@nabla/markup` behavior changes
  - No spec or fixture modifications
--- No cycle detection, depth limit, or transclusion expansion
-+- No depth limit / `maxTransclusionDepth`
-+- No transclusion rendering/expansion
-+- No backlink changes
+-- No depth limit / `maxTransclusionDepth`
+ - No transclusion rendering/expansion
+ - No backlink changes
  - No broad refactor
- 
- ## Verification Summary
-@@ -70,4 +59,4 @@ None.
+@@ -59,4 +61,4 @@ None.
  
  ## Next Recommended Task
  
--P2-009 — workspace consolidation follow-up
-+P2-010 — workspace consolidation follow-up
+-P2-010 — workspace consolidation follow-up
++P2-011 — workspace consolidation follow-up

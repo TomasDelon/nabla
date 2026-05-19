@@ -1,4 +1,5 @@
- packages/workspace/src/transclusion-resolver.ts    |  62 ++++++++++
- .../workspace/tests/transclusion-cycle.test.mjs    | 137 +++++++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md                 |  49 +++-----
- 3 files changed, 218 insertions(+), 30 deletions(-)
+ packages/workspace/src/transclusion-resolver.ts    | 143 ++++++++++++++--
+ packages/workspace/src/workspace.ts                |   2 +
+ .../workspace/tests/transclusion-depth.test.mjs    | 188 +++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md                 |  34 ++--
+ 4 files changed, 336 insertions(+), 31 deletions(-)

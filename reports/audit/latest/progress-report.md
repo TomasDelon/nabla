@@ -6,7 +6,7 @@ Phase 2 — `@nabla/workspace`
 
 ## Task ID
 
-`P2-009` — transclusion cycle detection
+`P2-010` — transclusion depth limit
 
 ## Branch
 
@@ -14,29 +14,31 @@ Phase 2 — `@nabla/workspace`
 
 ## Status
 
-P2-009 completed: transclusion cycle detection.
+P2-010 completed: transclusion depth limit.
 
-### Cycle Detection
+### Depth Limit Detection
 
-- Added `detectTransclusionCycles` internal function in `transclusion-resolver.ts`
-- Builds directed graph from resolved transclusion edges
-- Uses DFS with recursion-stack tracking to detect back edges
-- Node identity includes file path, `path#slug` for headings, `path^blockId` for blocks
-- Emits `NABLA_TRANSCLUSION_CYCLE` (severity `"error"`) per cycle found
-- Runs after all direct transclusion resolutions are collected
+- Added `maxDepth` parameter to `resolveTransclusions` in `transclusion-resolver.ts`
+- Renamed `detectTransclusionCycles` to `detectTransclusionIssues` — handles both cycles and depth limit
+- Graph traversal tracks depth from root nodes during DFS
+- When `depth + 1 > maxDepth`, the edge is removed and `NABLA_TRANSCLUSION_DEPTH_LIMIT` (severity `"warning"`) is emitted
+- Depth counting: root node depth = 0, each transclusion hop increments by 1
+- Exceeding resolution edges are spliced from the resolutions array after traversal
+- `createWorkspace` passes `options.maxTransclusionDepth` (default `5`) to the resolver
 
-### Cycles Detected
+### Depth Limit Behavior
 
-- Self-cycle: A transcludes A directly
-- Two-node cycle: A → B → A
-- Longer cycle: A → B → C → A
-- No false positives for acyclic chains or diamond dependencies
+- Default max depth: 5 (per spec `expected-index.json`)
+- Custom `maxTransclusionDepth` works through `createWorkspace` options
+- Short acyclic chains do not emit depth-limit diagnostics
+- Cycle detection still passes alongside depth limit
+- Depth limit can stop traversal before a cycle is reached
+- Direct transclusion resolution behavior unchanged
 
 ### Scope Guardrails
 
 - No `@nabla/markup` behavior changes
 - No spec or fixture modifications
-- No depth limit / `maxTransclusionDepth`
 - No transclusion rendering/expansion
 - No backlink changes
 - No broad refactor
@@ -59,4 +61,4 @@ None.
 
 ## Next Recommended Task
 
-P2-010 — workspace consolidation follow-up
+P2-011 — workspace consolidation follow-up

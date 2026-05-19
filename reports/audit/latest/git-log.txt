@@ -1,1 +1,1 @@
-aff7ed8 feat(workspace): add transclusion cycle detection
+ccd7610 feat(workspace): add transclusion depth limit
