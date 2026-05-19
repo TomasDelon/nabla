@@ -1,437 +1,376 @@
-diff --git a/packages/app/src/app.css b/packages/app/src/app.css
-index 3d92946..0ece106 100644
---- a/packages/app/src/app.css
-+++ b/packages/app/src/app.css
-@@ -19,23 +19,25 @@
- body {
-   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-   color: #1a1a1a;
--  background: #ffffff;
-+  background: #f5f5f7;
-   line-height: 1.6;
- }
- 
- .app {
--  max-width: 640px;
-+  max-width: 680px;
-   margin: 0 auto;
--  padding: 2rem;
-+  padding: 2rem 1rem;
- }
- 
- .app-header {
-+  text-align: center;
-   margin-bottom: 2rem;
- }
- 
- .app-title {
--  font-size: 1.5rem;
-+  font-size: 1.75rem;
-   font-weight: 700;
-+  letter-spacing: -0.02em;
-   margin-bottom: 0.25rem;
- }
- 
-@@ -50,83 +52,74 @@ body {
-   gap: 1.5rem;
- }
- 
--.status-card {
--  background: #f9fafb;
-+.card {
-+  background: #ffffff;
-   border: 1px solid #e5e7eb;
--  border-radius: 0.375rem;
--  padding: 1rem;
-+  border-radius: 0.5rem;
-+  padding: 1.25rem;
-+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
- }
- 
--.status-card__title {
-+.card__title {
-   font-size: 1.125rem;
-   font-weight: 600;
-   margin-bottom: 0.5rem;
- }
- 
--.status-card__note {
-+.card__note {
-   color: #6b7280;
--  font-size: 0.875rem;
-+  font-size: 0.8125rem;
-+  margin-bottom: 0.75rem;
- }
- 
--.status-card__stats {
-+.card__stats {
-   display: flex;
--  gap: 1rem;
-+  flex-wrap: wrap;
-+  gap: 0.75rem 1.25rem;
-   font-size: 0.8125rem;
-   color: #6b7280;
-   font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
--  margin-top: 0.5rem;
+diff --git a/packages/app/fixtures/canonical-export-basic/expected.json b/packages/app/fixtures/canonical-export-basic/expected.json
+new file mode 100644
+index 0000000..5cb2983
+--- /dev/null
++++ b/packages/app/fixtures/canonical-export-basic/expected.json
+@@ -0,0 +1,4 @@
++{
++  "nonEmpty": true,
++  "value": "# Title\nParagraph.\n"
++}
+diff --git a/packages/app/fixtures/canonical-export-basic/input.json b/packages/app/fixtures/canonical-export-basic/input.json
+new file mode 100644
+index 0000000..af1ef3d
+--- /dev/null
++++ b/packages/app/fixtures/canonical-export-basic/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "canonicalExport",
++  "args": ["# Title\n\nParagraph.\n"]
++}
+diff --git a/packages/app/fixtures/component-descriptor-kinds/expected.json b/packages/app/fixtures/component-descriptor-kinds/expected.json
+new file mode 100644
+index 0000000..2a13954
+--- /dev/null
++++ b/packages/app/fixtures/component-descriptor-kinds/expected.json
+@@ -0,0 +1,4 @@
++{
++  "kinds": ["taskState", "wikiLink", "tag", "highlight", "emoji", "footnote", "comment", "callout", "toggle", "foldedHeading"],
++  "excluded": ["transclusion", "tooltip"]
++}
+diff --git a/packages/app/fixtures/component-descriptor-kinds/input.json b/packages/app/fixtures/component-descriptor-kinds/input.json
+new file mode 100644
+index 0000000..70f672b
+--- /dev/null
++++ b/packages/app/fixtures/component-descriptor-kinds/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "componentDescriptorKinds",
++  "args": []
++}
+diff --git a/packages/app/fixtures/component-descriptor-summary/expected.json b/packages/app/fixtures/component-descriptor-summary/expected.json
+new file mode 100644
+index 0000000..05ba886
+--- /dev/null
++++ b/packages/app/fixtures/component-descriptor-summary/expected.json
+@@ -0,0 +1,5 @@
++{
++  "totalCount": 23,
++  "uniqueKinds": 10,
++  "supportedKinds": 10
++}
+diff --git a/packages/app/fixtures/component-descriptor-summary/input.json b/packages/app/fixtures/component-descriptor-summary/input.json
+new file mode 100644
+index 0000000..87be578
+--- /dev/null
++++ b/packages/app/fixtures/component-descriptor-summary/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "componentDescriptorSummary",
++  "args": []
++}
+diff --git a/packages/app/fixtures/editor-edit-roundtrip/expected.json b/packages/app/fixtures/editor-edit-roundtrip/expected.json
+new file mode 100644
+index 0000000..e5d74bc
+--- /dev/null
++++ b/packages/app/fixtures/editor-edit-roundtrip/expected.json
+@@ -0,0 +1,7 @@
++{
++  "firstNonEmpty": true,
++  "secondNonEmpty": true,
++  "different": true,
++  "firstIncludes": "Alpha",
++  "secondIncludes": "Beta"
++}
+diff --git a/packages/app/fixtures/editor-edit-roundtrip/input.json b/packages/app/fixtures/editor-edit-roundtrip/input.json
+new file mode 100644
+index 0000000..2d729dd
+--- /dev/null
++++ b/packages/app/fixtures/editor-edit-roundtrip/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "editorRoundtrip",
++  "args": ["# Alpha\n", "# Beta\n"]
++}
+diff --git a/packages/app/fixtures/render-pipeline-summary/expected.json b/packages/app/fixtures/render-pipeline-summary/expected.json
+new file mode 100644
+index 0000000..58eec03
+--- /dev/null
++++ b/packages/app/fixtures/render-pipeline-summary/expected.json
+@@ -0,0 +1,6 @@
++{
++  "hasCanonicalOutput": true,
++  "originalLength": true,
++  "canonicalLength": true,
++  "diagnosticsCount": true
++}
+diff --git a/packages/app/fixtures/render-pipeline-summary/input.json b/packages/app/fixtures/render-pipeline-summary/input.json
+new file mode 100644
+index 0000000..34e348f
+--- /dev/null
++++ b/packages/app/fixtures/render-pipeline-summary/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "renderPipelineSummary",
++  "args": []
++}
+diff --git a/packages/app/fixtures/sample-source-basic/expected.json b/packages/app/fixtures/sample-source-basic/expected.json
+new file mode 100644
+index 0000000..0e3d780
+--- /dev/null
++++ b/packages/app/fixtures/sample-source-basic/expected.json
+@@ -0,0 +1,3 @@
++{
++  "nonEmpty": true
++}
+diff --git a/packages/app/fixtures/sample-source-basic/input.json b/packages/app/fixtures/sample-source-basic/input.json
+new file mode 100644
+index 0000000..955c008
+--- /dev/null
++++ b/packages/app/fixtures/sample-source-basic/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "sampleSourceBasic",
++  "args": []
++}
+diff --git a/packages/app/fixtures/source-of-truth-invariant/expected.json b/packages/app/fixtures/source-of-truth-invariant/expected.json
+new file mode 100644
+index 0000000..d252ec7
+--- /dev/null
++++ b/packages/app/fixtures/source-of-truth-invariant/expected.json
+@@ -0,0 +1,3 @@
++{
++  "forbiddenKeys": ["html", "innerHTML", "editorState", "jsonState", "serializedState"]
++}
+diff --git a/packages/app/fixtures/source-of-truth-invariant/input.json b/packages/app/fixtures/source-of-truth-invariant/input.json
+new file mode 100644
+index 0000000..e52e5cb
+--- /dev/null
++++ b/packages/app/fixtures/source-of-truth-invariant/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "sourceOfTruthInvariant",
++  "args": []
++}
+diff --git a/packages/app/fixtures/workspace-summary-basic/expected.json b/packages/app/fixtures/workspace-summary-basic/expected.json
+new file mode 100644
+index 0000000..2d089bc
+--- /dev/null
++++ b/packages/app/fixtures/workspace-summary-basic/expected.json
+@@ -0,0 +1,7 @@
++{
++  "hasWorkspaceIndex": true,
++  "documentCount": 1,
++  "linkCount": true,
++  "backlinkCount": true,
++  "diagnosticCount": true
++}
+diff --git a/packages/app/fixtures/workspace-summary-basic/input.json b/packages/app/fixtures/workspace-summary-basic/input.json
+new file mode 100644
+index 0000000..ad55e15
+--- /dev/null
++++ b/packages/app/fixtures/workspace-summary-basic/input.json
+@@ -0,0 +1,4 @@
++{
++  "operation": "workspaceSummary",
++  "args": []
++}
+diff --git a/packages/app/tests/app-fixtures.test.mjs b/packages/app/tests/app-fixtures.test.mjs
+new file mode 100644
+index 0000000..bba80fb
+--- /dev/null
++++ b/packages/app/tests/app-fixtures.test.mjs
+@@ -0,0 +1,190 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { readdir, readFile } from "node:fs/promises";
++import { join, dirname } from "node:path";
++import { fileURLToPath } from "node:url";
++
++const __dirname = dirname(fileURLToPath(import.meta.url));
++const FIXTURES_DIR = join(__dirname, "..", "fixtures");
++
++const FORBIDDEN_KEYS = ["html", "innerHTML", "editorState", "jsonState", "serializedState"];
++
++function isObject(v) {
++  return typeof v === "object" && v !== null;
 +}
 +
-+.card__stat {
-+  white-space: nowrap;
++function checkObjectFields(actual, expected, label) {
++  for (const [key, value] of Object.entries(expected)) {
++    assert.ok(key in actual, `${label}: expected field "${key}" in result`);
++    const actualValue = actual[key];
++    if (value === true) {
++      assert.ok(typeof actualValue !== "undefined", `${label}: field "${key}" must exist`);
++    } else if (typeof value === "number") {
++      assert.equal(actualValue, value, `${label}: field "${key}" mismatch`);
++    } else if (isObject(value)) {
++      checkObjectFields(actualValue, value, `${label}.${key}`);
++    } else {
++      assert.deepEqual(actualValue, value, `${label}: field "${key}" mismatch`);
++    }
++  }
 +}
 +
-+.card__stat-label {
-+  color: #9ca3af;
-+  margin-right: 0.25rem;
- }
- 
- .app-reminder {
-   font-size: 0.75rem;
--  color: #6b7280;
-+  color: #9ca3af;
-   text-align: center;
-   font-style: italic;
--}
--
--.sample-section {
--  display: flex;
--  flex-direction: column;
--  gap: 0.5rem;
-+  padding: 0.5rem 0;
- }
- 
- .section-title {
-   font-size: 1.125rem;
-   font-weight: 600;
-+  margin-bottom: 0.25rem;
- }
- 
- .section-note {
-   color: #6b7280;
--  font-size: 0.875rem;
--  margin-bottom: 0.5rem;
--}
--
--.source-view {
--  width: 100%;
--  padding: 0.75rem;
--  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
-   font-size: 0.8125rem;
--  line-height: 1.5;
--  background: #f9fafb;
--  border: 1px solid #e5e7eb;
--  border-radius: 0.375rem;
--  color: #1a1a1a;
--  resize: vertical;
-+  margin-bottom: 0.75rem;
- }
- 
- .editor-section {
-   display: flex;
-   flex-direction: column;
--  gap: 0.5rem;
--}
--
--.editor-section .section-note {
--  margin-bottom: 0;
-+  gap: 0.75rem;
- }
- 
- .editor-summary {
-   display: flex;
--  gap: 1rem;
-+  flex-wrap: wrap;
-+  gap: 0.75rem 1.25rem;
-   font-size: 0.8125rem;
-   color: #6b7280;
-   font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
-@@ -134,52 +127,94 @@ body {
- 
- .editor-textarea {
-   width: 100%;
--  padding: 0.75rem;
-+  min-height: 14rem;
-+  padding: 0.875rem;
-   font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
-   font-size: 0.8125rem;
--  line-height: 1.5;
-+  line-height: 1.6;
-   background: #ffffff;
--  border: 1px solid #3b82f6;
-+  border: 1px solid #93c5fd;
-   border-radius: 0.375rem;
-   color: #1a1a1a;
-   resize: vertical;
-+  transition: border-color 0.15s;
- }
- 
--.component-preview {
-+.editor-textarea:focus {
-+  outline: none;
-+  border-color: #3b82f6;
-+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
++function checkNoForbiddenKeys(obj, label) {
++  for (const key of FORBIDDEN_KEYS) {
++    assert.equal(key in obj, false, `${label}: must not contain "${key}"`);
++  }
 +}
 +
-+.source-view {
-+  width: 100%;
-+  min-height: 10rem;
-+  padding: 0.875rem;
-+  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
-+  font-size: 0.8125rem;
-+  line-height: 1.6;
-   background: #f9fafb;
-   border: 1px solid #e5e7eb;
-   border-radius: 0.375rem;
--  padding: 1rem;
-+  color: #374151;
-+  resize: vertical;
++async function loadFixtures() {
++  const entries = await readdir(FIXTURES_DIR, { withFileTypes: true });
++  const dirs = entries.filter((e) => e.isDirectory());
++  const results = [];
++
++  for (const dir of dirs) {
++    const inputPath = join(FIXTURES_DIR, dir.name, "input.json");
++    const expectedPath = join(FIXTURES_DIR, dir.name, "expected.json");
++
++    const inputRaw = await readFile(inputPath, "utf8");
++    const expectedRaw = await readFile(expectedPath, "utf8");
++
++    results.push({
++      name: dir.name,
++      operation: JSON.parse(inputRaw).operation,
++      args: JSON.parse(inputRaw).args ?? [],
++      expected: JSON.parse(expectedRaw),
++    });
++  }
++
++  return results.sort((a, b) => a.name.localeCompare(b.name));
 +}
 +
-+.component-preview {
-+  background: #ffffff;
-+  border: 1px solid #e5e7eb;
-+  border-radius: 0.5rem;
-+  padding: 1.25rem;
-+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
- }
- 
- .preview-grid {
-   display: flex;
-   flex-direction: column;
--  gap: 1rem;
-+  gap: 0.75rem;
- }
- 
- .preview-group {
--  border-top: 1px solid #e5e7eb;
-+  border-top: 1px solid #f3f4f6;
-   padding-top: 0.75rem;
- }
- 
- .preview-group__title {
--  font-size: 0.875rem;
-+  font-size: 0.75rem;
-   font-weight: 600;
--  color: #374151;
--  margin-bottom: 0.5rem;
-+  color: #6b7280;
-+  text-transform: uppercase;
-+  letter-spacing: 0.05em;
-+  margin-bottom: 0.625rem;
- }
- 
- .preview-examples {
-   display: flex;
-   flex-direction: column;
--  gap: 0.5rem;
-+  gap: 0.375rem;
++function checkKindExclusion(descriptors, excludedKinds) {
++  const kinds = descriptors.map((d) => d.kind);
++  for (const excluded of excludedKinds) {
++    assert.equal(kinds.includes(excluded), false, `descriptors must not include "${excluded}"`);
++  }
 +}
 +
-+.preview-examples--row {
-+  flex-direction: row;
-+  flex-wrap: wrap;
-+  gap: 0.75rem 1.25rem;
-+}
++test("all app fixtures pass", async () => {
++  const fixtures = await loadFixtures();
 +
-+.preview-examples--grid {
-+  display: grid;
-+  grid-template-columns: 1fr 1fr;
-+  gap: 0.75rem;
- }
- 
- .preview-item {
-   padding: 0.25rem 0;
- }
- 
-+.preview-item--inline {
-+  display: inline-flex;
-+  align-items: center;
-+}
++  assert.ok(fixtures.length > 0, "At least one fixture must exist");
 +
- .preview-comment-row {
-   display: flex;
-   align-items: center;
-@@ -195,6 +230,6 @@ body {
- 
- .preview-comment-note {
-   font-size: 0.75rem;
--  color: #6b7280;
-+  color: #9ca3af;
-   font-style: italic;
- }
-diff --git a/packages/app/src/main.tsx b/packages/app/src/main.tsx
-index ced4d62..dea3c91 100644
---- a/packages/app/src/main.tsx
-+++ b/packages/app/src/main.tsx
-@@ -96,35 +96,37 @@ function App() {
-         <p className="app-subtitle">Markdown-first visual editor</p>
-       </header>
-       <main className="app-main">
--        <div className="status-card">
--          <h2 className="status-card__title">Render pipeline connected</h2>
--          <div className="status-card__stats">
--            <span>Original length: {pipelineSummary.originalLength}</span>
--            <span>Canonical length: {pipelineSummary.canonicalLength}</span>
--            <span>Diagnostics: {pipelineSummary.diagnosticsCount}</span>
-+        <div className="card">
-+          <h2 className="card__title">Render pipeline</h2>
-+          <div className="card__stats">
-+            <span className="card__stat"><span className="card__stat-label">Original</span>{pipelineSummary.originalLength}</span>
-+            <span className="card__stat"><span className="card__stat-label">Canonical</span>{pipelineSummary.canonicalLength}</span>
-+            <span className="card__stat"><span className="card__stat-label">Diagnostics</span>{pipelineSummary.diagnosticsCount}</span>
-           </div>
-         </div>
- 
--        <section className="editor-section">
--          <h2 className="section-title">Editor</h2>
--          <p className="section-note">
--            This is plain source editing MVP. Rich-text editor node views are deferred.
--          </p>
--          <div className="editor-summary">
--            <span>Edited length: {editorSummary.sourceLength}</span>
--            <span>Exported length: {editorSummary.exportedLength}</span>
--            <span>Diagnostics: {editorSummary.diagnosticsCount}</span>
-+        <div className="card">
-+          <div className="editor-section">
-+            <h2 className="card__title">Editor</h2>
-+            <p className="card__note">
-+              This is plain source editing MVP. Rich-text editor node views are deferred.
-+            </p>
-+            <div className="editor-summary">
-+              <span className="card__stat"><span className="card__stat-label">Edited</span>{editorSummary.sourceLength}</span>
-+              <span className="card__stat"><span className="card__stat-label">Exported</span>{editorSummary.exportedLength}</span>
-+              <span className="card__stat"><span className="card__stat-label">Diagnostics</span>{editorSummary.diagnosticsCount}</span>
-+            </div>
-+            <textarea
-+              className="editor-textarea"
-+              value={editedSource}
-+              onChange={(e) => setEditedSource(e.target.value)}
-+              rows={12}
-+            />
-           </div>
--          <textarea
--            className="editor-textarea"
--            value={editedSource}
--            onChange={(e) => setEditedSource(e.target.value)}
--            rows={12}
--          />
--        </section>
-+        </div>
- 
--        <div className="sample-section">
--          <h2 className="section-title">Canonical export</h2>
-+        <div className="card">
-+          <h2 className="card__title">Canonical export</h2>
-           <textarea
-             className="source-view"
-             readOnly
-@@ -133,29 +135,29 @@ function App() {
-           />
-         </div>
- 
--        <div className="status-card">
--          <h2 className="status-card__title">Workspace</h2>
--          <p className="section-note">
-+        <div className="card">
-+          <h2 className="card__title">Workspace</h2>
-+          <p className="card__note">
-             MVP-level workspace index from in-memory document. No filesystem, no transclusion rendering.
-           </p>
--          <div className="status-card__stats">
--            <span>Documents: {workspaceSummary.documentCount}</span>
--            <span>Links: {workspaceSummary.linkCount}</span>
--            <span>Backlinks: {workspaceSummary.backlinkCount}</span>
--            <span>Diagnostics: {workspaceSummary.diagnosticCount}</span>
-+          <div className="card__stats">
-+            <span className="card__stat"><span className="card__stat-label">Documents</span>{workspaceSummary.documentCount}</span>
-+            <span className="card__stat"><span className="card__stat-label">Links</span>{workspaceSummary.linkCount}</span>
-+            <span className="card__stat"><span className="card__stat-label">Backlinks</span>{workspaceSummary.backlinkCount}</span>
-+            <span className="card__stat"><span className="card__stat-label">Diagnostics</span>{workspaceSummary.diagnosticCount}</span>
-           </div>
-         </div>
- 
-         <section className="component-preview">
--          <h2 className="section-title">Visual Components Preview</h2>
--          <p className="section-note">
-+          <h2 className="card__title">Visual Components Preview</h2>
-+          <p className="card__note">
-             Derived UI from sample metadata — Markdown/Nabla Markdown+ remains
-             the source of truth. No editor/workspace integration.
--            Total: {componentSummary.totalCount} descriptors,
--            {componentSummary.supportedKinds.length} supported component kinds.
-+            {componentSummary.totalCount} descriptors across {componentSummary.supportedKinds.length} kinds.
-           </p>
- 
-           <div className="preview-grid">
++  const sampleDoc = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++  const renderPipeline = await import(
++    new URL("../dist/render-pipeline.js", import.meta.url)
++  );
++  const componentRendering = await import(
++    new URL("../dist/component-rendering.js", import.meta.url)
++  );
++  const editorIntegration = await import(
++    new URL("../dist/editor-integration.js", import.meta.url)
++  );
++  const workspaceIntegration = await import(
++    new URL("../dist/workspace-integration.js", import.meta.url)
++  );
 +
-             <div className="preview-group">
-               <h3 className="preview-group__title">Task State</h3>
-               <div className="preview-examples">
-@@ -176,11 +178,11 @@ function App() {
- 
-             <div className="preview-group">
-               <h3 className="preview-group__title">Wiki Link</h3>
--              <div className="preview-examples">
-+              <div className="preview-examples preview-examples--row">
-                 {descriptors.filter(d => d.kind === "wikiLink").map((desc, i) => {
-                   const p = desc.props as any;
-                   return (
--                    <div key={i} className="preview-item">
-+                    <div key={i} className="preview-item preview-item--inline">
-                       <WikiLink
-                         target={p.target}
-                         alias={p.alias}
-@@ -197,11 +199,11 @@ function App() {
- 
-             <div className="preview-group">
-               <h3 className="preview-group__title">Tag</h3>
--              <div className="preview-examples">
-+              <div className="preview-examples preview-examples--row">
-                 {descriptors.filter(d => d.kind === "tag").map((desc, i) => {
-                   const p = desc.props as any;
-                   return (
--                    <div key={i} className="preview-item">
-+                    <div key={i} className="preview-item preview-item--inline">
-                       <Tag value={p.value} segments={p.segments} raw={p.raw} />
-                     </div>
-                   );
-@@ -211,11 +213,11 @@ function App() {
- 
-             <div className="preview-group">
-               <h3 className="preview-group__title">Highlight</h3>
--              <div className="preview-examples">
-+              <div className="preview-examples preview-examples--row">
-                 {descriptors.filter(d => d.kind === "highlight").map((desc, i) => {
-                   const p = desc.props as any;
-                   return (
--                    <div key={i} className="preview-item">
-+                    <div key={i} className="preview-item preview-item--inline">
-                       <Highlight text={p.text} color={p.color} raw={p.raw} />
-                     </div>
-                   );
-@@ -225,11 +227,11 @@ function App() {
- 
-             <div className="preview-group">
-               <h3 className="preview-group__title">Emoji</h3>
--              <div className="preview-examples">
-+              <div className="preview-examples preview-examples--row">
-                 {descriptors.filter(d => d.kind === "emoji").map((desc, i) => {
-                   const p = desc.props as any;
-                   return (
--                    <div key={i} className="preview-item">
-+                    <div key={i} className="preview-item preview-item--inline">
-                       <Emoji name={p.name} value={p.value} raw={p.raw} />
-                     </div>
-                   );
++  const SAMPLE_SOURCE = sampleDoc.SAMPLE_DOCUMENT_SOURCE;
++
++  for (const fixture of fixtures) {
++    const { operation, args } = fixture;
++
++    switch (operation) {
++      case "sampleSourceBasic": {
++        const source = SAMPLE_SOURCE;
++        const nonEmpty = typeof source === "string" && source.length > 0;
++        assert.equal(nonEmpty, true, "sample source must be non-empty");
++        assert.ok(source.includes("Nabla Sample Document"));
++        break;
++      }
++
++      case "renderPipelineSummary": {
++        const summary = renderPipeline.getRenderPipelineSummary(SAMPLE_SOURCE);
++        checkObjectFields(summary, fixture.expected, fixture.name);
++        checkNoForbiddenKeys(summary, fixture.name);
++        break;
++      }
++
++      case "canonicalExport": {
++        const source = args[0];
++        const exported = renderPipeline.canonicalizeSampleSource(source);
++        assert.equal(typeof exported, "string");
++        assert.ok(exported.length > 0, "canonical export must be non-empty");
++        assert.equal(exported, fixture.expected.value);
++        break;
++      }
++
++      case "editorRoundtrip": {
++        const first = editorIntegration.exportCanonicalSource(args[0]);
++        const second = editorIntegration.exportCanonicalSource(args[1]);
++        assert.equal(typeof first, "string");
++        assert.ok(first.length > 0);
++        assert.equal(typeof second, "string");
++        assert.ok(second.length > 0);
++        assert.notEqual(first, second);
++        assert.ok(first.includes(fixture.expected.firstIncludes));
++        assert.ok(second.includes(fixture.expected.secondIncludes));
++        break;
++      }
++
++      case "componentDescriptorSummary": {
++        const summary = componentRendering.getComponentRenderingSummary();
++        assert.equal(summary.totalCount, fixture.expected.totalCount);
++        assert.equal(summary.uniqueKinds.length, fixture.expected.uniqueKinds);
++        assert.equal(summary.supportedKinds.length, fixture.expected.supportedKinds);
++        for (const desc of componentRendering.createSampleComponentDescriptors()) {
++          checkNoForbiddenKeys(desc.props, `${fixture.name}:${desc.kind}`);
++        }
++        break;
++      }
++
++      case "componentDescriptorKinds": {
++        const descriptors = componentRendering.createSampleComponentDescriptors();
++        const kinds = descriptors.map((d) => d.kind);
++        for (const expectedKind of fixture.expected.kinds) {
++          assert.ok(kinds.includes(expectedKind), `descriptors must include "${expectedKind}"`);
++        }
++        checkKindExclusion(descriptors, fixture.expected.excluded);
++        break;
++      }
++
++      case "workspaceSummary": {
++        const summary = workspaceIntegration.getWorkspaceIntegrationSummary(SAMPLE_SOURCE);
++        assert.equal(summary.hasWorkspaceIndex, true);
++        assert.equal(summary.documentCount, fixture.expected.documentCount);
++        assert.equal(typeof summary.linkCount, "number");
++        assert.equal(typeof summary.backlinkCount, "number");
++        assert.equal(typeof summary.diagnosticCount, "number");
++        checkNoForbiddenKeys(summary, fixture.name);
++        break;
++      }
++
++      case "sourceOfTruthInvariant": {
++        const pipelineSummary = renderPipeline.getRenderPipelineSummary(
++          "# Test\n\n[!note]> callout\n",
++        );
++        checkNoForbiddenKeys(pipelineSummary, `${fixture.name}:renderPipelineSummary`);
++
++        const editorSummary = editorIntegration.getEditorIntegrationSummary(
++          "# Editor test\n",
++        );
++        checkNoForbiddenKeys(editorSummary, `${fixture.name}:editorIntegrationSummary`);
++
++        const workspaceSummary = workspaceIntegration.getWorkspaceIntegrationSummary(
++          "# Workspace test\n\n[[Page]]\n",
++        );
++        checkNoForbiddenKeys(workspaceSummary, `${fixture.name}:workspaceIntegrationSummary`);
++
++        for (const desc of componentRendering.createSampleComponentDescriptors()) {
++          checkNoForbiddenKeys(desc.props, `${fixture.name}:componentProps:${desc.kind}`);
++        }
++        break;
++      }
++
++      default:
++        assert.fail(`Unknown operation: ${operation}`);
++    }
++  }
++});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 41dd577..abafbd7 100644
+index abafbd7..577fb45 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
  
  ## Last Task
  
--`P5-007` — Workspace Document Index Integration (Conditional)
-+`P5-008` — App Visual Polish Pass
+-`P5-008` — App Visual Polish Pass
++`P5-009` — App Fixture/Regression Coverage
  
  ## Branch
  
@@ -439,37 +378,34 @@ index 41dd577..abafbd7 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed. P5-009 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -550,10 +550,33 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
- - Created `packages/app/tests/workspace-integration.test.mjs` with 11 tests: documentCount >= 1, linkCount numeric, backlinkCount numeric, diagnosticCount numeric, hasWorkspaceIndex true, no filesystem paths in summary, no hidden JSON/HTML/editorState/jsonState/serializedState keys.
- - `@nabla/workspace` symlinked in `packages/app/node_modules/` for workspace resolution.
+@@ -573,10 +573,30 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
+ - No component/editor/workspace/markup source changes.
+ - No tooltip/transclusion rendering.
  
-+### P5-008 Notes
++### P5-009 Notes
 +
-+- Visual polish pass for the app MVP layout.
-+- Updated `packages/app/src/app.css` with:
-+  - Softer body background (`#f5f5f7`) for improved visual depth.
-+  - Wider max-width (680px) for better content density.
-+  - Centered app header with larger title.
-+  - Unified `.card` component replacing ad-hoc `.status-card` / `.sample-section` for consistent section styling (white background, subtle shadow).
-+  - `.card__stats` with labeled stat items using `.card__stat` and `.card__stat-label`.
-+  - Improved editor textarea: larger min-height, blue border with focus ring, transition.
-+  - Readonly source view with muted gray background and color.
-+  - Updated preview groups: uppercase section labels, lighter dividers, `.preview-examples--row` variant for inline groups (wiki link, tag, highlight, emoji) to display side-by-side.
-+  - Removed unused `.status-card__note`, `.status-card__stats`, `.sample-section`, `.section-note` legacy classes.
-+- Updated `packages/app/src/main.tsx` with structural class migration:
-+  - Replaced `.status-card` with `.card` for render pipeline, editor, canonical export, and workspace sections.
-+  - Replaced `.section-title`/`.section-note` with `.card__title`/`.card__note` where appropriate.
-+  - Added `.preview-examples--row` and `.preview-item--inline` for inline preview groups.
-+  - Editor section wrapped in `.card` for consistent card styling.
-+- No app logic or helper function behavior changed.
-+- No tests modified.
++- Created `packages/app/fixtures/` with 8 fixture cases covering current MVP behavior.
++- Created `packages/app/tests/app-fixtures.test.mjs` — fixture-driven test runner.
++- Fixture cases:
++  - `sample-source-basic` — sample document source is non-empty.
++  - `render-pipeline-summary` — getRenderPipelineSummary returns expected fields.
++  - `canonical-export-basic` — canonicalizeSampleSource produces expected output.
++  - `editor-edit-roundtrip` — exportCanonicalSource changes deterministically on edit.
++  - `component-descriptor-summary` — getComponentRenderingSummary reports correct counts (23 total, 10 unique kinds, 10 supported kinds).
++  - `component-descriptor-kinds` — all 10 accepted kinds present; transclusion/tooltip excluded.
++  - `workspace-summary-basic` — getWorkspaceIntegrationSummary returns documentCount 1 and numeric fields.
++  - `source-of-truth-invariant` — no hidden JSON/HTML/editorState/jsonState/serializedState keys in any pipeline/helper results.
++- All 65 app tests pass (including 8 existing test files and the new fixture runner).
++- No app source files modified.
++- No DOM/browser snapshot tests added.
++- No dependencies added.
 +- No component/editor/workspace/markup source changes.
-+- No tooltip/transclusion rendering.
++- Tooltip and transclusion confirmed excluded from component descriptor kinds.
 +
  ## Active Blockers
  
@@ -477,5 +413,5 @@ index 41dd577..abafbd7 100644
  
  ## Next Recommended Task
  
--P5-008 — Visual Polish & Component Integration Sweep — refine layout, styling, and component display consistency across the app.
-+P5-009 — App Fixture/Regression Coverage — add app-level regression fixtures and fixture-driven tests covering the sample document and editor/save/export pipeline.
+-P5-009 — App Fixture/Regression Coverage — add app-level regression fixtures and fixture-driven tests covering the sample document and editor/save/export pipeline.
++P5-010 — API Consistency Audit & Final Validation — audit the app package public API surface for consistency, completeness, and scope adherence.

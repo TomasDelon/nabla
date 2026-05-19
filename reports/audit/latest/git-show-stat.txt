@@ -1,4 +1,19 @@
- packages/app/src/app.css           | 141 +++++++++++++++++++++++--------------
- packages/app/src/main.tsx          |  90 +++++++++++------------
- reports/IMPLEMENTATION_PROGRESS.md |  29 +++++++-
- 3 files changed, 160 insertions(+), 100 deletions(-)
+ .../fixtures/canonical-export-basic/expected.json  |   4 +
+ .../app/fixtures/canonical-export-basic/input.json |   4 +
+ .../component-descriptor-kinds/expected.json       |   4 +
+ .../fixtures/component-descriptor-kinds/input.json |   4 +
+ .../component-descriptor-summary/expected.json     |   5 +
+ .../component-descriptor-summary/input.json        |   4 +
+ .../fixtures/editor-edit-roundtrip/expected.json   |   7 +
+ .../app/fixtures/editor-edit-roundtrip/input.json  |   4 +
+ .../fixtures/render-pipeline-summary/expected.json |   6 +
+ .../fixtures/render-pipeline-summary/input.json    |   4 +
+ .../app/fixtures/sample-source-basic/expected.json |   3 +
+ .../app/fixtures/sample-source-basic/input.json    |   4 +
+ .../source-of-truth-invariant/expected.json        |   3 +
+ .../fixtures/source-of-truth-invariant/input.json  |   4 +
+ .../fixtures/workspace-summary-basic/expected.json |   7 +
+ .../fixtures/workspace-summary-basic/input.json    |   4 +
+ packages/app/tests/app-fixtures.test.mjs           | 190 +++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md                 |  26 ++-
+ 18 files changed, 284 insertions(+), 3 deletions(-)

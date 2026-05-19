@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-008` — App Visual Polish Pass
+`P5-009` — App Fixture/Regression Coverage
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed. P5-009 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -573,10 +573,30 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - No component/editor/workspace/markup source changes.
 - No tooltip/transclusion rendering.
 
+### P5-009 Notes
+
+- Created `packages/app/fixtures/` with 8 fixture cases covering current MVP behavior.
+- Created `packages/app/tests/app-fixtures.test.mjs` — fixture-driven test runner.
+- Fixture cases:
+  - `sample-source-basic` — sample document source is non-empty.
+  - `render-pipeline-summary` — getRenderPipelineSummary returns expected fields.
+  - `canonical-export-basic` — canonicalizeSampleSource produces expected output.
+  - `editor-edit-roundtrip` — exportCanonicalSource changes deterministically on edit.
+  - `component-descriptor-summary` — getComponentRenderingSummary reports correct counts (23 total, 10 unique kinds, 10 supported kinds).
+  - `component-descriptor-kinds` — all 10 accepted kinds present; transclusion/tooltip excluded.
+  - `workspace-summary-basic` — getWorkspaceIntegrationSummary returns documentCount 1 and numeric fields.
+  - `source-of-truth-invariant` — no hidden JSON/HTML/editorState/jsonState/serializedState keys in any pipeline/helper results.
+- All 65 app tests pass (including 8 existing test files and the new fixture runner).
+- No app source files modified.
+- No DOM/browser snapshot tests added.
+- No dependencies added.
+- No component/editor/workspace/markup source changes.
+- Tooltip and transclusion confirmed excluded from component descriptor kinds.
+
 ## Active Blockers
 
 None.
 
 ## Next Recommended Task
 
-P5-009 — App Fixture/Regression Coverage — add app-level regression fixtures and fixture-driven tests covering the sample document and editor/save/export pipeline.
+P5-010 — API Consistency Audit & Final Validation — audit the app package public API surface for consistency, completeness, and scope adherence.

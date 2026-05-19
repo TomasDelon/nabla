@@ -1,1 +1,1 @@
-1fb9c88 style(app): polish MVP layout
+de4f28d test(app): add app fixture regression coverage
