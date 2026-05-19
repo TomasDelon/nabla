@@ -1,6 +1,4 @@
- package.json                     |  6 ++--
- packages/workspace/package.json  | 24 +++++++++++++++
- packages/workspace/src/index.ts  | 66 ++++++++++++++++++++++++++++++++++++++++
- packages/workspace/tsconfig.json | 10 ++++++
- pnpm-lock.yaml                   |  6 ++++
- 5 files changed, 109 insertions(+), 3 deletions(-)
+ packages/workspace/src/index.ts              |  2 +
+ packages/workspace/src/path-utils.ts         | 25 ++++++++
+ packages/workspace/tests/path-utils.test.mjs | 87 ++++++++++++++++++++++++++++
+ 3 files changed, 114 insertions(+)
