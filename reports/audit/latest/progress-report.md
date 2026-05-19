@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-010` — Emoji Shortcode Node View
+`P3-011` — Footnotes and Comments Node Views
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, and emoji shortcode helpers created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, and footnote/comment helpers created.
 
 ### Repairs Applied
 
@@ -107,6 +107,15 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No other Nabla node views added.
 - No dependencies added.
 
+### P3-011 Notes
+
+- Added footnote and comment support only in `packages/editor/src/nodes/footnote.ts` and `packages/editor/src/nodes/comment.ts` plus editor integration helpers.
+- Footnote metadata distinguishes references and definitions.
+- Comment metadata supports multiline block comments when the current markup syntax supports them.
+- No footnote panel UI or comment mode UI was added.
+- No other Nabla node views added.
+- No dependencies added.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -125,4 +134,4 @@ None.
 
 ## Next Recommended Task
 
-P3-011 (footnotes/comments) — extend editor-specific behavior to the next accepted Nabla syntax surface without broadening into unrelated node views.
+P3-012 (fold state commands) — add the next accepted editor-side behavior without broadening into unrelated node views.

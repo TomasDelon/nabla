@@ -1,1 +1,1 @@
-d617c33 feat(editor): add emoji shortcode helpers
+2637e46 feat(editor): add footnote and comment helpers
