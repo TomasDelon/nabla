@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-008B` — Playground Visual Polish Pass
+`P4-009` — Callout Visual Component
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -301,6 +301,25 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No app/Phase 5 work started.
 - No parser/serializer changes.
 - No dependencies added.
+
+### P4-009 Notes
+
+- Created `packages/components/src/callout.tsx` with `Callout` component and `getCalloutDisplay` helper.
+- Created `packages/components/src/callout.css` with card-like callout, left accent border by type, fold toggle, and `--nabla-*` token styling.
+- Callout renders a header with callout type label and fold toggle button; body is hidden when `foldState` is `"closed"`.
+- Callout type label mapping for common types (note, warning, tip, danger, info, abstract, question); unknown types use the raw type string as label.
+- Exported `Callout`, `getCalloutDisplay`, and `CalloutDisplay` type from `packages/components/src/index.ts`.
+- Updated playground with Callout section showing open note and closed warning examples with fold toggle interaction.
+- Added `packages/components/tests/callout.test.mjs` with 4 tests covering `getCalloutDisplay` metadata and component function export.
+- Updated `packages/components/tests/public-api.test.mjs` with Callout export test; removed Callout from forbidden-exports test.
+- Local `CalloutProps` type used (types.ts `CalloutProps` has `children?: never`); no `types.ts` modifications.
+- No new visual components added beyond callout.
+- No component API contract rewrite.
+- No dependencies added.
+- No editor/markup/workspace source changes.
+- No app/Phase 5 work started.
+- No parser/serializer changes.
+- DOM/React rendering tests deferred to component fixture/regression phase.
 
 ## Verification Summary
 

@@ -8,6 +8,8 @@ packages/components/playground/index.html
 packages/components/playground/src/main.tsx
 packages/components/playground/src/playground.css
 packages/components/playground/vite.config.ts
+packages/components/src/callout.css
+packages/components/src/callout.tsx
 packages/components/src/comment.css
 packages/components/src/comment.tsx
 packages/components/src/emoji.css
@@ -26,6 +28,7 @@ packages/components/src/tokens.css
 packages/components/src/types.ts
 packages/components/src/wiki-link.css
 packages/components/src/wiki-link.tsx
+packages/components/tests/callout.test.mjs
 packages/components/tests/emoji.test.mjs
 packages/components/tests/footnote-comment.test.mjs
 packages/components/tests/public-api.test.mjs

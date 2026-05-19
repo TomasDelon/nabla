@@ -1,8 +1,8 @@
 # Audit Bundle
 
-Reviewed range: `db61265..16affc0`
+Reviewed range: `61de9e6..a469732`
 Current branch: `phase-4-components-core`
-Current HEAD at generation time: `16affc0292b928e68059472a00f0726017b5e185`
+Current HEAD at generation time: `a469732b8439ede6e2b91800e5c542675df4011f`
 
 Review source of truth: use the audit bundle commit hash to read `reports/audit/latest/*`.
 

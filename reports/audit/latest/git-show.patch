@@ -1,308 +1,292 @@
 diff --git a/packages/components/playground/src/main.tsx b/packages/components/playground/src/main.tsx
-index 2a09760..ab0caa4 100644
+index ab0caa4..d04a5f7 100644
 --- a/packages/components/playground/src/main.tsx
 +++ b/packages/components/playground/src/main.tsx
-@@ -16,32 +16,29 @@ import "../../src/highlight.css";
+@@ -7,6 +7,7 @@ import { Highlight } from "../../src/highlight.tsx";
+ import { Emoji } from "../../src/emoji.tsx";
+ import { FootnoteReference, FootnoteDefinition } from "../../src/footnote.tsx";
+ import { Comment } from "../../src/comment.tsx";
++import { Callout } from "../../src/callout.tsx";
+ 
+ import "../../src/tokens.css";
+ import "../../src/task-state.css";
+@@ -16,6 +17,7 @@ import "../../src/highlight.css";
  import "../../src/emoji.css";
  import "../../src/footnote.css";
  import "../../src/comment.css";
-+import "./playground.css";
++import "../../src/callout.css";
+ import "./playground.css";
  
  type TaskState = "unchecked" | "checked" | "cancelled" | "important";
- const ALL_TASK_STATES: TaskState[] = ["unchecked", "checked", "cancelled", "important"];
- 
--function Section({ title, children }: { title: string; children: ReactNode }) {
-+function ExampleRow({ label, children }: { label: string; children: ReactNode }) {
-   return (
--    <section style={{ marginBottom: "2rem" }}>
--      <h2 style={{ borderBottom: "1px solid #e5e7eb", paddingBottom: "0.5rem" }}>{title}</h2>
--      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", paddingTop: "0.75rem" }}>
--        {children}
--      </div>
--    </section>
-+    <div className="playground-row">
-+      <span className="playground-row__label">{label}</span>
-+      <div className="playground-row__content">{children}</div>
-+    </div>
-   );
- }
- 
--function Label({ children }: { children: ReactNode }) {
--  return <span style={{ fontSize: "0.75rem", color: "#6b7280", fontFamily: "monospace" }}>{children}</span>;
-+function Section({ title, children }: { title: string; children: ReactNode }) {
-+  return (
-+    <section className="playground-section">
-+      <h2 className="playground-section__title">{title}</h2>
-+      <div className="playground-section__body">{children}</div>
-+    </section>
-+  );
- }
- 
--const CONTAINER_STYLE: Record<string, string> = {
--  maxWidth: "640px",
--  margin: "0 auto",
--  padding: "2rem",
--  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
--};
--
- function App() {
-   const [taskStates, setTaskStates] = useState<TaskState[]>(["unchecked", "checked", "cancelled", "important"]);
- 
-@@ -54,99 +51,83 @@ function App() {
+@@ -50,6 +52,18 @@ function App() {
+     });
    }
  
++  const [calloutFoldStates, setCalloutFoldStates] = useState<Record<string, "open" | "closed">>({
++    note: "open",
++    warning: "closed",
++  });
++
++  function toggleCallout(key: string) {
++    setCalloutFoldStates((prev) => ({
++      ...prev,
++      [key]: prev[key] === "open" ? "closed" : "open",
++    }));
++  }
++
    return (
--    <div style={CONTAINER_STYLE}>
--      <h1 style={{ marginBottom: "0.25rem" }}>@nabla/components</h1>
--      <p style={{ color: "#6b7280", fontSize: "0.875rem", marginBottom: "2rem" }}>
-+    <div className="playground">
-+      <h1 className="playground__heading">@nabla/components</h1>
-+      <p className="playground__subtitle">
-         Development playground — not the app. Source of truth remains Markdown/Nabla Markdown+.
-       </p>
- 
-       <Section title="Task State Checkbox">
-         {ALL_TASK_STATES.map((state, i) => (
--          <div key={state}>
--            <Label>{TASK_STATE_LABELS[state]}</Label>
-+          <ExampleRow key={state} label={TASK_STATE_LABELS[state]}>
-             <TaskStateCheckbox state={taskStates[i]} text={`Item ${i + 1}`} onChange={(s) => handleTaskStateChange(i, s)} />
--          </div>
-+          </ExampleRow>
-         ))}
-       </Section>
- 
-       <Section title="Wiki Link">
--        <div>
--          <Label>Resolved</Label>
-+        <ExampleRow label="Resolved">
-           <WikiLink target="ResolvedPage" alias="Resolved Link" unresolved={false} raw="[[ResolvedPage|Resolved Link]]" />
--        </div>
--        <div>
--          <Label>Unresolved (missing target)</Label>
-+        </ExampleRow>
-+        <ExampleRow label="Unresolved (missing target)">
-           <WikiLink target="MissingPage" unresolved={true} raw="[[MissingPage]]" />
--        </div>
--        <div>
--          <Label>With heading reference</Label>
-+        </ExampleRow>
-+        <ExampleRow label="With heading reference">
-           <WikiLink target="Page" heading="Section" unresolved={false} raw="[[Page#Section]]" />
--        </div>
--        <div>
--          <Label>With block reference</Label>
-+        </ExampleRow>
-+        <ExampleRow label="With block reference">
-           <WikiLink target="Page" blockId="abc123" unresolved={false} raw="[[Page^abc123]]" />
--        </div>
-+        </ExampleRow>
-       </Section>
- 
-       <Section title="Tag">
--        <div>
--          <Label>Simple tag</Label>
-+        <ExampleRow label="Simple tag">
-           <Tag value="mytag" segments={["mytag"]} raw="#mytag" />
--        </div>
--        <div>
--          <Label>Nested tag</Label>
-+        </ExampleRow>
-+        <ExampleRow label="Nested tag">
-           <Tag value="nested/tag" segments={["nested", "tag"]} raw="#nested/tag" />
--        </div>
-+        </ExampleRow>
-       </Section>
- 
-       <Section title="Highlight">
--        <div>
--          <Label>Simple highlight</Label>
-+        <ExampleRow label="Simple highlight">
-           <Highlight text="highlighted text" raw="==highlighted text==" />
--        </div>
--        <div>
--          <Label>Color highlight (#ffff00)</Label>
-+        </ExampleRow>
-+        <ExampleRow label="Color highlight (#ffff00)">
-           <Highlight text="yellow note" color="#ffff00" raw="=={#ff0}yellow note==" />
--        </div>
-+        </ExampleRow>
-       </Section>
- 
-       <Section title="Emoji">
--        <div>
--          <Label>Known shortcode (:check:)</Label>
-+        <ExampleRow label="Known shortcode (:check:)">
-           <Emoji name="check" value="✅" raw=":check:" />
--        </div>
--        <div>
--          <Label>Unknown shortcode (:unknown:)</Label>
-+        </ExampleRow>
-+        <ExampleRow label="Unknown shortcode (:unknown:)">
-           <Emoji name="unknown" value=":unknown:" raw=":unknown:" />
--        </div>
-+        </ExampleRow>
-       </Section>
- 
-       <Section title="Footnote">
--        <div>
--          <Label>Reference</Label>
--          <span>Some text</span>
-+        <ExampleRow label="Reference">
-+          <span>Some text </span>
-           <FootnoteReference footnoteKind="reference" id="note1" raw="[^note1]" />
--        </div>
--        <div>
--          <Label>Definition</Label>
-+        </ExampleRow>
-+        <ExampleRow label="Definition">
-           <FootnoteDefinition footnoteKind="definition" id="note1" text="Footnote definition text." raw="[^note1]: Footnote definition text." />
--        </div>
-+        </ExampleRow>
-       </Section>
- 
-       <Section title="Comment">
--        <div>
--          <Label>Editing mode (visible)</Label>
-+        <ExampleRow label="Editing mode (visible)">
-           <Comment text="private note" multiline={false} raw="%%private note%%" mode="editing" />
--        </div>
--        <div>
--          <Label>Reading mode (hidden — renders null)</Label>
-+        </ExampleRow>
-+        <ExampleRow label="Reading mode (hidden — renders null)">
-           <Comment text="should be hidden" multiline={false} raw="%%should be hidden%%" mode="reading" />
-           <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>→ (nothing rendered above)</span>
--        </div>
--        <div>
--          <Label>Multiline comment</Label>
-+        </ExampleRow>
-+        <ExampleRow label="Multiline comment">
+     <div className="playground">
+       <h1 className="playground__heading">@nabla/components</h1>
+@@ -129,6 +143,19 @@ function App() {
            <Comment text="line 1\nline 2" multiline={true} raw="%%line 1\nline 2%%" mode="editing" />
--        </div>
-+        </ExampleRow>
+         </ExampleRow>
        </Section>
++
++      <Section title="Callout">
++        <ExampleRow label="Note callout (open)">
++          <Callout calloutType="note" foldState={calloutFoldStates.note} onToggleFold={() => toggleCallout("note")}>
++            <p style={{ margin: 0 }}>This is a note callout with visible body content.</p>
++          </Callout>
++        </ExampleRow>
++        <ExampleRow label="Warning callout (closed)">
++          <Callout calloutType="warning" foldState={calloutFoldStates.warning} onToggleFold={() => toggleCallout("warning")}>
++            <p style={{ margin: 0 }}>This warning body is hidden when closed.</p>
++          </Callout>
++        </ExampleRow>
++      </Section>
      </div>
    );
-diff --git a/packages/components/playground/src/playground.css b/packages/components/playground/src/playground.css
+ }
+diff --git a/packages/components/src/callout.css b/packages/components/src/callout.css
 new file mode 100644
-index 0000000..54be338
+index 0000000..d88bfb6
 --- /dev/null
-+++ b/packages/components/playground/src/playground.css
-@@ -0,0 +1,56 @@
-+.playground {
-+  max-width: 640px;
-+  margin: 0 auto;
-+  padding: 2rem;
-+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
++++ b/packages/components/src/callout.css
+@@ -0,0 +1,64 @@
++.nabla-callout {
++  border: 1px solid var(--nabla-color-border);
++  border-radius: var(--nabla-radius-md);
++  background: var(--nabla-color-surface);
++  font-family: var(--nabla-font-family);
++  font-size: var(--nabla-font-size-md);
++  line-height: var(--nabla-line-height);
++  border-left-width: 3px;
 +}
 +
-+.playground__heading {
-+  margin-bottom: 0.25rem;
-+  font-size: 1.5rem;
-+  font-weight: 700;
-+}
-+
-+.playground__subtitle {
-+  color: #6b7280;
-+  font-size: 0.875rem;
-+  margin-bottom: 2rem;
-+}
-+
-+.playground-section {
-+  margin-bottom: 2rem;
-+}
-+
-+.playground-section__title {
-+  font-size: 1.125rem;
-+  font-weight: 600;
-+  border-bottom: 1px solid #e5e7eb;
-+  padding-bottom: 0.5rem;
-+  margin: 0 0 0.75rem;
-+}
-+
-+.playground-section__body {
++.nabla-callout__header {
 +  display: flex;
-+  flex-direction: column;
-+  gap: 0.75rem;
++  align-items: center;
++  justify-content: space-between;
++  padding: 0.5rem 0.75rem;
++  border-bottom: 1px solid var(--nabla-color-border);
 +}
 +
-+.playground-row {
-+  background: #f9fafb;
-+  border: 1px solid #e5e7eb;
-+  border-radius: 0.375rem;
-+  padding: 0.75rem 1rem;
++.nabla-callout__type {
++  font-weight: 600;
++  font-size: var(--nabla-font-size-sm);
++  text-transform: uppercase;
++  letter-spacing: 0.05em;
++  color: var(--nabla-color-text);
 +}
 +
-+.playground-row__label {
-+  display: block;
-+  font-size: 0.75rem;
-+  color: #6b7280;
-+  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
-+  margin-bottom: 0.375rem;
-+  line-height: 1.4;
++.nabla-callout__toggle {
++  background: none;
++  border: 1px solid var(--nabla-color-border);
++  border-radius: var(--nabla-radius-sm);
++  cursor: pointer;
++  padding: 0.125rem 0.375rem;
++  font-size: var(--nabla-font-size-sm);
++  line-height: 1;
++  color: var(--nabla-color-text-muted);
++  user-select: none;
 +}
 +
-+.playground-row__content {
-+  line-height: 1.6;
++.nabla-callout__toggle:hover {
++  background: var(--nabla-color-border);
 +}
-diff --git a/packages/components/src/comment.css b/packages/components/src/comment.css
-index a921f11..9f5b62d 100644
---- a/packages/components/src/comment.css
-+++ b/packages/components/src/comment.css
-@@ -3,6 +3,7 @@
-   font-size: var(--nabla-font-size-md);
-   line-height: var(--nabla-line-height);
-   color: var(--nabla-color-text-muted);
-+  font-style: italic;
-   opacity: 0.6;
-   user-select: none;
- }
-diff --git a/packages/components/src/footnote.css b/packages/components/src/footnote.css
-index 36d850b..9b64e24 100644
---- a/packages/components/src/footnote.css
-+++ b/packages/components/src/footnote.css
-@@ -4,6 +4,7 @@
-   cursor: pointer;
-   vertical-align: super;
-   line-height: 1;
-+  margin-left: 0.1em;
-   user-select: none;
- }
++
++.nabla-callout__body {
++  padding: 0.75rem;
++}
++
++.nabla-callout[data-callout-type="note"],
++.nabla-callout[data-callout-type="info"],
++.nabla-callout[data-callout-type="abstract"] {
++  border-left-color: var(--nabla-color-primary);
++}
++
++.nabla-callout[data-callout-type="warning"],
++.nabla-callout[data-callout-type="question"] {
++  border-left-color: var(--nabla-color-warning);
++}
++
++.nabla-callout[data-callout-type="tip"] {
++  border-left-color: var(--nabla-color-success);
++}
++
++.nabla-callout[data-callout-type="danger"] {
++  border-left-color: var(--nabla-color-danger);
++}
+diff --git a/packages/components/src/callout.tsx b/packages/components/src/callout.tsx
+new file mode 100644
+index 0000000..32fb306
+--- /dev/null
++++ b/packages/components/src/callout.tsx
+@@ -0,0 +1,56 @@
++import { type ReactNode } from "react";
++
++export interface CalloutDisplay {
++  readonly calloutType: string;
++  readonly foldState: "open" | "closed";
++  readonly typeLabel: string;
++}
++
++const CALLOUT_TYPE_LABELS: Record<string, string> = {
++  note: "Note",
++  warning: "Warning",
++  tip: "Tip",
++  danger: "Danger",
++  info: "Info",
++  abstract: "Abstract",
++  question: "Question",
++};
++
++export function getCalloutDisplay(props: {
++  readonly calloutType: string;
++  readonly foldState: "open" | "closed";
++}): CalloutDisplay {
++  return {
++    calloutType: props.calloutType,
++    foldState: props.foldState,
++    typeLabel: CALLOUT_TYPE_LABELS[props.calloutType.toLowerCase()] ?? props.calloutType,
++  };
++}
++
++export interface CalloutProps {
++  readonly calloutType: string;
++  readonly foldState: "open" | "closed";
++  readonly onToggleFold: () => void;
++  readonly children?: ReactNode;
++}
++
++export function Callout({ calloutType, foldState, onToggleFold, children }: CalloutProps) {
++  const display = getCalloutDisplay({ calloutType, foldState });
++
++  return (
++    <div className="nabla-callout" data-fold-state={foldState} data-callout-type={calloutType.toLowerCase()}>
++      <div className="nabla-callout__header">
++        <span className="nabla-callout__type">{display.typeLabel}</span>
++        <button
++          className="nabla-callout__toggle"
++          onClick={onToggleFold}
++          aria-label={foldState === "open" ? "Collapse" : "Expand"}
++          type="button"
++        >
++          {foldState === "open" ? "−" : "+"}
++        </button>
++      </div>
++      {foldState === "open" && <div className="nabla-callout__body">{children}</div>}
++    </div>
++  );
++}
+diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
+index ba91e6f..9eff4e2 100644
+--- a/packages/components/src/index.ts
++++ b/packages/components/src/index.ts
+@@ -28,6 +28,8 @@ export {
  
-diff --git a/packages/components/src/highlight.css b/packages/components/src/highlight.css
-index 36df679..204c746 100644
---- a/packages/components/src/highlight.css
-+++ b/packages/components/src/highlight.css
-@@ -1,5 +1,5 @@
- .nabla-highlight {
--  background-color: #ffff0066;
-+  background-color: #ffff0080;
-   color: inherit;
-   padding: 0 0.125rem;
-   border-radius: var(--nabla-radius-sm);
-diff --git a/packages/components/src/tag.css b/packages/components/src/tag.css
-index f4a6c7a..d216e65 100644
---- a/packages/components/src/tag.css
-+++ b/packages/components/src/tag.css
-@@ -1,6 +1,6 @@
- .nabla-tag {
-   display: inline-block;
--  padding: 0.0625rem var(--nabla-spacing-sm);
-+  padding: 0.125rem var(--nabla-spacing-sm);
-   font-family: var(--nabla-font-family);
-   font-size: var(--nabla-font-size-sm);
-   line-height: var(--nabla-line-height);
+ export { Comment, getCommentDisplay } from "./comment.js";
+ 
++export { Callout, getCalloutDisplay } from "./callout.js";
++
+ export type { NablaComponentTheme } from "./theme.js";
+ 
+ export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
+@@ -42,3 +44,4 @@ export type { HighlightStyle } from "./highlight.js";
+ export type { EmojiDisplay } from "./emoji.js";
+ export type { FootnoteDisplay } from "./footnote.js";
+ export type { CommentDisplay } from "./comment.js";
++export type { CalloutDisplay } from "./callout.js";
+diff --git a/packages/components/tests/callout.test.mjs b/packages/components/tests/callout.test.mjs
+new file mode 100644
+index 0000000..a8c015f
+--- /dev/null
++++ b/packages/components/tests/callout.test.mjs
+@@ -0,0 +1,41 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++async function load() {
++  return import(new URL("../dist/callout.js", import.meta.url));
++}
++
++test("getCalloutDisplay returns type and foldState for open note", async () => {
++  const mod = await load();
++
++  const result = mod.getCalloutDisplay({ calloutType: "note", foldState: "open" });
++
++  assert.equal(result.calloutType, "note");
++  assert.equal(result.foldState, "open");
++  assert.equal(result.typeLabel, "Note");
++});
++
++test("getCalloutDisplay for closed warning", async () => {
++  const mod = await load();
++
++  const result = mod.getCalloutDisplay({ calloutType: "warning", foldState: "closed" });
++
++  assert.equal(result.calloutType, "warning");
++  assert.equal(result.foldState, "closed");
++  assert.equal(result.typeLabel, "Warning");
++});
++
++test("getCalloutDisplay preserves unknown callout type as label", async () => {
++  const mod = await load();
++
++  const result = mod.getCalloutDisplay({ calloutType: "custom", foldState: "open" });
++
++  assert.equal(result.calloutType, "custom");
++  assert.equal(result.typeLabel, "custom");
++});
++
++test("Callout is a function", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.Callout, "function");
++});
+diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
+index 18d22b4..0ce2d9f 100644
+--- a/packages/components/tests/public-api.test.mjs
++++ b/packages/components/tests/public-api.test.mjs
+@@ -51,11 +51,17 @@ test("Footnote and Comment are exported from public API", async () => {
+   assert.equal(typeof mod.getCommentDisplay, "function");
+ });
+ 
++test("Callout is exported from public API", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.Callout, "function");
++  assert.equal(typeof mod.getCalloutDisplay, "function");
++});
++
+ test("no forbidden visual components are exported", async () => {
+   const mod = await load();
+   const keys = Object.keys(mod);
+ 
+-  assert.equal(keys.includes("Callout"), false);
+   assert.equal(keys.includes("Toggle"), false);
+   assert.equal(keys.includes("FoldedHeading"), false);
+ });
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index e699d4d..6591b96 100644
+index 6591b96..b7a924e 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-008A` — Components Visual Playground
-+`P4-008B` — Playground Visual Polish Pass
+-`P4-008B` — Playground Visual Polish Pass
++`P4-009` — Callout Visual Component
  
  ## Branch
  
@@ -310,32 +294,33 @@ index e699d4d..6591b96 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -284,6 +284,24 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
- - No editor/markup/workspace source changes.
- - Dependencies added: `vite`, `@vitejs/plugin-react`, `react-dom`, `@types/react-dom`.
+@@ -302,6 +302,25 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+ - No parser/serializer changes.
+ - No dependencies added.
  
-+### P4-008B Notes
++### P4-009 Notes
 +
-+- Polish pass for the components playground only.
-+- Added `ExampleRow` component with card-style rows (border, background, padding).
-+- Added `playground/src/playground.css` for all playground-specific styling.
-+- Converted inline styles to CSS classes for sections, rows, and layout.
-+- Labels now sit above components with clear spacing (`margin-bottom` on label, card padding).
-+- Footnote reference example: added space before reference, and added `margin-left: 0.1em` to `.nabla-footnote-reference` generic CSS.
-+- Tag pill: increased top/bottom padding from 1px to 2px for better pill shape visibility.
-+- Highlight default: increased background opacity from 40% (#ffff0066) to 50% (#ffff0080) for better readability.
-+- Comment: added `font-style: italic` for a more muted, comment-like appearance.
-+- No new visual components implemented.
-+- No component behavior or API changed.
++- Created `packages/components/src/callout.tsx` with `Callout` component and `getCalloutDisplay` helper.
++- Created `packages/components/src/callout.css` with card-like callout, left accent border by type, fold toggle, and `--nabla-*` token styling.
++- Callout renders a header with callout type label and fold toggle button; body is hidden when `foldState` is `"closed"`.
++- Callout type label mapping for common types (note, warning, tip, danger, info, abstract, question); unknown types use the raw type string as label.
++- Exported `Callout`, `getCalloutDisplay`, and `CalloutDisplay` type from `packages/components/src/index.ts`.
++- Updated playground with Callout section showing open note and closed warning examples with fold toggle interaction.
++- Added `packages/components/tests/callout.test.mjs` with 4 tests covering `getCalloutDisplay` metadata and component function export.
++- Updated `packages/components/tests/public-api.test.mjs` with Callout export test; removed Callout from forbidden-exports test.
++- Local `CalloutProps` type used (types.ts `CalloutProps` has `children?: never`); no `types.ts` modifications.
++- No new visual components added beyond callout.
++- No component API contract rewrite.
++- No dependencies added.
 +- No editor/markup/workspace source changes.
 +- No app/Phase 5 work started.
 +- No parser/serializer changes.
-+- No dependencies added.
++- DOM/React rendering tests deferred to component fixture/regression phase.
 +
  ## Verification Summary
  

@@ -1,7 +1,7 @@
 packages/components/playground/src/main.tsx
-packages/components/playground/src/playground.css
-packages/components/src/comment.css
-packages/components/src/footnote.css
-packages/components/src/highlight.css
-packages/components/src/tag.css
+packages/components/src/callout.css
+packages/components/src/callout.tsx
+packages/components/src/index.ts
+packages/components/tests/callout.test.mjs
+packages/components/tests/public-api.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md
