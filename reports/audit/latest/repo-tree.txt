@@ -41,6 +41,8 @@ packages/markup/tests/wiki-links.test.mjs
 packages/markup/tsconfig.json
 packages/workspace/package.json
 packages/workspace/src/index.ts
+packages/workspace/src/path-utils.ts
+packages/workspace/tests/path-utils.test.mjs
 packages/workspace/tsconfig.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
