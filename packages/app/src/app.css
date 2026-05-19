@@ -1,3 +1,15 @@
+@import "@nabla/components/src/tokens.css";
+@import "@nabla/components/src/task-state.css";
+@import "@nabla/components/src/wiki-link.css";
+@import "@nabla/components/src/tag.css";
+@import "@nabla/components/src/highlight.css";
+@import "@nabla/components/src/emoji.css";
+@import "@nabla/components/src/footnote.css";
+@import "@nabla/components/src/comment.css";
+@import "@nabla/components/src/callout.css";
+@import "@nabla/components/src/toggle.css";
+@import "@nabla/components/src/folded-heading.css";
+
 * {
   margin: 0;
   padding: 0;
@@ -86,6 +98,7 @@ body {
 .section-note {
   color: #6b7280;
   font-size: 0.875rem;
+  margin-bottom: 0.5rem;
 }
 
 .source-view {
@@ -99,4 +112,58 @@ body {
   border-radius: 0.375rem;
   color: #1a1a1a;
   resize: vertical;
+}
+
+.component-preview {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  padding: 1rem;
+}
+
+.preview-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.preview-group {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.75rem;
+}
+
+.preview-group__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.preview-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.preview-item {
+  padding: 0.25rem 0;
+}
+
+.preview-comment-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.preview-comment-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  min-width: 11rem;
+}
+
+.preview-comment-note {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
 }
