@@ -1,411 +1,329 @@
-diff --git a/packages/app/fixtures/canonical-export-basic/expected.json b/packages/app/fixtures/canonical-export-basic/expected.json
+diff --git a/packages/app/src/index.ts b/packages/app/src/index.ts
+index 537ebf7..54b4635 100644
+--- a/packages/app/src/index.ts
++++ b/packages/app/src/index.ts
+@@ -1 +1,12 @@
+ export const NABLA_APP_PACKAGE = "@nabla/app";
++
++export { SAMPLE_DOCUMENT_SOURCE } from "./sample-document.js";
++export { canonicalizeSampleSource, getRenderPipelineSummary } from "./render-pipeline.js";
++export { createSampleComponentDescriptors, getComponentRenderingSummary } from "./component-rendering.js";
++export { createSourceEditor, getEditableSource, exportCanonicalSource, getEditorIntegrationSummary } from "./editor-integration.js";
++export { createSampleWorkspaceIndex, getWorkspaceIntegrationSummary } from "./workspace-integration.js";
++
++export type { RenderPipelineSummary } from "./render-pipeline.js";
++export type { ComponentRenderingSummary } from "./component-rendering.js";
++export type { EditorIntegrationSummary } from "./editor-integration.js";
++export type { WorkspaceIntegrationSummary } from "./workspace-integration.js";
+diff --git a/packages/app/tests/api-consistency.test.mjs b/packages/app/tests/api-consistency.test.mjs
 new file mode 100644
-index 0000000..5cb2983
+index 0000000..cb0a86d
 --- /dev/null
-+++ b/packages/app/fixtures/canonical-export-basic/expected.json
-@@ -0,0 +1,4 @@
-+{
-+  "nonEmpty": true,
-+  "value": "# Title\nParagraph.\n"
-+}
-diff --git a/packages/app/fixtures/canonical-export-basic/input.json b/packages/app/fixtures/canonical-export-basic/input.json
-new file mode 100644
-index 0000000..af1ef3d
---- /dev/null
-+++ b/packages/app/fixtures/canonical-export-basic/input.json
-@@ -0,0 +1,4 @@
-+{
-+  "operation": "canonicalExport",
-+  "args": ["# Title\n\nParagraph.\n"]
-+}
-diff --git a/packages/app/fixtures/component-descriptor-kinds/expected.json b/packages/app/fixtures/component-descriptor-kinds/expected.json
-new file mode 100644
-index 0000000..2a13954
---- /dev/null
-+++ b/packages/app/fixtures/component-descriptor-kinds/expected.json
-@@ -0,0 +1,4 @@
-+{
-+  "kinds": ["taskState", "wikiLink", "tag", "highlight", "emoji", "footnote", "comment", "callout", "toggle", "foldedHeading"],
-+  "excluded": ["transclusion", "tooltip"]
-+}
-diff --git a/packages/app/fixtures/component-descriptor-kinds/input.json b/packages/app/fixtures/component-descriptor-kinds/input.json
-new file mode 100644
-index 0000000..70f672b
---- /dev/null
-+++ b/packages/app/fixtures/component-descriptor-kinds/input.json
-@@ -0,0 +1,4 @@
-+{
-+  "operation": "componentDescriptorKinds",
-+  "args": []
-+}
-diff --git a/packages/app/fixtures/component-descriptor-summary/expected.json b/packages/app/fixtures/component-descriptor-summary/expected.json
-new file mode 100644
-index 0000000..05ba886
---- /dev/null
-+++ b/packages/app/fixtures/component-descriptor-summary/expected.json
-@@ -0,0 +1,5 @@
-+{
-+  "totalCount": 23,
-+  "uniqueKinds": 10,
-+  "supportedKinds": 10
-+}
-diff --git a/packages/app/fixtures/component-descriptor-summary/input.json b/packages/app/fixtures/component-descriptor-summary/input.json
-new file mode 100644
-index 0000000..87be578
---- /dev/null
-+++ b/packages/app/fixtures/component-descriptor-summary/input.json
-@@ -0,0 +1,4 @@
-+{
-+  "operation": "componentDescriptorSummary",
-+  "args": []
-+}
-diff --git a/packages/app/fixtures/editor-edit-roundtrip/expected.json b/packages/app/fixtures/editor-edit-roundtrip/expected.json
-new file mode 100644
-index 0000000..e5d74bc
---- /dev/null
-+++ b/packages/app/fixtures/editor-edit-roundtrip/expected.json
-@@ -0,0 +1,7 @@
-+{
-+  "firstNonEmpty": true,
-+  "secondNonEmpty": true,
-+  "different": true,
-+  "firstIncludes": "Alpha",
-+  "secondIncludes": "Beta"
-+}
-diff --git a/packages/app/fixtures/editor-edit-roundtrip/input.json b/packages/app/fixtures/editor-edit-roundtrip/input.json
-new file mode 100644
-index 0000000..2d729dd
---- /dev/null
-+++ b/packages/app/fixtures/editor-edit-roundtrip/input.json
-@@ -0,0 +1,4 @@
-+{
-+  "operation": "editorRoundtrip",
-+  "args": ["# Alpha\n", "# Beta\n"]
-+}
-diff --git a/packages/app/fixtures/render-pipeline-summary/expected.json b/packages/app/fixtures/render-pipeline-summary/expected.json
-new file mode 100644
-index 0000000..58eec03
---- /dev/null
-+++ b/packages/app/fixtures/render-pipeline-summary/expected.json
-@@ -0,0 +1,6 @@
-+{
-+  "hasCanonicalOutput": true,
-+  "originalLength": true,
-+  "canonicalLength": true,
-+  "diagnosticsCount": true
-+}
-diff --git a/packages/app/fixtures/render-pipeline-summary/input.json b/packages/app/fixtures/render-pipeline-summary/input.json
-new file mode 100644
-index 0000000..34e348f
---- /dev/null
-+++ b/packages/app/fixtures/render-pipeline-summary/input.json
-@@ -0,0 +1,4 @@
-+{
-+  "operation": "renderPipelineSummary",
-+  "args": []
-+}
-diff --git a/packages/app/fixtures/sample-source-basic/expected.json b/packages/app/fixtures/sample-source-basic/expected.json
-new file mode 100644
-index 0000000..0e3d780
---- /dev/null
-+++ b/packages/app/fixtures/sample-source-basic/expected.json
-@@ -0,0 +1,3 @@
-+{
-+  "nonEmpty": true
-+}
-diff --git a/packages/app/fixtures/sample-source-basic/input.json b/packages/app/fixtures/sample-source-basic/input.json
-new file mode 100644
-index 0000000..955c008
---- /dev/null
-+++ b/packages/app/fixtures/sample-source-basic/input.json
-@@ -0,0 +1,4 @@
-+{
-+  "operation": "sampleSourceBasic",
-+  "args": []
-+}
-diff --git a/packages/app/fixtures/source-of-truth-invariant/expected.json b/packages/app/fixtures/source-of-truth-invariant/expected.json
-new file mode 100644
-index 0000000..d252ec7
---- /dev/null
-+++ b/packages/app/fixtures/source-of-truth-invariant/expected.json
-@@ -0,0 +1,3 @@
-+{
-+  "forbiddenKeys": ["html", "innerHTML", "editorState", "jsonState", "serializedState"]
-+}
-diff --git a/packages/app/fixtures/source-of-truth-invariant/input.json b/packages/app/fixtures/source-of-truth-invariant/input.json
-new file mode 100644
-index 0000000..e52e5cb
---- /dev/null
-+++ b/packages/app/fixtures/source-of-truth-invariant/input.json
-@@ -0,0 +1,4 @@
-+{
-+  "operation": "sourceOfTruthInvariant",
-+  "args": []
-+}
-diff --git a/packages/app/fixtures/workspace-summary-basic/expected.json b/packages/app/fixtures/workspace-summary-basic/expected.json
-new file mode 100644
-index 0000000..2d089bc
---- /dev/null
-+++ b/packages/app/fixtures/workspace-summary-basic/expected.json
-@@ -0,0 +1,7 @@
-+{
-+  "hasWorkspaceIndex": true,
-+  "documentCount": 1,
-+  "linkCount": true,
-+  "backlinkCount": true,
-+  "diagnosticCount": true
-+}
-diff --git a/packages/app/fixtures/workspace-summary-basic/input.json b/packages/app/fixtures/workspace-summary-basic/input.json
-new file mode 100644
-index 0000000..ad55e15
---- /dev/null
-+++ b/packages/app/fixtures/workspace-summary-basic/input.json
-@@ -0,0 +1,4 @@
-+{
-+  "operation": "workspaceSummary",
-+  "args": []
-+}
-diff --git a/packages/app/tests/app-fixtures.test.mjs b/packages/app/tests/app-fixtures.test.mjs
-new file mode 100644
-index 0000000..bba80fb
---- /dev/null
-+++ b/packages/app/tests/app-fixtures.test.mjs
-@@ -0,0 +1,190 @@
++++ b/packages/app/tests/api-consistency.test.mjs
+@@ -0,0 +1,272 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
-+import { readdir, readFile } from "node:fs/promises";
-+import { join, dirname } from "node:path";
-+import { fileURLToPath } from "node:url";
 +
-+const __dirname = dirname(fileURLToPath(import.meta.url));
-+const FIXTURES_DIR = join(__dirname, "..", "fixtures");
-+
-+const FORBIDDEN_KEYS = ["html", "innerHTML", "editorState", "jsonState", "serializedState"];
-+
-+function isObject(v) {
-+  return typeof v === "object" && v !== null;
++async function load() {
++  return import(new URL("../dist/index.js", import.meta.url));
 +}
 +
-+function checkObjectFields(actual, expected, label) {
-+  for (const [key, value] of Object.entries(expected)) {
-+    assert.ok(key in actual, `${label}: expected field "${key}" in result`);
-+    const actualValue = actual[key];
-+    if (value === true) {
-+      assert.ok(typeof actualValue !== "undefined", `${label}: field "${key}" must exist`);
-+    } else if (typeof value === "number") {
-+      assert.equal(actualValue, value, `${label}: field "${key}" mismatch`);
-+    } else if (isObject(value)) {
-+      checkObjectFields(actualValue, value, `${label}.${key}`);
-+    } else {
-+      assert.deepEqual(actualValue, value, `${label}: field "${key}" mismatch`);
++const INTENDED_EXPORTS = [
++  "NABLA_APP_PACKAGE",
++  "SAMPLE_DOCUMENT_SOURCE",
++  "canonicalizeSampleSource",
++  "getRenderPipelineSummary",
++  "createSampleComponentDescriptors",
++  "getComponentRenderingSummary",
++  "createSourceEditor",
++  "getEditableSource",
++  "exportCanonicalSource",
++  "getEditorIntegrationSummary",
++  "createSampleWorkspaceIndex",
++  "getWorkspaceIntegrationSummary",
++];
++
++const FORBIDDEN_INTERNALS = [
++  "parse",
++  "serialize",
++  "createWorkspace",
++  "createEditor",
++  "loadSource",
++  "getSource",
++  "TaskStateCheckbox",
++  "WikiLink",
++  "Tag",
++  "Highlight",
++  "Emoji",
++  "FootnoteReference",
++  "FootnoteDefinition",
++  "Comment",
++  "Callout",
++  "Toggle",
++  "FoldedHeading",
++  "createComponentDescriptor",
++  "toComponentProps",
++];
++
++const SOURCE_OF_TRUTH_VIOLATIONS = [
++  "html",
++  "innerHTML",
++  "editorState",
++  "jsonState",
++  "serializedState",
++];
++
++test("app public API exports NABLA_APP_PACKAGE", async () => {
++  const mod = await load();
++  assert.equal(mod.NABLA_APP_PACKAGE, "@nabla/app");
++});
++
++test("app public API exports SAMPLE_DOCUMENT_SOURCE", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.SAMPLE_DOCUMENT_SOURCE, "string");
++  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.length > 0);
++});
++
++test("app public API exports canonicalizeSampleSource", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.canonicalizeSampleSource, "function");
++  const result = mod.canonicalizeSampleSource("# Test");
++  assert.equal(typeof result, "string");
++});
++
++test("app public API exports getRenderPipelineSummary", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.getRenderPipelineSummary, "function");
++  const result = mod.getRenderPipelineSummary("# Test");
++  assert.equal(typeof result.originalLength, "number");
++  assert.equal(typeof result.canonicalLength, "number");
++  assert.equal(typeof result.diagnosticsCount, "number");
++  assert.equal(typeof result.hasCanonicalOutput, "boolean");
++  assert.equal(typeof result.canonicalSource, "string");
++});
++
++test("app public API exports createSampleComponentDescriptors", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.createSampleComponentDescriptors, "function");
++  const descriptors = mod.createSampleComponentDescriptors();
++  assert.ok(Array.isArray(descriptors));
++  assert.ok(descriptors.length > 0);
++});
++
++test("app public API exports getComponentRenderingSummary", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.getComponentRenderingSummary, "function");
++  const summary = mod.getComponentRenderingSummary();
++  assert.equal(typeof summary.totalCount, "number");
++  assert.ok(Array.isArray(summary.uniqueKinds));
++  assert.ok(Array.isArray(summary.supportedKinds));
++});
++
++test("app public API exports createSourceEditor", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.createSourceEditor, "function");
++  const editor = mod.createSourceEditor("# Test");
++  assert.ok(editor);
++  assert.equal(typeof editor.source, "string");
++});
++
++test("app public API exports getEditableSource", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.getEditableSource, "function");
++  const source = mod.getEditableSource("# Hello");
++  assert.equal(typeof source, "string");
++  assert.ok(source.length > 0);
++});
++
++test("app public API exports exportCanonicalSource", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.exportCanonicalSource, "function");
++  const result = mod.exportCanonicalSource("# Hello\n\nWorld.");
++  assert.equal(typeof result, "string");
++  assert.ok(result.length > 0);
++});
++
++test("app public API exports getEditorIntegrationSummary", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.getEditorIntegrationSummary, "function");
++  const summary = mod.getEditorIntegrationSummary("# Test");
++  assert.equal(typeof summary.sourceLength, "number");
++  assert.equal(typeof summary.exportedLength, "number");
++  assert.equal(typeof summary.diagnosticsCount, "number");
++  assert.equal(typeof summary.hasExportedSource, "boolean");
++});
++
++test("app public API exports createSampleWorkspaceIndex", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.createSampleWorkspaceIndex, "function");
++  const result = mod.createSampleWorkspaceIndex("# Test\n\n[[Page]]\n");
++  assert.ok(result);
++  assert.ok(result.workspace);
++});
++
++test("app public API exports getWorkspaceIntegrationSummary", async () => {
++  const mod = await load();
++  assert.equal(typeof mod.getWorkspaceIntegrationSummary, "function");
++  const summary = mod.getWorkspaceIntegrationSummary("# Test\n\n[[Page]]\n");
++  assert.equal(typeof summary.hasWorkspaceIndex, "boolean");
++  assert.equal(typeof summary.documentCount, "number");
++  assert.equal(typeof summary.linkCount, "number");
++  assert.equal(typeof summary.backlinkCount, "number");
++  assert.equal(typeof summary.diagnosticCount, "number");
++});
++
++test("app public API exports all intended exports", async () => {
++  const mod = await load();
++  for (const name of INTENDED_EXPORTS) {
++    assert.ok(name in mod, `expected export "${name}" is missing from app public API`);
++  }
++});
++
++test("app public API does not export forbidden low-level parser/serializer internals", async () => {
++  const mod = await load();
++  for (const name of ["parse", "serialize"]) {
++    assert.equal(name in mod, false, `must not export "${name}"`);
++  }
++});
++
++test("app public API does not export forbidden low-level workspace internals", async () => {
++  const mod = await load();
++  assert.equal("createWorkspace" in mod, false, "must not export createWorkspace");
++});
++
++test("app public API does not export forbidden low-level editor internals", async () => {
++  const mod = await load();
++  for (const name of ["createEditor", "loadSource", "getSource"]) {
++    assert.equal(name in mod, false, `must not export "${name}"`);
++  }
++});
++
++test("app public API does not export component React classes directly", async () => {
++  const mod = await load();
++  const componentNames = [
++    "TaskStateCheckbox",
++    "WikiLink",
++    "Tag",
++    "Highlight",
++    "Emoji",
++    "FootnoteReference",
++    "FootnoteDefinition",
++    "Comment",
++    "Callout",
++    "Toggle",
++    "FoldedHeading",
++  ];
++  for (const name of componentNames) {
++    assert.equal(name in mod, false, `must not export component "${name}" directly`);
++  }
++});
++
++test("app public API does not export component bridge internals", async () => {
++  const mod = await load();
++  for (const name of ["createComponentDescriptor", "toComponentProps"]) {
++    assert.equal(name in mod, false, `must not export "${name}"`);
++  }
++});
++
++test("app public API does not export any forbidden internals", async () => {
++  const mod = await load();
++  for (const name of FORBIDDEN_INTERNALS) {
++    assert.equal(name in mod, false, `must not export forbidden internal "${name}"`);
++  }
++});
++
++test("app public API does not expose source-of-truth violation keys on summary objects", async () => {
++  const mod = await load();
++  const summaries = [
++    { label: "renderPipelineSummary", value: mod.getRenderPipelineSummary("# Test") },
++    { label: "editorIntegrationSummary", value: mod.getEditorIntegrationSummary("# Test") },
++    { label: "workspaceIntegrationSummary", value: mod.getWorkspaceIntegrationSummary("# Test\n\n[[Page]]\n") },
++  ];
++  const componentSummary = mod.getComponentRenderingSummary();
++  for (const { label, value } of summaries) {
++    for (const key of SOURCE_OF_TRUTH_VIOLATIONS) {
++      assert.equal(key in value, false, `${label} must not contain "${key}"`);
 +    }
 +  }
-+}
-+
-+function checkNoForbiddenKeys(obj, label) {
-+  for (const key of FORBIDDEN_KEYS) {
-+    assert.equal(key in obj, false, `${label}: must not contain "${key}"`);
++  for (const desc of mod.createSampleComponentDescriptors()) {
++    for (const key of SOURCE_OF_TRUTH_VIOLATIONS) {
++      assert.equal(key in desc.props, false, `descriptor ${desc.kind} props must not contain "${key}"`);
++    }
 +  }
-+}
++});
 +
-+async function loadFixtures() {
-+  const entries = await readdir(FIXTURES_DIR, { withFileTypes: true });
-+  const dirs = entries.filter((e) => e.isDirectory());
-+  const results = [];
-+
-+  for (const dir of dirs) {
-+    const inputPath = join(FIXTURES_DIR, dir.name, "input.json");
-+    const expectedPath = join(FIXTURES_DIR, dir.name, "expected.json");
-+
-+    const inputRaw = await readFile(inputPath, "utf8");
-+    const expectedRaw = await readFile(expectedPath, "utf8");
-+
-+    results.push({
-+      name: dir.name,
-+      operation: JSON.parse(inputRaw).operation,
-+      args: JSON.parse(inputRaw).args ?? [],
-+      expected: JSON.parse(expectedRaw),
-+    });
++test("tooltip renderers are not exported from app public API", async () => {
++  const mod = await load();
++  const tooltipNames = [
++    "TooltipRenderer",
++    "renderTooltip",
++    "TooltipComponent",
++  ];
++  for (const name of tooltipNames) {
++    assert.equal(name in mod, false, `must not export tooltip renderer "${name}"`);
 +  }
++});
 +
-+  return results.sort((a, b) => a.name.localeCompare(b.name));
-+}
-+
-+function checkKindExclusion(descriptors, excludedKinds) {
-+  const kinds = descriptors.map((d) => d.kind);
-+  for (const excluded of excludedKinds) {
-+    assert.equal(kinds.includes(excluded), false, `descriptors must not include "${excluded}"`);
++test("transclusion renderers are not exported from app public API", async () => {
++  const mod = await load();
++  const transclusionNames = [
++    "TransclusionRenderer",
++    "renderTransclusion",
++    "TransclusionComponent",
++  ];
++  for (const name of transclusionNames) {
++    assert.equal(name in mod, false, `must not export transclusion renderer "${name}"`);
 +  }
-+}
++});
 +
-+test("all app fixtures pass", async () => {
-+  const fixtures = await loadFixtures();
++test("Node-safe import — dist/index.js loads without error", async () => {
++  const mod = await load();
++  assert.ok(mod, "app public API module loaded successfully");
++});
 +
-+  assert.ok(fixtures.length > 0, "At least one fixture must exist");
-+
-+  const sampleDoc = await import(
-+    new URL("../dist/sample-document.js", import.meta.url)
-+  );
-+  const renderPipeline = await import(
-+    new URL("../dist/render-pipeline.js", import.meta.url)
-+  );
-+  const componentRendering = await import(
-+    new URL("../dist/component-rendering.js", import.meta.url)
-+  );
-+  const editorIntegration = await import(
-+    new URL("../dist/editor-integration.js", import.meta.url)
-+  );
-+  const workspaceIntegration = await import(
-+    new URL("../dist/workspace-integration.js", import.meta.url)
-+  );
-+
-+  const SAMPLE_SOURCE = sampleDoc.SAMPLE_DOCUMENT_SOURCE;
-+
-+  for (const fixture of fixtures) {
-+    const { operation, args } = fixture;
-+
-+    switch (operation) {
-+      case "sampleSourceBasic": {
-+        const source = SAMPLE_SOURCE;
-+        const nonEmpty = typeof source === "string" && source.length > 0;
-+        assert.equal(nonEmpty, true, "sample source must be non-empty");
-+        assert.ok(source.includes("Nabla Sample Document"));
-+        break;
-+      }
-+
-+      case "renderPipelineSummary": {
-+        const summary = renderPipeline.getRenderPipelineSummary(SAMPLE_SOURCE);
-+        checkObjectFields(summary, fixture.expected, fixture.name);
-+        checkNoForbiddenKeys(summary, fixture.name);
-+        break;
-+      }
-+
-+      case "canonicalExport": {
-+        const source = args[0];
-+        const exported = renderPipeline.canonicalizeSampleSource(source);
-+        assert.equal(typeof exported, "string");
-+        assert.ok(exported.length > 0, "canonical export must be non-empty");
-+        assert.equal(exported, fixture.expected.value);
-+        break;
-+      }
-+
-+      case "editorRoundtrip": {
-+        const first = editorIntegration.exportCanonicalSource(args[0]);
-+        const second = editorIntegration.exportCanonicalSource(args[1]);
-+        assert.equal(typeof first, "string");
-+        assert.ok(first.length > 0);
-+        assert.equal(typeof second, "string");
-+        assert.ok(second.length > 0);
-+        assert.notEqual(first, second);
-+        assert.ok(first.includes(fixture.expected.firstIncludes));
-+        assert.ok(second.includes(fixture.expected.secondIncludes));
-+        break;
-+      }
-+
-+      case "componentDescriptorSummary": {
-+        const summary = componentRendering.getComponentRenderingSummary();
-+        assert.equal(summary.totalCount, fixture.expected.totalCount);
-+        assert.equal(summary.uniqueKinds.length, fixture.expected.uniqueKinds);
-+        assert.equal(summary.supportedKinds.length, fixture.expected.supportedKinds);
-+        for (const desc of componentRendering.createSampleComponentDescriptors()) {
-+          checkNoForbiddenKeys(desc.props, `${fixture.name}:${desc.kind}`);
-+        }
-+        break;
-+      }
-+
-+      case "componentDescriptorKinds": {
-+        const descriptors = componentRendering.createSampleComponentDescriptors();
-+        const kinds = descriptors.map((d) => d.kind);
-+        for (const expectedKind of fixture.expected.kinds) {
-+          assert.ok(kinds.includes(expectedKind), `descriptors must include "${expectedKind}"`);
-+        }
-+        checkKindExclusion(descriptors, fixture.expected.excluded);
-+        break;
-+      }
-+
-+      case "workspaceSummary": {
-+        const summary = workspaceIntegration.getWorkspaceIntegrationSummary(SAMPLE_SOURCE);
-+        assert.equal(summary.hasWorkspaceIndex, true);
-+        assert.equal(summary.documentCount, fixture.expected.documentCount);
-+        assert.equal(typeof summary.linkCount, "number");
-+        assert.equal(typeof summary.backlinkCount, "number");
-+        assert.equal(typeof summary.diagnosticCount, "number");
-+        checkNoForbiddenKeys(summary, fixture.name);
-+        break;
-+      }
-+
-+      case "sourceOfTruthInvariant": {
-+        const pipelineSummary = renderPipeline.getRenderPipelineSummary(
-+          "# Test\n\n[!note]> callout\n",
-+        );
-+        checkNoForbiddenKeys(pipelineSummary, `${fixture.name}:renderPipelineSummary`);
-+
-+        const editorSummary = editorIntegration.getEditorIntegrationSummary(
-+          "# Editor test\n",
-+        );
-+        checkNoForbiddenKeys(editorSummary, `${fixture.name}:editorIntegrationSummary`);
-+
-+        const workspaceSummary = workspaceIntegration.getWorkspaceIntegrationSummary(
-+          "# Workspace test\n\n[[Page]]\n",
-+        );
-+        checkNoForbiddenKeys(workspaceSummary, `${fixture.name}:workspaceIntegrationSummary`);
-+
-+        for (const desc of componentRendering.createSampleComponentDescriptors()) {
-+          checkNoForbiddenKeys(desc.props, `${fixture.name}:componentProps:${desc.kind}`);
-+        }
-+        break;
-+      }
-+
-+      default:
-+        assert.fail(`Unknown operation: ${operation}`);
++test("intended exports are all functions or strings", async () => {
++  const mod = await load();
++  const stringExports = new Set(["NABLA_APP_PACKAGE", "SAMPLE_DOCUMENT_SOURCE"]);
++  for (const name of INTENDED_EXPORTS) {
++    const val = mod[name];
++    if (stringExports.has(name)) {
++      assert.equal(typeof val, "string", `${name} should be a string`);
++    } else {
++      assert.equal(typeof val, "function", `${name} should be a function`);
 +    }
 +  }
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index abafbd7..577fb45 100644
+index 577fb45..18cc7fa 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
-@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
- 
- ## Last Task
- 
--`P5-008` — App Visual Polish Pass
-+`P5-009` — App Fixture/Regression Coverage
- 
- ## Branch
- 
-@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
- 
- ## Status
- 
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed. P5-006-REPAIR completed. P5-007 completed. P5-008 completed. P5-009 completed.
- 
- Phase 1 (`@nabla/markup`) — ACCEPTED.
- Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -573,10 +573,30 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
+@@ -593,10 +593,34 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
  - No component/editor/workspace/markup source changes.
- - No tooltip/transclusion rendering.
+ - Tooltip and transclusion confirmed excluded from component descriptor kinds.
  
-+### P5-009 Notes
++### P5-010 Notes
 +
-+- Created `packages/app/fixtures/` with 8 fixture cases covering current MVP behavior.
-+- Created `packages/app/tests/app-fixtures.test.mjs` — fixture-driven test runner.
-+- Fixture cases:
-+  - `sample-source-basic` — sample document source is non-empty.
-+  - `render-pipeline-summary` — getRenderPipelineSummary returns expected fields.
-+  - `canonical-export-basic` — canonicalizeSampleSource produces expected output.
-+  - `editor-edit-roundtrip` — exportCanonicalSource changes deterministically on edit.
-+  - `component-descriptor-summary` — getComponentRenderingSummary reports correct counts (23 total, 10 unique kinds, 10 supported kinds).
-+  - `component-descriptor-kinds` — all 10 accepted kinds present; transclusion/tooltip excluded.
-+  - `workspace-summary-basic` — getWorkspaceIntegrationSummary returns documentCount 1 and numeric fields.
-+  - `source-of-truth-invariant` — no hidden JSON/HTML/editorState/jsonState/serializedState keys in any pipeline/helper results.
-+- All 65 app tests pass (including 8 existing test files and the new fixture runner).
-+- No app source files modified.
-+- No DOM/browser snapshot tests added.
++- Audited public API surface of `@nabla/app`.
++- Added app-level re-exports to `packages/app/src/index.ts`:
++  - `NABLA_APP_PACKAGE`, `SAMPLE_DOCUMENT_SOURCE`
++  - `canonicalizeSampleSource`, `getRenderPipelineSummary`
++  - `createSampleComponentDescriptors`, `getComponentRenderingSummary`
++  - `createSourceEditor`, `getEditableSource`, `exportCanonicalSource`, `getEditorIntegrationSummary`
++  - `createSampleWorkspaceIndex`, `getWorkspaceIntegrationSummary`
++  - Type exports: `RenderPipelineSummary`, `ComponentRenderingSummary`, `EditorIntegrationSummary`, `WorkspaceIntegrationSummary`
++- No forbidden low-level internals re-exported: no `parse`, `serialize`, `createWorkspace`, `createEditor`, `loadSource`, `getSource`, no React component classes, no bridge internals.
++- Created `packages/app/tests/api-consistency.test.mjs` with 22 tests covering:
++  - All intended exports present and functional
++  - No forbidden parser/serializer/workspace/editor/component/bridge internals leaked
++  - No source-of-truth violation keys (html, innerHTML, editorState, jsonState, serializedState) in summary objects or component props
++  - Tooltip/transclusion renderers not exported
++  - Node-safe import verification from built `dist/index.js`
++- No app runtime behavior changed.
++- No app UI changed.
++- No app helper implementations modified.
++- No Phase 1–4 source package changes.
 +- No dependencies added.
-+- No component/editor/workspace/markup source changes.
-+- Tooltip and transclusion confirmed excluded from component descriptor kinds.
++- No final validation report created (P5-011 deferred).
 +
  ## Active Blockers
  
@@ -413,5 +331,5 @@ index abafbd7..577fb45 100644
  
  ## Next Recommended Task
  
--P5-009 — App Fixture/Regression Coverage — add app-level regression fixtures and fixture-driven tests covering the sample document and editor/save/export pipeline.
-+P5-010 — API Consistency Audit & Final Validation — audit the app package public API surface for consistency, completeness, and scope adherence.
+-P5-010 — API Consistency Audit & Final Validation — audit the app package public API surface for consistency, completeness, and scope adherence.
++P5-011 — Phase 5 Validation Report

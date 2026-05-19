@@ -1,1 +1,1 @@
-de4f28d test(app): add app fixture regression coverage
+7c27c4b test(app): add API boundary consistency coverage

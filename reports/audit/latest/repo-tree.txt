@@ -29,6 +29,7 @@ packages/app/src/main.tsx
 packages/app/src/render-pipeline.ts
 packages/app/src/sample-document.ts
 packages/app/src/workspace-integration.ts
+packages/app/tests/api-consistency.test.mjs
 packages/app/tests/app-fixtures.test.mjs
 packages/app/tests/component-rendering.test.mjs
 packages/app/tests/editor-integration.test.mjs
