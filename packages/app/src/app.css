@@ -56,6 +56,15 @@ body {
   font-size: 0.875rem;
 }
 
+.status-card__stats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+  margin-top: 0.5rem;
+}
+
 .app-reminder {
   font-size: 0.75rem;
   color: #6b7280;
