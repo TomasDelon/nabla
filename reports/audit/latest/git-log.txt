@@ -1,1 +1,1 @@
-c66a967 feat(components): add emoji component
+51f3fdf feat(components): add footnote and comment components

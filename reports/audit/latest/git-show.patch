@@ -1,166 +1,322 @@
-diff --git a/packages/components/src/emoji.css b/packages/components/src/emoji.css
+diff --git a/packages/components/src/comment.css b/packages/components/src/comment.css
 new file mode 100644
-index 0000000..6b4e2ac
+index 0000000..a921f11
 --- /dev/null
-+++ b/packages/components/src/emoji.css
-@@ -0,0 +1,9 @@
-+.nabla-emoji {
++++ b/packages/components/src/comment.css
+@@ -0,0 +1,12 @@
++.nabla-comment {
 +  font-family: var(--nabla-font-family);
 +  font-size: var(--nabla-font-size-md);
 +  line-height: var(--nabla-line-height);
-+}
-+
-+.nabla-emoji--unknown {
 +  color: var(--nabla-color-text-muted);
-+}
-diff --git a/packages/components/src/emoji.tsx b/packages/components/src/emoji.tsx
-new file mode 100644
-index 0000000..0694d2f
---- /dev/null
-+++ b/packages/components/src/emoji.tsx
-@@ -0,0 +1,43 @@
-+export interface EmojiDisplay {
-+  readonly name: string;
-+  readonly value: string;
-+  readonly raw: string;
-+  readonly isKnown: boolean;
++  opacity: 0.6;
++  user-select: none;
 +}
 +
-+export function getEmojiDisplay(props: {
-+  readonly name: string;
-+  readonly value: string;
++.nabla-comment[data-multiline] {
++  display: block;
++}
+diff --git a/packages/components/src/comment.tsx b/packages/components/src/comment.tsx
+new file mode 100644
+index 0000000..a90129a
+--- /dev/null
++++ b/packages/components/src/comment.tsx
+@@ -0,0 +1,47 @@
++import type { NablaRenderMode } from "./types.js";
++
++export interface CommentDisplay {
++  readonly text: string;
++  readonly multiline: boolean;
 +  readonly raw: string;
-+}): EmojiDisplay {
++  readonly visible: boolean;
++}
++
++export function getCommentDisplay(props: {
++  readonly text: string;
++  readonly multiline: boolean;
++  readonly raw: string;
++  readonly mode: NablaRenderMode;
++}): CommentDisplay {
 +  return {
-+    name: props.name,
-+    value: props.value,
++    text: props.text,
++    multiline: props.multiline,
 +    raw: props.raw,
-+    isKnown: props.value !== props.raw,
++    visible: props.mode === "editing",
 +  };
 +}
 +
-+export interface EmojiProps {
-+  readonly name: string;
-+  readonly value: string;
++export interface CommentProps {
++  readonly text: string;
++  readonly multiline: boolean;
 +  readonly raw: string;
++  readonly mode?: NablaRenderMode;
 +}
 +
-+export function Emoji({ name, value, raw }: EmojiProps) {
-+  const display = getEmojiDisplay({ name, value, raw });
++export function Comment({ text, multiline, raw, mode = "editing" }: CommentProps) {
++  const display = getCommentDisplay({ text, multiline, raw, mode });
 +
-+  if (display.isKnown) {
-+    return (
-+      <span className="nabla-emoji" title={`:${name}:`}>
-+        {display.value}
-+      </span>
-+    );
++  if (!display.visible) {
++    return null;
 +  }
 +
 +  return (
-+    <span className="nabla-emoji nabla-emoji--unknown" title={`Unknown shortcode`}>
-+      {display.raw}
++    <span
++      className="nabla-comment"
++      data-multiline={multiline ? "" : undefined}
++      title={`Comment${multiline ? " (multiline)" : ""}`}
++    >
++      %%{text}%%
++    </span>
++  );
++}
+diff --git a/packages/components/src/footnote.css b/packages/components/src/footnote.css
+new file mode 100644
+index 0000000..36d850b
+--- /dev/null
++++ b/packages/components/src/footnote.css
+@@ -0,0 +1,19 @@
++.nabla-footnote-reference {
++  font-size: var(--nabla-font-size-sm);
++  color: var(--nabla-color-primary);
++  cursor: pointer;
++  vertical-align: super;
++  line-height: 1;
++  user-select: none;
++}
++
++.nabla-footnote-definition {
++  font-family: var(--nabla-font-family);
++  font-size: var(--nabla-font-size-md);
++  line-height: var(--nabla-line-height);
++  color: var(--nabla-color-text-muted);
++}
++
++.nabla-footnote-definition__id {
++  color: var(--nabla-color-primary);
++}
+diff --git a/packages/components/src/footnote.tsx b/packages/components/src/footnote.tsx
+new file mode 100644
+index 0000000..1d53854
+--- /dev/null
++++ b/packages/components/src/footnote.tsx
+@@ -0,0 +1,50 @@
++export interface FootnoteDisplay {
++  readonly id: string;
++  readonly kind: "reference" | "definition";
++  readonly text: string | undefined;
++  readonly displayText: string;
++}
++
++export function getFootnoteDisplay(props: {
++  readonly footnoteKind: "reference" | "definition";
++  readonly id: string;
++  readonly text?: string;
++}): FootnoteDisplay {
++  return {
++    id: props.id,
++    kind: props.footnoteKind,
++    text: props.text,
++    displayText:
++      props.footnoteKind === "reference" ? `[${props.id}]` : `[^${props.id}]: ${props.text ?? ""}`,
++  };
++}
++
++export interface FootnoteReferenceProps {
++  readonly footnoteKind: "reference";
++  readonly id: string;
++  readonly raw: string;
++}
++
++export function FootnoteReference({ id }: FootnoteReferenceProps) {
++  return (
++    <sup className="nabla-footnote-reference" title={`Footnote ${id}`}>
++      {id}
++    </sup>
++  );
++}
++
++export interface FootnoteDefinitionProps {
++  readonly footnoteKind: "definition";
++  readonly id: string;
++  readonly text?: string;
++  readonly raw: string;
++}
++
++export function FootnoteDefinition({ id, text }: FootnoteDefinitionProps) {
++  return (
++    <span className="nabla-footnote-definition">
++      <span className="nabla-footnote-definition__id">[^{id}]:</span>{" "}
++      <span className="nabla-footnote-definition__text">{text}</span>
 +    </span>
 +  );
 +}
 diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-index ac3f674..a11b8f8 100644
+index a11b8f8..ba91e6f 100644
 --- a/packages/components/src/index.ts
 +++ b/packages/components/src/index.ts
-@@ -18,6 +18,8 @@ export { Tag, getTagDisplay } from "./tag.js";
+@@ -20,6 +20,14 @@ export { Highlight, getHighlightStyle } from "./highlight.js";
  
- export { Highlight, getHighlightStyle } from "./highlight.js";
+ export { Emoji, getEmojiDisplay } from "./emoji.js";
  
-+export { Emoji, getEmojiDisplay } from "./emoji.js";
++export {
++  FootnoteReference,
++  FootnoteDefinition,
++  getFootnoteDisplay,
++} from "./footnote.js";
++
++export { Comment, getCommentDisplay } from "./comment.js";
 +
  export type { NablaComponentTheme } from "./theme.js";
  
  export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
-@@ -29,3 +31,4 @@ export type { TaskStateValue } from "./types.js";
- export type { WikiLinkDisplay } from "./wiki-link.js";
+@@ -32,3 +40,5 @@ export type { WikiLinkDisplay } from "./wiki-link.js";
  export type { TagDisplay } from "./tag.js";
  export type { HighlightStyle } from "./highlight.js";
-+export type { EmojiDisplay } from "./emoji.js";
-diff --git a/packages/components/tests/emoji.test.mjs b/packages/components/tests/emoji.test.mjs
+ export type { EmojiDisplay } from "./emoji.js";
++export type { FootnoteDisplay } from "./footnote.js";
++export type { CommentDisplay } from "./comment.js";
+diff --git a/packages/components/tests/footnote-comment.test.mjs b/packages/components/tests/footnote-comment.test.mjs
 new file mode 100644
-index 0000000..edc6fed
+index 0000000..961c2af
 --- /dev/null
-+++ b/packages/components/tests/emoji.test.mjs
-@@ -0,0 +1,42 @@
++++ b/packages/components/tests/footnote-comment.test.mjs
+@@ -0,0 +1,99 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
-+async function load() {
-+  return import(new URL("../dist/emoji.js", import.meta.url));
++async function loadFootnote() {
++  return import(new URL("../dist/footnote.js", import.meta.url));
 +}
 +
-+test("getEmojiDisplay marks known shortcode when value differs from raw", async () => {
-+  const mod = await load();
++async function loadComment() {
++  return import(new URL("../dist/comment.js", import.meta.url));
++}
 +
-+  const result = mod.getEmojiDisplay({
-+    name: "check",
-+    value: "✅",
-+    raw: ":check:",
++test("getFootnoteDisplay for reference", async () => {
++  const mod = await loadFootnote();
++
++  const result = mod.getFootnoteDisplay({
++    footnoteKind: "reference",
++    id: "ref1",
 +  });
 +
-+  assert.equal(result.name, "check");
-+  assert.equal(result.value, "✅");
-+  assert.equal(result.raw, ":check:");
-+  assert.equal(result.isKnown, true);
++  assert.equal(result.kind, "reference");
++  assert.equal(result.id, "ref1");
++  assert.equal(result.text, undefined);
++  assert.equal(result.displayText, "[ref1]");
 +});
 +
-+test("getEmojiDisplay marks unknown shortcode when value equals raw", async () => {
-+  const mod = await load();
++test("getFootnoteDisplay for definition", async () => {
++  const mod = await loadFootnote();
 +
-+  const result = mod.getEmojiDisplay({
-+    name: "unknown",
-+    value: ":unknown:",
-+    raw: ":unknown:",
++  const result = mod.getFootnoteDisplay({
++    footnoteKind: "definition",
++    id: "def1",
++    text: "Definition text.",
 +  });
 +
-+  assert.equal(result.name, "unknown");
-+  assert.equal(result.value, ":unknown:");
-+  assert.equal(result.raw, ":unknown:");
-+  assert.equal(result.isKnown, false);
++  assert.equal(result.kind, "definition");
++  assert.equal(result.id, "def1");
++  assert.equal(result.text, "Definition text.");
++  assert.equal(result.displayText, "[^def1]: Definition text.");
 +});
 +
-+test("Emoji is a function", async () => {
-+  const mod = await load();
++test("FootnoteReference is a function", async () => {
++  const mod = await loadFootnote();
 +
-+  assert.equal(typeof mod.Emoji, "function");
++  assert.equal(typeof mod.FootnoteReference, "function");
++});
++
++test("FootnoteDefinition is a function", async () => {
++  const mod = await loadFootnote();
++
++  assert.equal(typeof mod.FootnoteDefinition, "function");
++});
++
++test("getCommentDisplay in editing mode shows visible", async () => {
++  const mod = await loadComment();
++
++  const result = mod.getCommentDisplay({
++    text: "note",
++    multiline: false,
++    raw: "%%note%%",
++    mode: "editing",
++  });
++
++  assert.equal(result.text, "note");
++  assert.equal(result.multiline, false);
++  assert.equal(result.visible, true);
++});
++
++test("getCommentDisplay in reading mode hides", async () => {
++  const mod = await loadComment();
++
++  const result = mod.getCommentDisplay({
++    text: "note",
++    multiline: false,
++    raw: "%%note%%",
++    mode: "reading",
++  });
++
++  assert.equal(result.visible, false);
++});
++
++test("getCommentDisplay preserves multiline flag", async () => {
++  const mod = await loadComment();
++
++  const result = mod.getCommentDisplay({
++    text: "line 1\nline 2",
++    multiline: true,
++    raw: "%%line 1\nline 2%%",
++    mode: "editing",
++  });
++
++  assert.equal(result.multiline, true);
++  assert.equal(result.visible, true);
++});
++
++test("Comment is a function", async () => {
++  const mod = await loadComment();
++
++  assert.equal(typeof mod.Comment, "function");
 +});
 diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
-index d9ad856..9da9a7c 100644
+index 9da9a7c..18d22b4 100644
 --- a/packages/components/tests/public-api.test.mjs
 +++ b/packages/components/tests/public-api.test.mjs
-@@ -34,11 +34,17 @@ test("Tag and Highlight are exported from public API", async () => {
-   assert.equal(typeof mod.getHighlightStyle, "function");
+@@ -41,12 +41,20 @@ test("Emoji is exported from public API", async () => {
+   assert.equal(typeof mod.getEmojiDisplay, "function");
  });
  
-+test("Emoji is exported from public API", async () => {
++test("Footnote and Comment are exported from public API", async () => {
 +  const mod = await load();
 +
-+  assert.equal(typeof mod.Emoji, "function");
-+  assert.equal(typeof mod.getEmojiDisplay, "function");
++  assert.equal(typeof mod.FootnoteReference, "function");
++  assert.equal(typeof mod.FootnoteDefinition, "function");
++  assert.equal(typeof mod.getFootnoteDisplay, "function");
++  assert.equal(typeof mod.Comment, "function");
++  assert.equal(typeof mod.getCommentDisplay, "function");
 +});
 +
  test("no forbidden visual components are exported", async () => {
    const mod = await load();
    const keys = Object.keys(mod);
  
--  assert.equal(keys.includes("Emoji"), false);
-   assert.equal(keys.includes("Footnote"), false);
-   assert.equal(keys.includes("Comment"), false);
+-  assert.equal(keys.includes("Footnote"), false);
+-  assert.equal(keys.includes("Comment"), false);
    assert.equal(keys.includes("Callout"), false);
+   assert.equal(keys.includes("Toggle"), false);
+   assert.equal(keys.includes("FoldedHeading"), false);
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 619a891..61590cc 100644
+index 61590cc..98d9c06 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-006` — Tag and Highlight Visual Components
-+`P4-007` — Emoji Visual Component
+-`P4-007` — Emoji Visual Component
++`P4-008` — Footnote and Comment Visual Components
  
  ## Branch
  
@@ -168,32 +324,34 @@ index 619a891..61590cc 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -247,6 +247,17 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+@@ -258,6 +258,19 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
  - No dependencies added.
  - No editor/markup/workspace source changes.
  
-+### P4-007 Notes
++### P4-008 Notes
 +
-+- Created `packages/components/src/emoji.tsx` with `Emoji` component and `getEmojiDisplay` helper.
-+- Created `packages/components/src/emoji.css` — minimal styling using `--nabla-*` tokens.
-+- Known shortcodes render emoji glyph; unknown shortcodes render literal raw text with muted color.
-+- Created tests: `tests/emoji.test.mjs` (3 tests); updated `tests/public-api.test.mjs`.
-+- Public API consistency: `Emoji` and `getEmojiDisplay` exported; no future components leak.
-+- No emoji picker UI implemented.
++- Created `packages/components/src/footnote.tsx` with `FootnoteReference` and `FootnoteDefinition` components.
++- Created `packages/components/src/footnote.css` — superscript markers, muted definitions.
++- Created `packages/components/src/comment.tsx` with `Comment` component — visible in editing mode, null in reading mode.
++- Created `packages/components/src/comment.css` — muted opacity styling.
++- Pure helpers: `getFootnoteDisplay`, `getCommentDisplay`.
++- Created tests: `tests/footnote-comment.test.mjs` (8 tests); updated `tests/public-api.test.mjs`.
++- Public API consistency: footnote/comment components and helpers exported; no future components leak.
++- No footnote panel UI implemented.
 +- No dependencies added.
 +- No editor/markup/workspace source changes.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -265,4 +276,4 @@ None.
+@@ -276,4 +289,4 @@ None.
  
  ## Next Recommended Task
  
--P4-007 — Emoji Visual Component — implement a React component for emoji shortcodes.
-+P4-008 — Footnote and Comment Visual Components — implement React components for footnotes and comments.
+-P4-008 — Footnote and Comment Visual Components — implement React components for footnotes and comments.
++P4-009 — Callout Visual Component — implement a React component for callout blocks.

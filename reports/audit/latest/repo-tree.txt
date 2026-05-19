@@ -4,8 +4,12 @@ nabla_complete_project_documentation_pack_v1_final.zip
 nabla_complete_project_documentation_pack_v1_final.zip.sha256
 package.json
 packages/components/package.json
+packages/components/src/comment.css
+packages/components/src/comment.tsx
 packages/components/src/emoji.css
 packages/components/src/emoji.tsx
+packages/components/src/footnote.css
+packages/components/src/footnote.tsx
 packages/components/src/highlight.css
 packages/components/src/highlight.tsx
 packages/components/src/index.ts
@@ -19,6 +23,7 @@ packages/components/src/types.ts
 packages/components/src/wiki-link.css
 packages/components/src/wiki-link.tsx
 packages/components/tests/emoji.test.mjs
+packages/components/tests/footnote-comment.test.mjs
 packages/components/tests/public-api.test.mjs
 packages/components/tests/tag-highlight.test.mjs
 packages/components/tests/task-state.test.mjs

@@ -1,7 +1,9 @@
- packages/components/src/emoji.css             |  9 ++++++
- packages/components/src/emoji.tsx             | 43 +++++++++++++++++++++++++++
- packages/components/src/index.ts              |  3 ++
- packages/components/tests/emoji.test.mjs      | 42 ++++++++++++++++++++++++++
- packages/components/tests/public-api.test.mjs |  8 ++++-
- reports/IMPLEMENTATION_PROGRESS.md            | 17 +++++++++--
- 6 files changed, 118 insertions(+), 4 deletions(-)
+ packages/components/src/comment.css                | 12 +++
+ packages/components/src/comment.tsx                | 47 ++++++++++
+ packages/components/src/footnote.css               | 19 +++++
+ packages/components/src/footnote.tsx               | 50 +++++++++++
+ packages/components/src/index.ts                   | 10 +++
+ .../components/tests/footnote-comment.test.mjs     | 99 ++++++++++++++++++++++
+ packages/components/tests/public-api.test.mjs      | 12 ++-
+ reports/IMPLEMENTATION_PROGRESS.md                 | 19 ++++-
+ 8 files changed, 263 insertions(+), 5 deletions(-)

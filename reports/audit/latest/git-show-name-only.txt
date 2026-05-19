@@ -1,6 +1,8 @@
-packages/components/src/emoji.css
-packages/components/src/emoji.tsx
+packages/components/src/comment.css
+packages/components/src/comment.tsx
+packages/components/src/footnote.css
+packages/components/src/footnote.tsx
 packages/components/src/index.ts
-packages/components/tests/emoji.test.mjs
+packages/components/tests/footnote-comment.test.mjs
 packages/components/tests/public-api.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

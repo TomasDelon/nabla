@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-007` — Emoji Visual Component
+`P4-008` — Footnote and Comment Visual Components
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -258,6 +258,19 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No dependencies added.
 - No editor/markup/workspace source changes.
 
+### P4-008 Notes
+
+- Created `packages/components/src/footnote.tsx` with `FootnoteReference` and `FootnoteDefinition` components.
+- Created `packages/components/src/footnote.css` — superscript markers, muted definitions.
+- Created `packages/components/src/comment.tsx` with `Comment` component — visible in editing mode, null in reading mode.
+- Created `packages/components/src/comment.css` — muted opacity styling.
+- Pure helpers: `getFootnoteDisplay`, `getCommentDisplay`.
+- Created tests: `tests/footnote-comment.test.mjs` (8 tests); updated `tests/public-api.test.mjs`.
+- Public API consistency: footnote/comment components and helpers exported; no future components leak.
+- No footnote panel UI implemented.
+- No dependencies added.
+- No editor/markup/workspace source changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -276,4 +289,4 @@ None.
 
 ## Next Recommended Task
 
-P4-008 — Footnote and Comment Visual Components — implement React components for footnotes and comments.
+P4-009 — Callout Visual Component — implement a React component for callout blocks.
