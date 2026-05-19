@@ -9,6 +9,9 @@ export type { FileIndexInput, FileIndexResult } from "./file-index.js";
 export { resolveWikiLinks } from "./wiki-link-resolver.js";
 export type { WikiLinkResolution, WikiLinkResolverResult } from "./wiki-link-resolver.js";
 
+export { resolveTransclusions } from "./transclusion-resolver.js";
+export type { TransclusionResolution, TransclusionResolverResult } from "./transclusion-resolver.js";
+
 export { createWorkspace } from "./workspace.js";
 export type { WorkspaceResult } from "./workspace.js";
 

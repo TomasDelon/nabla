@@ -47,6 +47,7 @@ packages/workspace/src/heading-index.ts
 packages/workspace/src/index.ts
 packages/workspace/src/path-utils.ts
 packages/workspace/src/slug.ts
+packages/workspace/src/transclusion-resolver.ts
 packages/workspace/src/wiki-link-resolver.ts
 packages/workspace/src/workspace.ts
 packages/workspace/tests/backlink-index.test.mjs
@@ -55,6 +56,7 @@ packages/workspace/tests/file-index.test.mjs
 packages/workspace/tests/heading-slugs.test.mjs
 packages/workspace/tests/helpers/load-ts-module.mjs
 packages/workspace/tests/path-utils.test.mjs
+packages/workspace/tests/transclusion-resolver.test.mjs
 packages/workspace/tests/wiki-link-resolver.test.mjs
 packages/workspace/tsconfig.json
 pnpm-lock.yaml
