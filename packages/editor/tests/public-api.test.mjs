@@ -22,3 +22,10 @@ test("editor model runtime constants are exported", async () => {
     "editor state -> Markdown string -> @nabla/markup parser -> @nabla/markup serializer -> saved Markdown source",
   );
 });
+
+test("save pipeline runtime exports are wired", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.canonicalize, "function");
+  assert.equal(mod.NABLA_EDITOR_EXPORT_LOSS, "NABLA_EDITOR_EXPORT_LOSS");
+});

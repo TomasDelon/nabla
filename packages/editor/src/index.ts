@@ -5,6 +5,8 @@ export {
   NABLA_EDITOR_SOURCE_OF_TRUTH,
 } from "./model.js";
 
+export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
+
 export type {
   EditorAdapter,
   EditorDiagnostic,
@@ -13,3 +15,8 @@ export type {
   EditorSource,
   EditorState,
 } from "./model.js";
+
+export type {
+  CanonicalizeOptions,
+  CanonicalizeResult,
+} from "./save-pipeline.js";

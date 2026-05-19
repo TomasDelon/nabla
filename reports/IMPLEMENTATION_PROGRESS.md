@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-002` — Editor Document Model Boundary
+`P3-003` — Editor Source-of-Truth Synchronization Contract
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton and adapter model contracts created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, and save canonicalization contract created.
 
 ### Repairs Applied
 
@@ -41,6 +41,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton and adapter model contract
 - No runtime editor behavior implemented.
 - Save-pipeline runtime work remains deferred; this task defines contracts only.
 
+### P3-003 Notes
+
+- Added `packages/editor/src/save-pipeline.ts` with editor-exported Markdown canonicalization through `@nabla/markup` parse/serialize APIs.
+- Export-loss semantics are controlled and explicit; canonical output is not compared against original source as a generic loss detector.
+- Parser diagnostics are forwarded as editor save diagnostics.
+- No Milkdown or ProseMirror dependencies added.
+- No editor frontend/runtime behavior implemented beyond raw string canonicalization.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -59,4 +67,4 @@ None.
 
 ## Next Recommended Task
 
-P3-003 (save pipeline contract wiring) — implement canonical editor export validation around the new model boundary.
+P3-004 (document-level save pipeline integration) — build on the canonicalization contract without expanding into editor frontend work.
