@@ -18,11 +18,17 @@ test("TaskStateCheckbox is exported from public API", async () => {
   assert.equal(typeof mod.getNextTaskState, "function");
 });
 
+test("WikiLink is exported from public API", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.WikiLink, "function");
+  assert.equal(typeof mod.getWikiLinkDisplay, "function");
+});
+
 test("no forbidden visual components are exported", async () => {
   const mod = await load();
   const keys = Object.keys(mod);
 
-  assert.equal(keys.includes("WikiLink"), false);
   assert.equal(keys.includes("Tag"), false);
   assert.equal(keys.includes("Highlight"), false);
   assert.equal(keys.includes("Emoji"), false);

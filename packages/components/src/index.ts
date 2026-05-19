@@ -12,6 +12,8 @@ export {
   TASK_STATE_LABELS,
 } from "./task-state.js";
 
+export { WikiLink, getWikiLinkDisplay } from "./wiki-link.js";
+
 export type { NablaComponentTheme } from "./theme.js";
 
 export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
@@ -20,3 +22,4 @@ export type { TaskStateProps, WikiLinkProps, TagProps, HighlightProps, EmojiProp
 export type { FootnoteProps, CommentProps, CalloutProps, ToggleProps, FoldedHeadingProps } from "./types.js";
 export type { TaskStateCheckboxProps } from "./task-state.js";
 export type { TaskStateValue } from "./types.js";
+export type { WikiLinkDisplay } from "./wiki-link.js";

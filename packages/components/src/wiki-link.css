@@ -1,0 +1,28 @@
+.nabla-wiki-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--nabla-spacing-xs);
+  cursor: pointer;
+  line-height: var(--nabla-line-height);
+  font-family: var(--nabla-font-family);
+  font-size: var(--nabla-font-size-md);
+  color: var(--nabla-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+.nabla-wiki-link[data-unresolved] {
+  color: var(--nabla-color-text-muted);
+  text-decoration-style: dashed;
+}
+
+.nabla-wiki-link__text {
+  white-space: nowrap;
+}
+
+.nabla-wiki-link__meta {
+  font-size: var(--nabla-font-size-sm);
+  opacity: 0.7;
+  white-space: nowrap;
+}
