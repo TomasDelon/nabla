@@ -1,19 +1,398 @@
+diff --git a/packages/app/src/app.css b/packages/app/src/app.css
+index 265b578..3d92946 100644
+--- a/packages/app/src/app.css
++++ b/packages/app/src/app.css
+@@ -114,6 +114,37 @@ body {
+   resize: vertical;
+ }
+ 
++.editor-section {
++  display: flex;
++  flex-direction: column;
++  gap: 0.5rem;
++}
++
++.editor-section .section-note {
++  margin-bottom: 0;
++}
++
++.editor-summary {
++  display: flex;
++  gap: 1rem;
++  font-size: 0.8125rem;
++  color: #6b7280;
++  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
++}
++
++.editor-textarea {
++  width: 100%;
++  padding: 0.75rem;
++  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
++  font-size: 0.8125rem;
++  line-height: 1.5;
++  background: #ffffff;
++  border: 1px solid #3b82f6;
++  border-radius: 0.375rem;
++  color: #1a1a1a;
++  resize: vertical;
++}
++
+ .component-preview {
+   background: #f9fafb;
+   border: 1px solid #e5e7eb;
+diff --git a/packages/app/src/editor-integration.ts b/packages/app/src/editor-integration.ts
+new file mode 100644
+index 0000000..693dc98
+--- /dev/null
++++ b/packages/app/src/editor-integration.ts
+@@ -0,0 +1,40 @@
++import { createEditor, loadSource, getSource } from "@nabla/editor";
++import {
++  canonicalizeSampleSource,
++  getRenderPipelineSummary,
++} from "./render-pipeline.js";
++import type { RenderPipelineSummary } from "./render-pipeline.js";
++
++export function createSourceEditor(source: string) {
++  const editor = createEditor();
++  loadSource(editor, source);
++  return editor;
++}
++
++export function getEditableSource(source: string): string {
++  const editor = createSourceEditor(source);
++  return getSource(editor);
++}
++
++export function exportCanonicalSource(source: string): string {
++  return canonicalizeSampleSource(source);
++}
++
++export interface EditorIntegrationSummary {
++  readonly sourceLength: number;
++  readonly exportedLength: number;
++  readonly diagnosticsCount: number;
++  readonly hasExportedSource: boolean;
++}
++
++export function getEditorIntegrationSummary(
++  source: string,
++): EditorIntegrationSummary {
++  const summary = getRenderPipelineSummary(source);
++  return {
++    sourceLength: summary.originalLength,
++    exportedLength: summary.canonicalLength,
++    diagnosticsCount: summary.diagnosticsCount,
++    hasExportedSource: summary.hasCanonicalOutput,
++  };
++}
+diff --git a/packages/app/src/main.tsx b/packages/app/src/main.tsx
+index 03208d3..9c5e881 100644
+--- a/packages/app/src/main.tsx
++++ b/packages/app/src/main.tsx
+@@ -6,6 +6,12 @@ import {
+   createSampleComponentDescriptors,
+   getComponentRenderingSummary,
+ } from "./component-rendering.js";
++import {
++  createSourceEditor,
++  getEditableSource,
++  exportCanonicalSource,
++  getEditorIntegrationSummary,
++} from "./editor-integration.js";
+ import {
+   TaskStateCheckbox,
+   getNextTaskState,
+@@ -23,8 +29,11 @@ import {
+ import "./app.css";
+ 
+ function App() {
+-  const [source] = useState(SAMPLE_DOCUMENT_SOURCE);
+-  const summary = getRenderPipelineSummary(source);
++  const [editedSource, setEditedSource] = useState(SAMPLE_DOCUMENT_SOURCE);
++
++  const pipelineSummary = getRenderPipelineSummary(SAMPLE_DOCUMENT_SOURCE);
++  const editedSummary = getRenderPipelineSummary(editedSource);
++  const editorSummary = getEditorIntegrationSummary(editedSource);
+ 
+   const componentSummary = getComponentRenderingSummary();
+ 
+@@ -85,12 +94,40 @@ function App() {
+         <div className="status-card">
+           <h2 className="status-card__title">Render pipeline connected</h2>
+           <div className="status-card__stats">
+-            <span>Original length: {summary.originalLength}</span>
+-            <span>Canonical length: {summary.canonicalLength}</span>
+-            <span>Diagnostics: {summary.diagnosticsCount}</span>
++            <span>Original length: {pipelineSummary.originalLength}</span>
++            <span>Canonical length: {pipelineSummary.canonicalLength}</span>
++            <span>Diagnostics: {pipelineSummary.diagnosticsCount}</span>
+           </div>
+         </div>
+ 
++        <section className="editor-section">
++          <h2 className="section-title">Editor</h2>
++          <p className="section-note">
++            This is plain source editing MVP. Rich-text editor node views are deferred.
++          </p>
++          <div className="editor-summary">
++            <span>Edited length: {editorSummary.sourceLength}</span>
++            <span>Exported length: {editorSummary.exportedLength}</span>
++            <span>Diagnostics: {editorSummary.diagnosticsCount}</span>
++          </div>
++          <textarea
++            className="editor-textarea"
++            value={editedSource}
++            onChange={(e) => setEditedSource(e.target.value)}
++            rows={12}
++          />
++        </section>
++
++        <div className="sample-section">
++          <h2 className="section-title">Canonical export</h2>
++          <textarea
++            className="source-view"
++            readOnly
++            value={editedSummary.canonicalSource}
++            rows={10}
++          />
++        </div>
++
+         <section className="component-preview">
+           <h2 className="section-title">Visual Components Preview</h2>
+           <p className="section-note">
+@@ -266,26 +303,6 @@ function App() {
+           </div>
+         </section>
+ 
+-        <div className="sample-section">
+-          <h2 className="section-title">Original source</h2>
+-          <textarea
+-            className="source-view"
+-            readOnly
+-            value={source}
+-            rows={10}
+-          />
+-        </div>
+-
+-        <div className="sample-section">
+-          <h2 className="section-title">Canonical output</h2>
+-          <textarea
+-            className="source-view"
+-            readOnly
+-            value={summary.canonicalSource}
+-            rows={10}
+-          />
+-        </div>
+-
+         <p className="app-reminder">
+           Markdown/Nabla Markdown+ remains the source of truth.
+         </p>
+diff --git a/packages/app/tests/editor-integration.test.mjs b/packages/app/tests/editor-integration.test.mjs
+new file mode 100644
+index 0000000..c4b0b14
+--- /dev/null
++++ b/packages/app/tests/editor-integration.test.mjs
+@@ -0,0 +1,149 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++async function load() {
++  return import(new URL("../dist/editor-integration.js", import.meta.url));
++}
++
++test("editor integration can load sample source", async () => {
++  const mod = await load();
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
++
++  const editor = mod.createSourceEditor(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.ok(editor);
++  assert.equal(typeof editor.source, "string");
++  assert.ok(editor.source.length > 0);
++});
++
++test("editable source can be retrieved", async () => {
++  const mod = await load();
++  const source = "# Hello\n\nWorld.\n";
++
++  const editable = mod.getEditableSource(source);
++
++  assert.equal(typeof editable, "string");
++  assert.ok(editable.length > 0);
++});
++
++test("canonical export returns non-empty string", async () => {
++  const mod = await load();
++  const source = "# Title\n\nParagraph.\n";
++
++  const exported = mod.exportCanonicalSource(source);
++
++  assert.equal(typeof exported, "string");
++  assert.ok(exported.length > 0);
++});
++
++test("edited source changes canonical export deterministically", async () => {
++  const mod = await load();
++
++  const first = mod.exportCanonicalSource("# Alpha\n");
++  const second = mod.exportCanonicalSource("# Beta\n");
++
++  assert.equal(typeof first, "string");
++  assert.equal(typeof second, "string");
++  assert.notEqual(first, second);
++  assert.ok(first.includes("Alpha"));
++  assert.ok(second.includes("Beta"));
++});
++
++test("summary contains numeric source length", async () => {
++  const mod = await load();
++  const source = "Test source.\n";
++
++  const summary = mod.getEditorIntegrationSummary(source);
++
++  assert.equal(typeof summary.sourceLength, "number");
++  assert.ok(summary.sourceLength > 0);
++});
++
++test("summary contains numeric exported length", async () => {
++  const mod = await load();
++  const source = "Test source.\n";
++
++  const summary = mod.getEditorIntegrationSummary(source);
++
++  assert.equal(typeof summary.exportedLength, "number");
++  assert.ok(summary.exportedLength > 0);
++});
++
++test("summary contains diagnostics count", async () => {
++  const mod = await load();
++  const source = "Test source.\n";
++
++  const summary = mod.getEditorIntegrationSummary(source);
++
++  assert.equal(typeof summary.diagnosticsCount, "number");
++});
++
++test("summary hasExportedSource is true for valid source", async () => {
++  const mod = await load();
++  const source = "Test source.\n";
++
++  const summary = mod.getEditorIntegrationSummary(source);
++
++  assert.equal(summary.hasExportedSource, true);
++});
++
++test("summary contains no html key", async () => {
++  const mod = await load();
++  const source = "Test source.\n";
++
++  const summary = mod.getEditorIntegrationSummary(source);
++
++  assert.equal("html" in summary, false);
++});
++
++test("summary contains no innerHTML key", async () => {
++  const mod = await load();
++  const source = "Test source.\n";
++
++  const summary = mod.getEditorIntegrationSummary(source);
++
++  assert.equal("innerHTML" in summary, false);
++});
++
++test("summary contains no editorState key", async () => {
++  const mod = await load();
++  const source = "Test source.\n";
++
++  const summary = mod.getEditorIntegrationSummary(source);
++
++  assert.equal("editorState" in summary, false);
++});
++
++test("summary contains no jsonState key", async () => {
++  const mod = await load();
++  const source = "Test source.\n";
++
++  const summary = mod.getEditorIntegrationSummary(source);
++
++  assert.equal("jsonState" in summary, false);
++});
++
++test("summary contains no serializedState key", async () => {
++  const mod = await load();
++  const source = "Test source.\n";
++
++  const summary = mod.getEditorIntegrationSummary(source);
++
++  assert.equal("serializedState" in summary, false);
++});
++
++test("exported canonical export contains no hidden state keys", async () => {
++  const mod = await load();
++  const source = "# Hello\n\nWorld.\n";
++
++  const exported = mod.exportCanonicalSource(source);
++
++  const forbidden = ["html", "innerHTML", "editorState", "jsonState", "serializedState"];
++  for (const key of forbidden) {
++    assert.equal(typeof exported, "string");
++    assert.ok(!exported.includes("<!DOCTYPE"));
++    assert.ok(!exported.includes("<html"));
++  }
++});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 15246e6..0ce2fd6 100644
+index 0ce2fd6..d90f564 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
-@@ -494,7 +494,7 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
+@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
  
- - Added `packages/app/src/component-rendering.ts` with `createSampleComponentDescriptors()` and `getComponentRenderingSummary()`.
- - Uses only public `@nabla/components` APIs: `createComponentDescriptor`, `isBridgeKindSupported`, and all 11 visual React components (TaskStateCheckbox, WikiLink, Tag, Highlight, Emoji, FootnoteReference, FootnoteDefinition, Comment, Callout, Toggle, FoldedHeading).
--- Sample metadata is explicit and temporary — derived from the sample document content as an MVP bridge. Full parser/editor metadata extraction will replace this in P5-006.
-+- Sample metadata is explicit and temporary — derived from the sample document content as an MVP bridge. Automatic parser/editor metadata extraction for component rendering remains deferred; P5-006 focuses only on source editing and canonical export.
- - Updated `packages/app/src/main.tsx` with a "Visual Components Preview" section showing all accepted component kinds: task state (4 states), wiki link (resolved, unresolved), tag (simple, nested), highlight (default, color), emoji (known, unknown), footnote (reference, definition), comment (editing, reading), callout (open, closed), toggle (open, closed), folded heading (open, closed).
- - Component CSS imported via `@import` in `app.css` from `@nabla/components/src/*.css` paths (Vite-resolved).
- - App source-of-truth invariant preserved: original source textarea, canonical source textarea, and render pipeline summary remain untouched.
-@@ -509,4 +509,4 @@ None.
+ ## Last Task
+ 
+-`P5-005` — Component Rendering Integration
++`P5-006` — Editor Source Editing MVP
+ 
+ ## Branch
+ 
+@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
+ 
+ ## Status
+ 
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed. P5-005 completed. P5-006 completed.
+ 
+ Phase 1 (`@nabla/markup`) — ACCEPTED.
+ Phase 2 (`@nabla/workspace`) — ACCEPTED.
+@@ -503,10 +503,29 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
+ - No dependencies added to `packages/app/package.json`.
+ - `@nabla/components` symlinked in `packages/app/node_modules/` for workspace resolution.
+ 
++### P5-006 Notes
++
++- Added `packages/app/src/editor-integration.ts` with `createSourceEditor()`, `getEditableSource()`, `exportCanonicalSource()`, and `getEditorIntegrationSummary()`.
++- Uses only public `@nabla/editor` APIs: `createEditor`, `loadSource`, `getSource`.
++- Canonical export reuses existing `canonicalizeSampleSource` from the app render pipeline (which centralizes `@nabla/markup` parse/serialize).
++- Updated `packages/app/src/main.tsx`:
++  - Added editable source textarea initialized from `SAMPLE_DOCUMENT_SOURCE`.
++  - Canonical export textarea now follows the edited source (updates on every change).
++  - Editor integration summary displayed: source length, exported length, diagnostics count.
++  - Note added: "This is plain source editing MVP. Rich-text editor node views are deferred."
++  - Visual components preview, status card, and source-of-truth reminder preserved.
++- Source-of-truth rules maintained: edited text source is the working document source; canonical export is derived through the save pipeline; no hidden JSON/HTML/editorState.
++- Created `packages/app/tests/editor-integration.test.mjs` with 15 tests: can load sample source, editable source retrieval, canonical export non-empty, deterministic export changes on edit, summary fields (sourceLength, exportedLength, diagnosticsCount, hasExportedSource), no hidden JSON/HTML/editorState/jsonState/serializedState keys.
++- No rich-text ProseMirror node views implemented.
++- No workspace integration.
++- No automatic component metadata extraction.
++- No dependencies added to `packages/app/package.json`.
++- `@nabla/editor` symlinked in `packages/app/node_modules/` for workspace resolution.
++
+ ## Active Blockers
+ 
+ None.
  
  ## Next Recommended Task
  
--P5-006 — Editor/Workspace Integration — wire parser metadata extraction and editor adapter integration for automatic component metadata.
-+P5-006 — Editor Source Editing MVP — integrate @nabla/editor to allow editing the loaded document source and exporting canonical Markdown through the save pipeline.
+-P5-006 — Editor Source Editing MVP — integrate @nabla/editor to allow editing the loaded document source and exporting canonical Markdown through the save pipeline.
++P5-007 — Workspace Integration — integrate @nabla/workspace resolver and backlink tracking into the app document model.

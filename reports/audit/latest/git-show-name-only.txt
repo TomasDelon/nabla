@@ -1,1 +1,5 @@
+packages/app/src/app.css
+packages/app/src/editor-integration.ts
+packages/app/src/main.tsx
+packages/app/tests/editor-integration.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

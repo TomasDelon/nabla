@@ -1,2 +1,6 @@
- reports/IMPLEMENTATION_PROGRESS.md | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ packages/app/src/app.css                       |  31 +++++
+ packages/app/src/editor-integration.ts         |  40 +++++++
+ packages/app/src/main.tsx                      |  67 ++++++-----
+ packages/app/tests/editor-integration.test.mjs | 149 +++++++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md             |  25 ++++-
+ 5 files changed, 284 insertions(+), 28 deletions(-)

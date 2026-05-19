@@ -7,11 +7,13 @@ packages/app/index.html
 packages/app/package.json
 packages/app/src/app.css
 packages/app/src/component-rendering.ts
+packages/app/src/editor-integration.ts
 packages/app/src/index.ts
 packages/app/src/main.tsx
 packages/app/src/render-pipeline.ts
 packages/app/src/sample-document.ts
 packages/app/tests/component-rendering.test.mjs
+packages/app/tests/editor-integration.test.mjs
 packages/app/tests/render-pipeline.test.mjs
 packages/app/tests/sample-document.test.mjs
 packages/app/tsconfig.json

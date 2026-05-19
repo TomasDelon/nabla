@@ -1,1 +1,1 @@
-45dc0fb docs: correct P5-005 next task wording
+92dd589 feat(app): add editor source editing MVP
