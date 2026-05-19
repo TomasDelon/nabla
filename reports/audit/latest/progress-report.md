@@ -494,7 +494,7 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 
 - Added `packages/app/src/component-rendering.ts` with `createSampleComponentDescriptors()` and `getComponentRenderingSummary()`.
 - Uses only public `@nabla/components` APIs: `createComponentDescriptor`, `isBridgeKindSupported`, and all 11 visual React components (TaskStateCheckbox, WikiLink, Tag, Highlight, Emoji, FootnoteReference, FootnoteDefinition, Comment, Callout, Toggle, FoldedHeading).
-- Sample metadata is explicit and temporary — derived from the sample document content as an MVP bridge. Full parser/editor metadata extraction will replace this in P5-006.
+- Sample metadata is explicit and temporary — derived from the sample document content as an MVP bridge. Automatic parser/editor metadata extraction for component rendering remains deferred; P5-006 focuses only on source editing and canonical export.
 - Updated `packages/app/src/main.tsx` with a "Visual Components Preview" section showing all accepted component kinds: task state (4 states), wiki link (resolved, unresolved), tag (simple, nested), highlight (default, color), emoji (known, unknown), footnote (reference, definition), comment (editing, reading), callout (open, closed), toggle (open, closed), folded heading (open, closed).
 - Component CSS imported via `@import` in `app.css` from `@nabla/components/src/*.css` paths (Vite-resolved).
 - App source-of-truth invariant preserved: original source textarea, canonical source textarea, and render pipeline summary remain untouched.
@@ -509,4 +509,4 @@ None.
 
 ## Next Recommended Task
 
-P5-006 — Editor/Workspace Integration — wire parser metadata extraction and editor adapter integration for automatic component metadata.
+P5-006 — Editor Source Editing MVP — integrate @nabla/editor to allow editing the loaded document source and exporting canonical Markdown through the save pipeline.

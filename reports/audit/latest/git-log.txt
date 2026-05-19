@@ -1,1 +1,1 @@
-f721653 feat(app): render sample components
+45dc0fb docs: correct P5-005 next task wording
