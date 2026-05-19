@@ -1,5 +1,5 @@
 packages/app/src/app.css
 packages/app/src/main.tsx
-packages/app/src/sample-document.ts
-packages/app/tests/sample-document.test.mjs
+packages/app/src/render-pipeline.ts
+packages/app/tests/render-pipeline.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

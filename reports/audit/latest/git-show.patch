@@ -1,252 +1,208 @@
 diff --git a/packages/app/src/app.css b/packages/app/src/app.css
-index 9d23a56..c35b0a2 100644
+index c35b0a2..d14adfc 100644
 --- a/packages/app/src/app.css
 +++ b/packages/app/src/app.css
-@@ -62,3 +62,32 @@ body {
-   text-align: center;
-   font-style: italic;
+@@ -56,6 +56,15 @@ body {
+   font-size: 0.875rem;
  }
-+
-+.sample-section {
+ 
++.status-card__stats {
 +  display: flex;
-+  flex-direction: column;
-+  gap: 0.5rem;
-+}
-+
-+.section-title {
-+  font-size: 1.125rem;
-+  font-weight: 600;
-+}
-+
-+.section-note {
-+  color: #6b7280;
-+  font-size: 0.875rem;
-+}
-+
-+.source-view {
-+  width: 100%;
-+  padding: 0.75rem;
-+  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
++  gap: 1rem;
 +  font-size: 0.8125rem;
-+  line-height: 1.5;
-+  background: #f9fafb;
-+  border: 1px solid #e5e7eb;
-+  border-radius: 0.375rem;
-+  color: #1a1a1a;
-+  resize: vertical;
++  color: #6b7280;
++  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
++  margin-top: 0.5rem;
 +}
++
+ .app-reminder {
+   font-size: 0.75rem;
+   color: #6b7280;
 diff --git a/packages/app/src/main.tsx b/packages/app/src/main.tsx
-index 012e956..6d03683 100644
+index 6d03683..d3c22cf 100644
 --- a/packages/app/src/main.tsx
 +++ b/packages/app/src/main.tsx
-@@ -1,7 +1,11 @@
+@@ -1,10 +1,12 @@
  import { createRoot } from "react-dom/client";
-+import { useState } from "react";
-+import { SAMPLE_DOCUMENT_SOURCE } from "./sample-document.js";
+ import { useState } from "react";
+ import { SAMPLE_DOCUMENT_SOURCE } from "./sample-document.js";
++import { getRenderPipelineSummary } from "./render-pipeline.js";
  import "./app.css";
  
  function App() {
-+  const [source] = useState(SAMPLE_DOCUMENT_SOURCE);
-+
+   const [source] = useState(SAMPLE_DOCUMENT_SOURCE);
++  const summary = getRenderPipelineSummary(source);
+ 
    return (
      <div className="app">
-       <header className="app-header">
-@@ -15,6 +19,20 @@ function App() {
-             This is not loading documents yet.
-           </p>
-         </div>
+@@ -14,22 +16,34 @@ function App() {
+       </header>
+       <main className="app-main">
+         <div className="status-card">
+-          <h2 className="status-card__title">Phase 5 app shell running</h2>
+-          <p className="status-card__note">
+-            This is not loading documents yet.
+-          </p>
++          <h2 className="status-card__title">Render pipeline connected</h2>
++          <div className="status-card__stats">
++            <span>Original length: {summary.originalLength}</span>
++            <span>Canonical length: {summary.canonicalLength}</span>
++            <span>Diagnostics: {summary.diagnosticsCount}</span>
++          </div>
++        </div>
 +
 +        <div className="sample-section">
-+          <h2 className="section-title">Sample source loaded</h2>
-+          <p className="section-note">
-+            Parsing/rendering starts in P5-004.
-+          </p>
++          <h2 className="section-title">Original source</h2>
 +          <textarea
 +            className="source-view"
 +            readOnly
 +            value={source}
-+            rows={20}
++            rows={10}
 +          />
-+        </div>
-+
-         <p className="app-reminder">
-           Markdown/Nabla Markdown+ remains the source of truth.
-         </p>
-diff --git a/packages/app/src/sample-document.ts b/packages/app/src/sample-document.ts
+         </div>
+ 
+         <div className="sample-section">
+-          <h2 className="section-title">Sample source loaded</h2>
++          <h2 className="section-title">Canonical output</h2>
+           <p className="section-note">
+-            Parsing/rendering starts in P5-004.
++            Visual component rendering starts in P5-005.
+           </p>
+           <textarea
+             className="source-view"
+             readOnly
+-            value={source}
+-            rows={20}
++            value={summary.canonicalSource}
++            rows={10}
+           />
+         </div>
+ 
+diff --git a/packages/app/src/render-pipeline.ts b/packages/app/src/render-pipeline.ts
 new file mode 100644
-index 0000000..2dcda1a
+index 0000000..f974ab0
 --- /dev/null
-+++ b/packages/app/src/sample-document.ts
-@@ -0,0 +1,69 @@
-+export const SAMPLE_DOCUMENT_SOURCE = `# Nabla Sample Document
++++ b/packages/app/src/render-pipeline.ts
+@@ -0,0 +1,30 @@
++import { parse, serialize } from "@nabla/markup";
 +
-+This is a sample document that demonstrates accepted Nabla Markdown+ syntax surfaces.
++export interface RenderPipelineSummary {
++  readonly originalLength: number;
++  readonly canonicalLength: number;
++  readonly diagnosticsCount: number;
++  readonly hasCanonicalOutput: boolean;
++  readonly canonicalSource: string;
++}
 +
-+## Text Formatting
++export function parseSampleSource(source: string) {
++  return parse(source);
++}
 +
-+This text has a ==highlight== and a =={#ff0}color highlight==.
++export function canonicalizeSampleSource(source: string): string {
++  const doc = parse(source);
++  return serialize(doc);
++}
 +
-+Here is an emoji shortcode: :check:
-+
-+## Task States
-+
-+- [ ] Unchecked task
-+- [x] Checked task
-+- [-] Cancelled task
-+- [!] Important task
-+
-+## Wiki Links
-+
-+A resolved link: [[ResolvedPage|Resolved Link]].
-+
-+An unresolved link: [[MissingPage]].
-+
-+## Tags and Highlights
-+
-+A simple tag: #mytag.
-+
-+A nested tag: #nested/tag.
-+
-+## Footnotes
-+
-+Here is a footnote reference[^1].
-+
-+[^1]: This is the footnote definition.
-+
-+## Comments
-+
-+%%This is a private comment.%%
-+
-+## Callout
-+
-+[!note]> This is a note callout.
-+
-+## Toggle
-+
-+]> This is a toggle with content.
-+
-+## Folded Heading
-+
-+#> This is a folded heading.
-+
-+## Standard Markdown
-+
-+A paragraph with **bold** and *italic* text.
-+
-+- List item one
-+- List item two
-+
-+1. Ordered item one
-+2. Ordered item two
-+
-+> A blockquote.
-+
-+\`\`\`
-+A code block.
-+\`\`\`
-+
-+---
-+`;
-diff --git a/packages/app/tests/sample-document.test.mjs b/packages/app/tests/sample-document.test.mjs
++export function getRenderPipelineSummary(source: string): RenderPipelineSummary {
++  const doc = parse(source);
++  const canonicalSource = serialize(doc);
++  return {
++    originalLength: source.length,
++    canonicalLength: canonicalSource.length,
++    diagnosticsCount: doc.diagnostics.length,
++    hasCanonicalOutput: canonicalSource.length > 0,
++    canonicalSource,
++  };
++}
+diff --git a/packages/app/tests/render-pipeline.test.mjs b/packages/app/tests/render-pipeline.test.mjs
 new file mode 100644
-index 0000000..5437adb
+index 0000000..ce97e76
 --- /dev/null
-+++ b/packages/app/tests/sample-document.test.mjs
-@@ -0,0 +1,84 @@
++++ b/packages/app/tests/render-pipeline.test.mjs
+@@ -0,0 +1,73 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
 +async function load() {
-+  return import(new URL("../dist/sample-document.js", import.meta.url));
++  return import(new URL("../dist/render-pipeline.js", import.meta.url));
 +}
 +
-+test("SAMPLE_DOCUMENT_SOURCE is a non-empty string", async () => {
++test("parseSampleSource parses sample source without throwing", async () => {
 +  const mod = await load();
++  const source = "# Test\n\n- [x] done\n\n[[Page]]\n";
 +
-+  assert.equal(typeof mod.SAMPLE_DOCUMENT_SOURCE, "string");
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.length > 0);
++  const doc = mod.parseSampleSource(source);
++
++  assert.ok(doc);
++  assert.equal(typeof doc.type, "string");
++  assert.ok(Array.isArray(doc.children));
++  assert.ok(Array.isArray(doc.diagnostics));
 +});
 +
-+test("SAMPLE_DOCUMENT_SOURCE contains heading marker", async () => {
++test("canonicalizeSampleSource returns a non-empty string", async () => {
 +  const mod = await load();
++  const source = "# Nabla Sample\n\n:check:\n\n==hi==\n";
 +
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("# Nabla Sample Document"));
++  const output = mod.canonicalizeSampleSource(source);
++
++  assert.equal(typeof output, "string");
++  assert.ok(output.length > 0);
 +});
 +
-+test("SAMPLE_DOCUMENT_SOURCE contains task state markers", async () => {
++test("getRenderPipelineSummary returns all expected fields", async () => {
 +  const mod = await load();
++  const source = "# Hello\n\n%%comment%%\n";
 +
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [ ]"));
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [x]"));
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [-]"));
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("- [!]"));
++  const summary = mod.getRenderPipelineSummary(source);
++
++  assert.ok(summary.originalLength > 0);
++  assert.ok(summary.canonicalLength > 0);
++  assert.equal(typeof summary.diagnosticsCount, "number");
++  assert.equal(summary.hasCanonicalOutput, true);
++  assert.equal(typeof summary.canonicalSource, "string");
++  assert.ok(summary.canonicalSource.length > 0);
 +});
 +
-+test("SAMPLE_DOCUMENT_SOURCE contains wiki link syntax", async () => {
++test("getRenderPipelineSummary processes full sample document", async () => {
++  const { SAMPLE_DOCUMENT_SOURCE } = await import(
++    new URL("../dist/sample-document.js", import.meta.url)
++  );
 +  const mod = await load();
 +
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("[[ResolvedPage|Resolved Link]]"));
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("[[MissingPage]]"));
++  const summary = mod.getRenderPipelineSummary(SAMPLE_DOCUMENT_SOURCE);
++
++  assert.ok(summary.originalLength > 0);
++  assert.ok(summary.canonicalLength > 0);
++  assert.equal(typeof summary.diagnosticsCount, "number");
++  assert.equal(summary.hasCanonicalOutput, true);
 +});
 +
-+test("SAMPLE_DOCUMENT_SOURCE contains tag syntax", async () => {
++test("pipeline output preserves source-of-truth invariant", async () => {
 +  const mod = await load();
++  const source = "# Test\n\n[!note]> callout\n";
 +
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("#mytag"));
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("#nested/tag"));
-+});
++  const summary = mod.getRenderPipelineSummary(source);
 +
-+test("SAMPLE_DOCUMENT_SOURCE contains highlight syntax", async () => {
-+  const mod = await load();
++  const forbidden = ["html", "innerHTML", "editorState", "jsonState", "serializedState"];
++  for (const key of forbidden) {
++    assert.equal(key in summary, false, `summary must not contain "${key}"`);
++  }
 +
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("==highlight=="));
-+});
-+
-+test("SAMPLE_DOCUMENT_SOURCE contains emoji shortcode", async () => {
-+  const mod = await load();
-+
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes(":check:"));
-+});
-+
-+test("SAMPLE_DOCUMENT_SOURCE contains footnote syntax", async () => {
-+  const mod = await load();
-+
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("[^1]"));
-+});
-+
-+test("SAMPLE_DOCUMENT_SOURCE contains comment syntax", async () => {
-+  const mod = await load();
-+
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("%%"));
-+});
-+
-+test("SAMPLE_DOCUMENT_SOURCE contains callout marker", async () => {
-+  const mod = await load();
-+
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("[!note]>"));
-+});
-+
-+test("SAMPLE_DOCUMENT_SOURCE contains toggle marker", async () => {
-+  const mod = await load();
-+
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("]>"));
-+});
-+
-+test("SAMPLE_DOCUMENT_SOURCE contains folded heading marker", async () => {
-+  const mod = await load();
-+
-+  assert.ok(mod.SAMPLE_DOCUMENT_SOURCE.includes("#>"));
++  const canonicalSource = summary.canonicalSource;
++  assert.equal(typeof canonicalSource, "string");
++  assert.ok(!canonicalSource.includes("<!DOCTYPE"));
++  assert.ok(!canonicalSource.includes("<html"));
 +});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index ea3fb36..aadfe92 100644
+index aadfe92..cbcb422 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
  
  ## Last Task
  
--`P5-002` — App Dev Server and Minimal Shell
-+`P5-003` — Sample Document Source Loading
+-`P5-003` — Sample Document Source Loading
++`P5-004` — Markdown/Nabla Render Pipeline Integration
  
  ## Branch
  
@@ -254,31 +210,31 @@ index ea3fb36..aadfe92 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -448,6 +448,16 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
- - No document loading/rendering/editor integration.
- - No Phase 1–4 source package changes.
+@@ -458,6 +458,16 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
+ - No editor/component/workspace integration.
+ - No dependencies added.
  
-+### P5-003 Notes
++### P5-004 Notes
 +
-+- Created `packages/app/src/sample-document.ts` with sample Nabla Markdown+ source including headings, task states, wiki links, tags, highlights, emoji shortcodes, footnotes, comments, callout markers, toggle markers, and folded heading markers.
-+- Updated `packages/app/src/main.tsx` to load `SAMPLE_DOCUMENT_SOURCE` into React state and display it in a read-only `<textarea>`.
-+- Updated `packages/app/src/app.css` with source view styles.
-+- Added `packages/app/tests/sample-document.test.mjs` with 12 tests verifying source contains all expected syntax markers.
-+- No parsing/render pipeline implemented.
-+- No editor/component/workspace integration.
++- Created `packages/app/src/render-pipeline.ts` with `parseSampleSource`, `canonicalizeSampleSource`, and `getRenderPipelineSummary` helpers.
++- Used only public `@nabla/markup` APIs: `parse` and `serialize`.
++- App displays: original length, canonical length, diagnostics count, original source textarea, canonical output textarea.
++- Created `packages/app/tests/render-pipeline.test.mjs` with 5 tests covering parse, canonicalize, summary fields, full document processing, and source-of-truth invariant (no HTML/JSON/editorState).
++- No visual component rendering implemented.
++- No editor/workspace integration.
 +- No dependencies added.
 +
  ### P5-002 Notes
  
  - Created `packages/app/index.html`, `packages/app/vite.config.ts`, `packages/app/src/main.tsx`, `packages/app/src/app.css`.
-@@ -476,4 +486,4 @@ None.
+@@ -486,4 +496,4 @@ None.
  
  ## Next Recommended Task
  
--P5-003 — Sample Document Source Loading — implement hardcoded sample document loading into the app state.
-+P5-004 — Markdown/Nabla Render Pipeline Integration — wire the loaded source through @nabla/markup parser and display parsed output.
+-P5-004 — Markdown/Nabla Render Pipeline Integration — wire the loaded source through @nabla/markup parser and display parsed output.
++P5-005 — Component Rendering Integration — wire bridge descriptors to visual React components in the app.

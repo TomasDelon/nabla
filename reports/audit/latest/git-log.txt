@@ -1,1 +1,1 @@
-084e917 feat(app): load sample document source
+a7137a0 feat(app): add markup render pipeline

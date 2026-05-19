@@ -6,7 +6,7 @@ Phase 5 — `@nabla/app`
 
 ## Last Task
 
-`P5-003` — Sample Document Source Loading
+`P5-004` — Markdown/Nabla Render Pipeline Integration
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 5 — `@nabla/app`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed. P4-005 completed. P4-006 completed. P4-007 completed. P4-008 completed. P4-008A completed. P4-008B completed. P4-009 completed. P4-010 completed. P4-011 completed. P4-012 completed. P4-013 completed. P4-014 completed. P4-015 completed. P5-000 completed. P5-001 completed. P5-002 completed. P5-003 completed. P5-004 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -458,6 +458,16 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - No editor/component/workspace integration.
 - No dependencies added.
 
+### P5-004 Notes
+
+- Created `packages/app/src/render-pipeline.ts` with `parseSampleSource`, `canonicalizeSampleSource`, and `getRenderPipelineSummary` helpers.
+- Used only public `@nabla/markup` APIs: `parse` and `serialize`.
+- App displays: original length, canonical length, diagnostics count, original source textarea, canonical output textarea.
+- Created `packages/app/tests/render-pipeline.test.mjs` with 5 tests covering parse, canonicalize, summary fields, full document processing, and source-of-truth invariant (no HTML/JSON/editorState).
+- No visual component rendering implemented.
+- No editor/workspace integration.
+- No dependencies added.
+
 ### P5-002 Notes
 
 - Created `packages/app/index.html`, `packages/app/vite.config.ts`, `packages/app/src/main.tsx`, `packages/app/src/app.css`.
@@ -486,4 +496,4 @@ None.
 
 ## Next Recommended Task
 
-P5-004 — Markdown/Nabla Render Pipeline Integration — wire the loaded source through @nabla/markup parser and display parsed output.
+P5-005 — Component Rendering Integration — wire bridge descriptors to visual React components in the app.

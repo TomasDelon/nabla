@@ -8,7 +8,9 @@ packages/app/package.json
 packages/app/src/app.css
 packages/app/src/index.ts
 packages/app/src/main.tsx
+packages/app/src/render-pipeline.ts
 packages/app/src/sample-document.ts
+packages/app/tests/render-pipeline.test.mjs
 packages/app/tests/sample-document.test.mjs
 packages/app/tsconfig.json
 packages/app/vite.config.ts
