@@ -14,12 +14,12 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
 Phase 3 (`@nabla/editor`) — ACCEPTED.
-Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created.
+Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created; rendering contract types defined.
 
 ### Repairs Applied
 
@@ -186,6 +186,19 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No editor source modified.
 - No parser/serializer or workspace changes.
 - Only dependency: `@nabla/markup` (workspace).
+
+### P4-002 Notes
+
+- Created `packages/components/src/types.ts` with full rendering contract types.
+- Defined `NablaComponentKind` union for all 10 implementable component kinds (taskState, wikiLink, tag, highlight, emoji, footnote, comment, callout, toggle, foldedHeading).
+- Defined `NablaDeferredComponentKind` marking transclusion (DEFERRED) and tooltip (BLOCKED).
+- Defined per-kind prop interfaces: `TaskStateProps`, `WikiLinkProps`, `TagProps`, `HighlightProps`, `EmojiProps`, `FootnoteProps`, `CommentProps`, `CalloutProps`, `ToggleProps`, `FoldedHeadingProps`.
+- Defined `NablaComponentRegistry` interface for editor bridge resolution.
+- Added `NABLA_COMPONENT_RENDERING_CONTRACT` constant.
+- Re-exported all types from `packages/components/src/index.ts`.
+- No React dependency added.
+- No visual components implemented.
+- No editor/markup/workspace source changes.
 
 ## Verification Summary
 
