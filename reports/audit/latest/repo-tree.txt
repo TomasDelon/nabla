@@ -13,6 +13,7 @@ packages/markup/src/extensions/emoji-shortcodes.ts
 packages/markup/src/extensions/folded-headings.ts
 packages/markup/src/extensions/footnotes.ts
 packages/markup/src/extensions/frontmatter.ts
+packages/markup/src/extensions/gfm-tables.ts
 packages/markup/src/extensions/highlights.ts
 packages/markup/src/extensions/tags.ts
 packages/markup/src/extensions/task-states.ts

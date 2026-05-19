@@ -1,6 +1,8 @@
- packages/markup/src/extensions/emoji-shortcodes.ts | 59 ++++++++++++++++++++++
- packages/markup/src/index.ts                       |  6 +++
- packages/markup/src/parser.ts                      | 27 ++++++++++
- packages/markup/src/serializer.ts                  |  7 ++-
- packages/markup/tests/wiki-links.test.mjs          | 25 +++++++++
- 5 files changed, 123 insertions(+), 1 deletion(-)
+ packages/markup/src/extensions/block-ids.ts  |   8 +-
+ packages/markup/src/extensions/gfm-tables.ts | 168 +++++++++++++++++++++++++++
+ packages/markup/src/index.ts                 |  10 ++
+ packages/markup/src/parser.ts                |  19 +++
+ packages/markup/src/serializer.ts            |  12 ++
+ packages/markup/tests/wiki-links.test.mjs    |  48 ++++++++
+ reports/IMPLEMENTATION_PROGRESS.md           |  38 +++---
+ 7 files changed, 280 insertions(+), 23 deletions(-)

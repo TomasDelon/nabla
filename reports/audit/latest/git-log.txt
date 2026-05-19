@@ -1,1 +1,2 @@
-59af998 feat(markup): implement emoji shortcode parsing
+db4375b feat(markup): implement GFM table alignment parsing
+47a9236 docs: update implementation progress for P1-022 emoji shortcodes

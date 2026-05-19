@@ -1,180 +1,329 @@
-diff --git a/packages/markup/src/extensions/emoji-shortcodes.ts b/packages/markup/src/extensions/emoji-shortcodes.ts
+diff --git a/packages/markup/src/extensions/block-ids.ts b/packages/markup/src/extensions/block-ids.ts
+index 845a414..902a806 100644
+--- a/packages/markup/src/extensions/block-ids.ts
++++ b/packages/markup/src/extensions/block-ids.ts
+@@ -92,7 +92,7 @@ export function extractBlockId(text: string): BlockIdResult {
+ 
+ const ATTACHABLE_KINDS = new Set([
+   "paragraph", "heading", "foldableHeading", "listItem",
+-  "callout", "toggle", "transclusion"
++  "callout", "toggle", "transclusion", "table"
+ ]);
+ 
+ export function getBlockText(block: { kind: string; text?: string; content?: string; title?: string }): string | null {
+@@ -157,6 +157,12 @@ export function processBlockIds(
+         }
+         if (prevAttachable !== -1) {
+           (blocks[prevAttachable] as Record<string, unknown>).nablaBlockId = ownLineId;
++          Object.defineProperty(blocks[prevAttachable], "nablaBlockIdOwnLine", {
++            value: true,
++            enumerable: false,
++            writable: false,
++            configurable: false
++          });
+           blocks.splice(i, 1);
+           i--;
+           continue;
+diff --git a/packages/markup/src/extensions/gfm-tables.ts b/packages/markup/src/extensions/gfm-tables.ts
 new file mode 100644
-index 0000000..ec9c4a5
+index 0000000..28c3561
 --- /dev/null
-+++ b/packages/markup/src/extensions/emoji-shortcodes.ts
-@@ -0,0 +1,59 @@
-+import type { EmojiShortcodeNode } from "../ast.js";
-+import { DIAGNOSTIC_CODES } from "../diagnostics.js";
++++ b/packages/markup/src/extensions/gfm-tables.ts
+@@ -0,0 +1,168 @@
++import type { MarkdownNode } from "../ast.js";
 +
-+export const DEFAULT_EMOJI_REGISTRY: ReadonlyMap<string, string> = new Map([
-+  ["check", "\u2705"],
-+  ["warning", "\u26A0\uFE0F"],
-+  ["idea", "\uD83D\uDCA1"],
-+  ["fire", "\uD83D\uDD25"],
-+  ["star", "\u2B50"],
-+  ["x", "\u274C"],
-+]);
++const TABLE_SEPARATOR_PATTERN = /^[ \t]*:?-{3,}:?(?:[ \t]*\|[ \t]*:?-{3,}:?)*[ \t]*$/;
 +
-+const EMOJI_PATTERN = /:([a-z0-9_+\-]+):/;
++export function isTableSeparatorLine(line: string): boolean {
++  return TABLE_SEPARATOR_PATTERN.test(line.trim());
++}
 +
-+export type EmojiParseResult =
-+  | { kind: "known"; node: EmojiShortcodeNode }
-+  | { kind: "unknown"; raw: string; name: string }
-+  | null;
++export function detectTableStart(lines: string[], index: number): boolean {
++  if (index + 1 >= lines.length) return false;
++  if (!lines[index].includes("|")) return false;
++  return isTableSeparatorLine(lines[index + 1]);
++}
 +
-+export function tryParseEmojiShortcode(
-+  source: string,
-+  index: number,
-+  registry?: ReadonlyMap<string, string>
-+): EmojiParseResult {
-+  if (source[index] !== ":") return null;
++export function parseTableAlignment(separator: string): Array<"left" | "center" | "right" | null> {
++  let trimmed = separator.trim();
++  if (trimmed.startsWith("|")) trimmed = trimmed.slice(1).trimStart();
++  if (trimmed.endsWith("|")) trimmed = trimmed.slice(0, -1).trimEnd();
 +
-+  const rest = source.slice(index);
-+  const match = rest.match(EMOJI_PATTERN);
-+  if (!match || match.index !== 0) return null;
++  const cells = trimmed.split("|").map((s) => s.trim());
 +
-+  const name = match[1];
-+  const raw = match[0];
-+  const reg = registry ?? DEFAULT_EMOJI_REGISTRY;
++  return cells.map((cell) => {
++    const startsWithColon = cell.startsWith(":");
++    const endsWithColon = cell.endsWith(":");
++    if (startsWithColon && endsWithColon) return "center";
++    if (endsWithColon) return "right";
++    if (startsWithColon) return "left";
++    return null;
++  });
++}
 +
-+  if (!reg.has(name)) {
-+    return { kind: "unknown", raw, name };
++export function splitTableRow(row: string): string[] {
++  let trimmed = row.trim();
++  if (trimmed.startsWith("|")) trimmed = trimmed.slice(1).trimStart();
++  if (trimmed.endsWith("|")) trimmed = trimmed.slice(0, -1).trimEnd();
++
++  return trimmed.split("|").map((cell) => cell.trim());
++}
++
++export type TableBlockSpec = {
++  kind: "table";
++  headerRow: string;
++  separator: string;
++  bodyRows: string[];
++  endIndex: number;
++};
++
++export function parseTable(lines: string[], startIndex: number): TableBlockSpec | null {
++  if (!detectTableStart(lines, startIndex)) return null;
++
++  const headerRow = lines[startIndex];
++  const separator = lines[startIndex + 1];
++
++  const bodyRows: string[] = [];
++  let i = startIndex + 2;
++  while (i < lines.length && lines[i].includes("|")) {
++    bodyRows.push(lines[i]);
++    i++;
 +  }
 +
 +  return {
-+    kind: "known",
-+    node: {
-+      type: "emojiShortcode",
-+      name,
-+      raw
++    kind: "table",
++    headerRow,
++    separator,
++    bodyRows,
++    endIndex: i - 1
++  };
++}
++
++export function buildTableNode(
++  headerRow: string,
++  separator: string,
++  bodyRows: string[],
++  nablaBlockId?: string,
++  nablaBlockIdOwnLine?: boolean
++): MarkdownNode {
++  const align = parseTableAlignment(separator);
++  const headerCells = splitTableRow(headerRow);
++  const numCols = headerCells.length;
++
++  const headerRowNode: MarkdownNode = {
++    type: "tableRow",
++    children: headerCells.map((cell) => ({
++      type: "tableCell",
++      children: [{ type: "text", value: cell }]
++    }))
++  };
++
++  const bodyRowNodes = bodyRows.map((row) => {
++    const cells = splitTableRow(row);
++    while (cells.length < numCols) cells.push("");
++    return {
++      type: "tableRow" as const,
++      children: cells.slice(0, numCols).map((cell) => ({
++        type: "tableCell" as const,
++        children: [{ type: "text" as const, value: cell }]
++      }))
++    };
++  });
++
++  const nodeChildren = [headerRowNode, ...bodyRowNodes];
++
++  if (nablaBlockId) {
++    const blockData: Record<string, unknown> = { nablaBlockId };
++    if (nablaBlockIdOwnLine) {
++      Object.defineProperty(blockData, "nablaBlockIdOwnLine", {
++        value: true,
++        enumerable: false,
++        writable: false,
++        configurable: false
++      });
 +    }
-+  };
-+}
++    return {
++      type: "table",
++      align,
++      data: blockData as MarkdownNode["data"],
++      children: nodeChildren
++    } as MarkdownNode;
++  }
 +
-+export function buildEmojiUnknownDiagnostic(name: string) {
 +  return {
-+    severity: "info" as const,
-+    code: DIAGNOSTIC_CODES.EMOJI_UNKNOWN,
-+    message: `Unknown emoji shortcode: ${name}.`
-+  };
++    type: "table",
++    align,
++    children: nodeChildren
++  } as MarkdownNode;
 +}
 +
-+export function serializeEmojiShortcode(node: EmojiShortcodeNode) {
-+  return node.raw;
++export function serializeTable(node: MarkdownNode): string {
++  const children = node.children as MarkdownNode[] | undefined;
++  if (!children || children.length === 0) return "";
++
++  const align = node.align as Array<string | null> | undefined;
++  const numCols = align ? align.length : 0;
++
++  const rows: string[] = [];
++
++  for (const row of children) {
++    if (row.type !== "tableRow") continue;
++    const cells = (row.children as MarkdownNode[] | undefined) ?? [];
++    const cellValues = cells.map((cell) => {
++      if (cell.type !== "tableCell") return "";
++      const cellChildren = (cell.children as MarkdownNode[]) ?? [];
++      return cellChildren.map((child) => {
++        if (child.type === "text") return child.value ?? "";
++        return "";
++      }).join("");
++    });
++
++    while (cellValues.length < numCols) cellValues.push("");
++    rows.push(cellValues.slice(0, numCols).join(" | "));
++  }
++
++  if (rows.length === 0) return "";
++
++  const separatorCells: string[] = [];
++  const effectiveAlign = align ?? [];
++  while (separatorCells.length < numCols) {
++    const a = effectiveAlign[separatorCells.length] ?? null;
++    if (a === "left") separatorCells.push(":---");
++    else if (a === "center") separatorCells.push(":---:");
++    else if (a === "right") separatorCells.push("---:");
++    else separatorCells.push("---");
++  }
++
++  rows.splice(1, 0, separatorCells.join(" | "));
++
++  return rows.join("\n");
 +}
 diff --git a/packages/markup/src/index.ts b/packages/markup/src/index.ts
-index cc7912f..018f2b3 100644
+index 018f2b3..21504cd 100644
 --- a/packages/markup/src/index.ts
 +++ b/packages/markup/src/index.ts
-@@ -60,6 +60,12 @@ export {
-   parseTransclusionLine,
-   serializeTransclusion
- } from "./extensions/transclusions.js";
-+export {
-+  tryParseEmojiShortcode,
-+  serializeEmojiShortcode,
-+  DEFAULT_EMOJI_REGISTRY,
-+  buildEmojiUnknownDiagnostic
-+} from "./extensions/emoji-shortcodes.js";
- export type {
+@@ -70,6 +70,16 @@ export type {
    ProtectedRegion,
    ProtectedRegionKind
+ } from "./protected-regions.js";
++export {
++  buildTableNode,
++  serializeTable,
++  detectTableStart,
++  parseTable,
++  parseTableAlignment,
++  splitTableRow,
++  isTableSeparatorLine
++} from "./extensions/gfm-tables.js";
++export type { TableBlockSpec } from "./extensions/gfm-tables.js";
+ export type { SerializeOptions } from "./serializer.js";
+ export type {
+   ExpectedDiagnostic,
 diff --git a/packages/markup/src/parser.ts b/packages/markup/src/parser.ts
-index f555d88..1d06097 100644
+index 1d06097..ef65e39 100644
 --- a/packages/markup/src/parser.ts
 +++ b/packages/markup/src/parser.ts
-@@ -13,6 +13,7 @@ import { parseToggleMarker } from "./extensions/toggles.js";
- import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
+@@ -14,6 +14,7 @@ import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
  import { parseTransclusionLine } from "./extensions/transclusions.js";
  import { processBlockIds } from "./extensions/block-ids.js";
-+import { tryParseEmojiShortcode, buildEmojiUnknownDiagnostic } from "./extensions/emoji-shortcodes.js";
+ import { tryParseEmojiShortcode, buildEmojiUnknownDiagnostic } from "./extensions/emoji-shortcodes.js";
++import { detectTableStart, parseTable, buildTableNode } from "./extensions/gfm-tables.js";
  import { DIAGNOSTIC_CODES } from "./diagnostics.js";
  
  export type ParseOptions = {
-@@ -463,6 +464,32 @@ function parseParagraphChildren(source: string) {
-       }
+@@ -89,6 +90,7 @@ type BlockSpec = (
+   | { kind: "callout"; calloutType: string; foldState?: FoldState; title: string; syntax: SyntaxStatus; rawMarker: string; childContent: string; nablaBlockId?: string }
+   | { kind: "toggle"; foldState: FoldState; title: string; rawMarker: string; childContent: string; nablaBlockId?: string }
+   | { kind: "transclusion"; text: string; nablaBlockId?: string }
++  | { kind: "table"; headerRow: string; separator: string; bodyRows: string[]; nablaBlockId?: string }
+ );
+ 
+ function parseBlocks(source: string): BlockSpec[] {
+@@ -286,6 +288,21 @@ function parseBlocks(source: string): BlockSpec[] {
+       continue;
      }
  
-+    if (source[index] === ":") {
-+      if (
-+        isOffsetProtected(protectedRegions, index) ||
-+        inlineHtmlContainers.some((region) => index >= region.start && index < region.end)
-+      ) {
-+        index += 1;
++    if (detectTableStart(lines, i)) {
++      flushParagraph();
++      const table = parseTable(lines, i);
++      if (table !== null) {
++        blocks.push({
++          kind: "table",
++          headerRow: table.headerRow,
++          separator: table.separator,
++          bodyRows: table.bodyRows
++        });
++        i = table.endIndex;
 +        continue;
-+      }
-+
-+      const emojiResult = tryParseEmojiShortcode(source, index);
-+      if (emojiResult !== null) {
-+        if (emojiResult.kind === "known") {
-+          if (bufferStart < index) {
-+            children.push(createTextNode(source.slice(bufferStart, index)));
-+          }
-+          children.push(emojiResult.node as MarkdownNode);
-+          bufferStart = index + emojiResult.node.raw.length;
-+          index = bufferStart;
-+          continue;
-+        }
-+        if (emojiResult.kind === "unknown") {
-+          diagnostics.push(buildEmojiUnknownDiagnostic(emojiResult.name));
-+        }
 +      }
 +    }
 +
-     index += 1;
+     paragraphLines.push(line);
+   }
+ 
+@@ -647,6 +664,8 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
+         transclusionNode.data = blockData as import("./ast.js").BlockNodeData;
+       }
+       docChildren.push(transclusionNode as unknown as NablaBlockNode);
++    } else if (block.kind === "table") {
++      docChildren.push(buildTableNode(block.headerRow, block.separator, block.bodyRows, block.nablaBlockId, (block as Record<string, unknown>).nablaBlockIdOwnLine as boolean | undefined));
+     }
    }
  
 diff --git a/packages/markup/src/serializer.ts b/packages/markup/src/serializer.ts
-index 132c00b..b29b250 100644
+index b29b250..5fad183 100644
 --- a/packages/markup/src/serializer.ts
 +++ b/packages/markup/src/serializer.ts
-@@ -1,4 +1,4 @@
--import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode, TransclusionNode } from "./ast.js";
-+import type { MarkdownNode, NablaDocument, WikiLinkNode, TagNode, FoldableHeadingNode, HighlightNode, ColorHighlightNode, PrivateCommentNode, TaskState, FrontmatterNode, FootnoteReferenceNode, FootnoteDefinitionNode, CalloutNode, ToggleNode, TransclusionNode, EmojiShortcodeNode } from "./ast.js";
- import { serializeWikiLink } from "./extensions/wiki-links.js";
- import { serializeTag } from "./extensions/tags.js";
- import { serializeHighlight, serializeColorHighlight } from "./extensions/highlights.js";
-@@ -7,6 +7,7 @@ import { serializeFrontmatter } from "./extensions/frontmatter.js";
- import { serializeFootnoteReference, serializeFootnoteDefinition } from "./extensions/footnotes.js";
+@@ -8,6 +8,7 @@ import { serializeFootnoteReference, serializeFootnoteDefinition } from "./exten
  import { serializeCallout, serializeToggle } from "./extensions/callouts.js";
  import { serializeTransclusion } from "./extensions/transclusions.js";
-+import { serializeEmojiShortcode } from "./extensions/emoji-shortcodes.js";
+ import { serializeEmojiShortcode } from "./extensions/emoji-shortcodes.js";
++import { serializeTable } from "./extensions/gfm-tables.js";
  
  export type SerializeOptions = {
    lineEnding?: "lf" | "crlf";
-@@ -67,6 +68,10 @@ function serializeInlineNode(node: MarkdownNode) {
-     return serializeFootnoteReference(node as FootnoteReferenceNode);
+@@ -162,6 +163,17 @@ function serializeBlockNode(node: MarkdownNode) {
+     return `\n${result} ^${blockId}`;
    }
  
-+  if (node.type === "emojiShortcode") {
-+    return serializeEmojiShortcode(node as EmojiShortcodeNode);
++  if (node.type === "table") {
++    const result = serializeTable(node);
++    const blockId = getBlockId(node);
++    if (!blockId) return `\n${result}`;
++    const isOwnLine = (node.data as Record<string, unknown> | undefined)?.nablaBlockIdOwnLine;
++    if (isOwnLine) {
++      return `\n${result}\n^${blockId}`;
++    }
++    return `\n${result} ^${blockId}`;
 +  }
 +
    return "";
  }
  
 diff --git a/packages/markup/tests/wiki-links.test.mjs b/packages/markup/tests/wiki-links.test.mjs
-index 0cb5e7a..72ae9eb 100644
+index 72ae9eb..880fbc3 100644
 --- a/packages/markup/tests/wiki-links.test.mjs
 +++ b/packages/markup/tests/wiki-links.test.mjs
-@@ -77,6 +77,11 @@ const transclusionFixtureIds = [
-   "transclusions/inline-unsupported"
+@@ -82,6 +82,14 @@ const emojiFixtureIds = [
+   "emoji-shortcodes/punctuation-and-protected"
  ];
  
-+const emojiFixtureIds = [
-+  "emoji-shortcodes/basic",
-+  "emoji-shortcodes/punctuation-and-protected"
++const tableFixtureIds = [
++  "gfm-tables/alignment"
++];
++
++const blockIdTableFixtureIds = [
++  "block-ids/table"
 +];
 +
  let parserModulePromise;
  let serializerModulePromise;
  let fixturesModulePromise;
-@@ -468,6 +473,26 @@ test("wiki link fixtures parse and serialize according to the checked-in contrac
+@@ -493,6 +501,46 @@ test("emoji shortcode fixtures parse and serialize according to the checked-in c
    }
  });
  
-+test("emoji shortcode fixtures parse and serialize according to the checked-in contracts", async () => {
++test("GFM table fixtures parse and serialize according to the checked-in contracts", async () => {
 +  const { parse } = await loadParserModule();
 +  const { serialize } = await loadSerializerModule();
 +  const {
@@ -184,7 +333,27 @@ index 0cb5e7a..72ae9eb 100644
 +    loadParserFixture
 +  } = await loadFixturesModule();
 +
-+  for (const fixtureId of emojiFixtureIds) {
++  for (const fixtureId of tableFixtureIds) {
++    const fixture = await loadParserFixture(fixtureId);
++    const parsed = parse(fixture.input);
++
++    compareFixtureAst(parsed, fixture.ast);
++    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
++    compareFixtureOutput(serialize(parsed), fixture.output);
++  }
++});
++
++test("table block ID fixtures parse and serialize according to the checked-in contracts", async () => {
++  const { parse } = await loadParserModule();
++  const { serialize } = await loadSerializerModule();
++  const {
++    compareFixtureAst,
++    compareFixtureDiagnostics,
++    compareFixtureOutput,
++    loadParserFixture
++  } = await loadFixturesModule();
++
++  for (const fixtureId of blockIdTableFixtureIds) {
 +    const fixture = await loadParserFixture(fixtureId);
 +    const parsed = parse(fixture.input);
 +
@@ -196,3 +365,84 @@ index 0cb5e7a..72ae9eb 100644
 +
  test("wiki link parser handles heading-only links and leaves transclusion syntax literal", async () => {
    const { parse } = await loadParserModule();
+ 
+diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
+index 66b9c02..3af9de2 100644
+--- a/reports/IMPLEMENTATION_PROGRESS.md
++++ b/reports/IMPLEMENTATION_PROGRESS.md
+@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
+ 
+ ## Task ID
+ 
+-`P1-021 transclusions`
++`P1-022 emoji shortcodes`
+ 
+ ## Branch
+ 
+@@ -14,46 +14,40 @@ Phase 1 - `@nabla/markup`
+ 
+ ## Status
+ 
+-Transclusion parsing and serialization implemented against checked-in fixture contracts (P1-021).
++Emoji shortcode parsing and serialization implemented against checked-in fixture contracts (P1-022).
+ 
+-All 5 transclusion fixture groups pass:
+-- `transclusions/note` — `![[Analyse]]` canonical transclusion
+-- `transclusions/heading` — `![[Analyse#Limits]]` heading transclusion
+-- `transclusions/block-canonical` — `![[Analyse^thm-main]]` canonical block ID transclusion
+-- `transclusions/block-compatible` — `![[Analyse#^thm-main]]` compatible block ID transclusion serialized to canonical
+-- `transclusions/inline-unsupported` — inline `![[Analyse]]` remains text with diagnostic
++All 2 emoji fixture groups pass:
++- `emoji-shortcodes/basic` — `:check: :warning: :unknown_custom:` — known shortcodes parse as EmojiShortcodeNode, unknown remains text
++- `emoji-shortcodes/punctuation-and-protected` — `:check:, :not_known: \`:warning:\`` — shortcode with following punctuation, unknown remains text, protected region preserved
+ 
+-Block ID attachment for transclusions verified via `block-ids/callout-toggle-transclusion-attachment`.
++Default emoji registry contains 6 entries: check, warning, idea, fire, star, x.
+ 
+-All existing wiki-links/tags/highlights/comments/task-states/frontmatter/code/footnotes/callouts/toggles/folded-headings/block-ids fixtures remain passing.
++All existing wiki-links/tags/highlights/comments/task-states/frontmatter/code/footnotes/callouts/toggles/folded-headings/block-ids/transclusions fixtures remain passing.
+ 
+ ## Scope Guardrails
+ 
+ - No workspace/editor/components/app
+ - No workspace-level file resolution
+ - No actual embedded rendering
+-- No cycle detection
+-- No table parsing
++- No registry overengineering
++- No external emoji packages
+ - No spec changes
+ - No fixture changes
+ 
+ ## Files Created
+ 
+-- `packages/markup/src/extensions/transclusions.ts`
++- `packages/markup/src/extensions/emoji-shortcodes.ts` — DEFAULT_EMOJI_REGISTRY, tryParseEmojiShortcode, buildEmojiUnknownDiagnostic, serializeEmojiShortcode
+ 
+ ## Files Modified
+ 
+-- `packages/markup/src/parser.ts` — transclusion block detection in parseBlocks, inline transclusion diagnostic in parseParagraphChildren, AST construction for transclusion blocks
+-- `packages/markup/src/serializer.ts` — transclusion serialization with block ID appending
+-- `packages/markup/src/extensions/block-ids.ts` — transclusion added to ATTACHABLE_KINDS, getBlockText, setBlockText; stripInlineBrackets fixed to use \0 instead of space to prevent space-run merging
+-- `packages/markup/src/index.ts` — exported parseTransclusionLine and serializeTransclusion
+-- `packages/markup/tests/wiki-links.test.mjs` — 5 transclusion fixture IDs and block-ids/callout-toggle-transclusion-attachment fixture ID, inline transclusion diagnostic expectation
+-- `packages/markup/tests/parser.test.mjs` — updated paragraph test that parse ![[note]] as transclusion
+-- `reports/IMPLEMENTATION_PROGRESS.md` — this update
++- `packages/markup/src/parser.ts` — added import of emoji functions, colon-check branch in parseParagraphChildren with protected-region/isOffsetProtected guard and inline HTML container guard
++- `packages/markup/src/serializer.ts` — added import of serializeEmojiShortcode, emojiShortcode case in serializeInlineNode
++- `packages/markup/src/index.ts` — exported tryParseEmojiShortcode, serializeEmojiShortcode, DEFAULT_EMOJI_REGISTRY, buildEmojiUnknownDiagnostic
++- `packages/markup/tests/wiki-links.test.mjs` — added emojiFixtureIds array with basic and punctuation-and-protected, added emoji shortcode fixture test
+ 
+ ## Verification Summary
+ 
+-- `node --test packages/markup/tests/**/*.test.mjs` — 65 tests pass
++- `node --test packages/markup/tests/**/*.test.mjs` — 66 tests pass
+ - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
+ - `tsc -b packages/markup/tsconfig.json` — build passed
+ - `node scripts/validate-fixtures.mjs` — fixture validation passed
+@@ -67,4 +61,4 @@ None.
+ 
+ ## Next Recommended Task
+ 
+-P1-022 emoji shortcodes
++P1-023 GFM table alignment
