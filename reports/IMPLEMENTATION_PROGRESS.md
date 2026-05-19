@@ -14,12 +14,12 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
 Phase 3 (`@nabla/editor`) — ACCEPTED.
-Phase 4 (`@nabla/components`) — kickoff report and backlog extracted.
+Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package skeleton created.
 
 ### Repairs Applied
 
@@ -176,6 +176,17 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted.
 - No workspace changes.
 - No editor source changes.
 
+### P4-001 Notes
+
+- Created `packages/components/` with `package.json`, `tsconfig.json`, and `src/index.ts`.
+- Package exports `NABLA_COMPONENTS_PACKAGE` constant.
+- Updated root `package.json` build/typecheck scripts to include `packages/components/tsconfig.json`.
+- No React dependencies added.
+- No visual components implemented.
+- No editor source modified.
+- No parser/serializer or workspace changes.
+- Only dependency: `@nabla/markup` (workspace).
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -194,4 +205,4 @@ None.
 
 ## Next Recommended Task
 
-P4-001 — Components Package Skeleton — create `packages/components/` with package.json, tsconfig.json, minimal entry, and verify it builds in the monorepo.
+P4-002 — Component Rendering Contract and Types — define TypeScript interfaces for the component rendering contract.
