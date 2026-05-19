@@ -1,4 +1,4 @@
-import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode, CalloutNode, ToggleNode, FoldState, SyntaxStatus } from "./ast.js";
+import type { MarkdownNode, NablaDocument, NablaBlockNode, FoldableHeadingNode, PrivateCommentNode, TaskState, FrontmatterNode, Diagnostic, FootnoteDefinitionNode, CalloutNode, ToggleNode, FoldState, SyntaxStatus, TextNode } from "./ast.js";
 import type { ParseMode } from "./parse-mode.js";
 import { findProtectedRegions, isOffsetProtected } from "./protected-regions.js";
 import { parseWikiLink } from "./extensions/wiki-links.js";
@@ -23,7 +23,7 @@ const HEADING_PATTERN = /^(#{1,6}) (.+)/;
 const FENCE_PATTERN = /^( {0,3})(`{3,}|~{3,})(.*)$/;
 const FENCE_CLOSE_PATTERN = /^( {0,3})(`{3,}|~{3,})[ \t]*$/;
 
-function createTextNode(value: string): MarkdownNode {
+function createTextNode(value: string): TextNode {
   return {
     type: "text",
     value

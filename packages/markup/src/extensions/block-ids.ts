@@ -12,7 +12,9 @@ const MID_BLOCK_ID = /\^([A-Za-z][A-Za-z0-9_-]*)/;
 export const OWN_LINE_ONLY = /^\^([A-Za-z][A-Za-z0-9_-]*)\s*$/;
 
 function stripInlineBrackets(text: string): string {
-  return text.replace(/\[\[[^\]]*\]\]/g, (m) => " ".repeat(m.length));
+  return text
+    .replace(/\[\[[^\]]*\]\]/g, (m) => " ".repeat(m.length))
+    .replace(/\[\^[^\]\s]+\]/g, (m) => " ".repeat(m.length));
 }
 
 export type BlockIdResult = {
