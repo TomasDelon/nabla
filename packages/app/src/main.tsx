@@ -96,35 +96,37 @@ function App() {
         <p className="app-subtitle">Markdown-first visual editor</p>
       </header>
       <main className="app-main">
-        <div className="status-card">
-          <h2 className="status-card__title">Render pipeline connected</h2>
-          <div className="status-card__stats">
-            <span>Original length: {pipelineSummary.originalLength}</span>
-            <span>Canonical length: {pipelineSummary.canonicalLength}</span>
-            <span>Diagnostics: {pipelineSummary.diagnosticsCount}</span>
+        <div className="card">
+          <h2 className="card__title">Render pipeline</h2>
+          <div className="card__stats">
+            <span className="card__stat"><span className="card__stat-label">Original</span>{pipelineSummary.originalLength}</span>
+            <span className="card__stat"><span className="card__stat-label">Canonical</span>{pipelineSummary.canonicalLength}</span>
+            <span className="card__stat"><span className="card__stat-label">Diagnostics</span>{pipelineSummary.diagnosticsCount}</span>
           </div>
         </div>
 
-        <section className="editor-section">
-          <h2 className="section-title">Editor</h2>
-          <p className="section-note">
-            This is plain source editing MVP. Rich-text editor node views are deferred.
-          </p>
-          <div className="editor-summary">
-            <span>Edited length: {editorSummary.sourceLength}</span>
-            <span>Exported length: {editorSummary.exportedLength}</span>
-            <span>Diagnostics: {editorSummary.diagnosticsCount}</span>
+        <div className="card">
+          <div className="editor-section">
+            <h2 className="card__title">Editor</h2>
+            <p className="card__note">
+              This is plain source editing MVP. Rich-text editor node views are deferred.
+            </p>
+            <div className="editor-summary">
+              <span className="card__stat"><span className="card__stat-label">Edited</span>{editorSummary.sourceLength}</span>
+              <span className="card__stat"><span className="card__stat-label">Exported</span>{editorSummary.exportedLength}</span>
+              <span className="card__stat"><span className="card__stat-label">Diagnostics</span>{editorSummary.diagnosticsCount}</span>
+            </div>
+            <textarea
+              className="editor-textarea"
+              value={editedSource}
+              onChange={(e) => setEditedSource(e.target.value)}
+              rows={12}
+            />
           </div>
-          <textarea
-            className="editor-textarea"
-            value={editedSource}
-            onChange={(e) => setEditedSource(e.target.value)}
-            rows={12}
-          />
-        </section>
+        </div>
 
-        <div className="sample-section">
-          <h2 className="section-title">Canonical export</h2>
+        <div className="card">
+          <h2 className="card__title">Canonical export</h2>
           <textarea
             className="source-view"
             readOnly
@@ -133,29 +135,29 @@ function App() {
           />
         </div>
 
-        <div className="status-card">
-          <h2 className="status-card__title">Workspace</h2>
-          <p className="section-note">
+        <div className="card">
+          <h2 className="card__title">Workspace</h2>
+          <p className="card__note">
             MVP-level workspace index from in-memory document. No filesystem, no transclusion rendering.
           </p>
-          <div className="status-card__stats">
-            <span>Documents: {workspaceSummary.documentCount}</span>
-            <span>Links: {workspaceSummary.linkCount}</span>
-            <span>Backlinks: {workspaceSummary.backlinkCount}</span>
-            <span>Diagnostics: {workspaceSummary.diagnosticCount}</span>
+          <div className="card__stats">
+            <span className="card__stat"><span className="card__stat-label">Documents</span>{workspaceSummary.documentCount}</span>
+            <span className="card__stat"><span className="card__stat-label">Links</span>{workspaceSummary.linkCount}</span>
+            <span className="card__stat"><span className="card__stat-label">Backlinks</span>{workspaceSummary.backlinkCount}</span>
+            <span className="card__stat"><span className="card__stat-label">Diagnostics</span>{workspaceSummary.diagnosticCount}</span>
           </div>
         </div>
 
         <section className="component-preview">
-          <h2 className="section-title">Visual Components Preview</h2>
-          <p className="section-note">
+          <h2 className="card__title">Visual Components Preview</h2>
+          <p className="card__note">
             Derived UI from sample metadata — Markdown/Nabla Markdown+ remains
             the source of truth. No editor/workspace integration.
-            Total: {componentSummary.totalCount} descriptors,
-            {componentSummary.supportedKinds.length} supported component kinds.
+            {componentSummary.totalCount} descriptors across {componentSummary.supportedKinds.length} kinds.
           </p>
 
           <div className="preview-grid">
+
             <div className="preview-group">
               <h3 className="preview-group__title">Task State</h3>
               <div className="preview-examples">
@@ -176,11 +178,11 @@ function App() {
 
             <div className="preview-group">
               <h3 className="preview-group__title">Wiki Link</h3>
-              <div className="preview-examples">
+              <div className="preview-examples preview-examples--row">
                 {descriptors.filter(d => d.kind === "wikiLink").map((desc, i) => {
                   const p = desc.props as any;
                   return (
-                    <div key={i} className="preview-item">
+                    <div key={i} className="preview-item preview-item--inline">
                       <WikiLink
                         target={p.target}
                         alias={p.alias}
@@ -197,11 +199,11 @@ function App() {
 
             <div className="preview-group">
               <h3 className="preview-group__title">Tag</h3>
-              <div className="preview-examples">
+              <div className="preview-examples preview-examples--row">
                 {descriptors.filter(d => d.kind === "tag").map((desc, i) => {
                   const p = desc.props as any;
                   return (
-                    <div key={i} className="preview-item">
+                    <div key={i} className="preview-item preview-item--inline">
                       <Tag value={p.value} segments={p.segments} raw={p.raw} />
                     </div>
                   );
@@ -211,11 +213,11 @@ function App() {
 
             <div className="preview-group">
               <h3 className="preview-group__title">Highlight</h3>
-              <div className="preview-examples">
+              <div className="preview-examples preview-examples--row">
                 {descriptors.filter(d => d.kind === "highlight").map((desc, i) => {
                   const p = desc.props as any;
                   return (
-                    <div key={i} className="preview-item">
+                    <div key={i} className="preview-item preview-item--inline">
                       <Highlight text={p.text} color={p.color} raw={p.raw} />
                     </div>
                   );
@@ -225,11 +227,11 @@ function App() {
 
             <div className="preview-group">
               <h3 className="preview-group__title">Emoji</h3>
-              <div className="preview-examples">
+              <div className="preview-examples preview-examples--row">
                 {descriptors.filter(d => d.kind === "emoji").map((desc, i) => {
                   const p = desc.props as any;
                   return (
-                    <div key={i} className="preview-item">
+                    <div key={i} className="preview-item preview-item--inline">
                       <Emoji name={p.name} value={p.value} raw={p.raw} />
                     </div>
                   );
