@@ -1,1 +1,1 @@
-4e27a12 feat(markup): implement block ID parsing
+b2a9d30 fix(markup): repair block ID parsing gates
