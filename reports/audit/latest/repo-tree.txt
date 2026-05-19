@@ -4,6 +4,9 @@ nabla_complete_project_documentation_pack_v1_final.zip
 nabla_complete_project_documentation_pack_v1_final.zip.sha256
 package.json
 packages/components/package.json
+packages/components/playground/index.html
+packages/components/playground/src/main.tsx
+packages/components/playground/vite.config.ts
 packages/components/src/comment.css
 packages/components/src/comment.tsx
 packages/components/src/emoji.css

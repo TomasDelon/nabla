@@ -1,8 +1,7 @@
-packages/components/src/comment.css
-packages/components/src/comment.tsx
-packages/components/src/footnote.css
-packages/components/src/footnote.tsx
-packages/components/src/index.ts
-packages/components/tests/footnote-comment.test.mjs
-packages/components/tests/public-api.test.mjs
+packages/components/package.json
+packages/components/playground/index.html
+packages/components/playground/src/main.tsx
+packages/components/playground/vite.config.ts
+pnpm-lock.yaml
+pnpm-workspace.yaml
 reports/IMPLEMENTATION_PROGRESS.md
