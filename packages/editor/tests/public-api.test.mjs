@@ -31,10 +31,12 @@ test("editor runtime exports are wired", async () => {
   const mod = await load();
 
   assert.equal(typeof mod.createEditor, "function");
+  assert.equal(typeof mod.getComments, "function");
   assert.equal(typeof mod.replaceSource, "function");
   assert.equal(typeof mod.insertMarkdownBlock, "function");
   assert.equal(typeof mod.getDocumentBlockSummary, "function");
   assert.equal(typeof mod.getEmojiShortcodes, "function");
+  assert.equal(typeof mod.getFootnotes, "function");
   assert.equal(typeof mod.getHighlights, "function");
   assert.equal(typeof mod.getTags, "function");
   assert.equal(typeof mod.getTaskStates, "function");
@@ -83,6 +85,17 @@ test("emoji runtime exports are wired", async () => {
   assert.equal(mod.NABLA_EMOJI_NODE_VIEW, "node-safe-adapter");
   assert.equal(typeof mod.getEmojiNodeViews, "function");
   assert.equal(typeof mod.getEmojiShortcodesFromMarkdown, "function");
+});
+
+test("footnote and comment runtime exports are wired", async () => {
+  const mod = await load();
+
+  assert.equal(mod.NABLA_FOOTNOTE_NODE_VIEW, "node-safe-adapter");
+  assert.equal(mod.NABLA_COMMENT_NODE_VIEW, "node-safe-adapter");
+  assert.equal(typeof mod.getFootnoteNodeViews, "function");
+  assert.equal(typeof mod.getFootnotesFromMarkdown, "function");
+  assert.equal(typeof mod.getCommentNodeViews, "function");
+  assert.equal(typeof mod.getCommentsFromMarkdown, "function");
 });
 
 test("position runtime exports are wired", async () => {

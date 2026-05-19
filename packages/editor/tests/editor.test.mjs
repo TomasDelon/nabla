@@ -13,10 +13,12 @@ test("public editor exports exist", async () => {
   const mod = await load();
 
   assert.equal(typeof mod.createEditor, "function");
+  assert.equal(typeof mod.getComments, "function");
   assert.equal(typeof mod.replaceSource, "function");
   assert.equal(typeof mod.insertMarkdownBlock, "function");
   assert.equal(typeof mod.getDocumentBlockSummary, "function");
   assert.equal(typeof mod.getEmojiShortcodes, "function");
+  assert.equal(typeof mod.getFootnotes, "function");
   assert.equal(typeof mod.getHighlights, "function");
   assert.equal(typeof mod.getTaskStates, "function");
   assert.equal(typeof mod.getTags, "function");
@@ -121,7 +123,9 @@ test("only accepted node view adapters are registered", async () => {
   const editor = mod.createEditor();
 
   assert.deepEqual(editor.nodeViews, {
+    comment: "node-safe-adapter",
     emoji: "node-safe-adapter",
+    footnote: "node-safe-adapter",
     highlight: "node-safe-adapter",
     tag: "node-safe-adapter",
     taskState: "node-safe-adapter",

@@ -2,9 +2,17 @@ import { defaultMarkdownParser, defaultMarkdownSerializer } from "prosemirror-ma
 import { EditorState as ProseMirrorEditorState } from "prosemirror-state";
 
 import {
+  getCommentNodeViews,
+  getCommentsFromMarkdown,
+} from "./nodes/comment.js";
+import {
   getEmojiNodeViews,
   getEmojiShortcodesFromMarkdown,
 } from "./nodes/emoji.js";
+import {
+  getFootnoteNodeViews,
+  getFootnotesFromMarkdown,
+} from "./nodes/footnote.js";
 import {
   getTaskStateNodeViews,
   getTaskStatesFromMarkdown,
@@ -19,8 +27,10 @@ import {
   setWikiLinkAliasInMarkdown,
 } from "./nodes/wiki-link.js";
 
+import type { EditorComment } from "./nodes/comment.js";
 import type { TaskState } from "@nabla/markup";
 import type { EditorEmojiShortcode } from "./nodes/emoji.js";
+import type { EditorFootnote } from "./nodes/footnote.js";
 import type { EditorHighlight } from "./nodes/highlight.js";
 import type { EditorTag } from "./nodes/tag.js";
 import type { EditorTaskState } from "./nodes/task-state.js";
@@ -30,7 +40,9 @@ export interface Editor {
   state: ProseMirrorEditorState;
   source: string;
   readonly nodeViews: Readonly<{
+    readonly comment: string;
     readonly emoji: string;
+    readonly footnote: string;
     readonly highlight: string;
     readonly tag: string;
     readonly taskState: string;
@@ -73,7 +85,9 @@ function normalizeExportedMarkdown(markdown: string): string {
 
 function shouldPreserveSource(editor: Editor): boolean {
   return (
+    getCommentsFromMarkdown(editor.source).length > 0 ||
     getEmojiShortcodesFromMarkdown(editor.source).length > 0 ||
+    getFootnotesFromMarkdown(editor.source).length > 0 ||
     getHighlightsFromMarkdown(editor.source).length > 0 ||
     getTagsFromMarkdown(editor.source).length > 0 ||
     getTaskStatesFromMarkdown(editor.source).length > 0 ||
@@ -86,7 +100,9 @@ export function createEditor(): Editor {
     state: createState(""),
     source: "",
     nodeViews: Object.freeze({
+      ...getCommentNodeViews(),
       ...getEmojiNodeViews(),
+      ...getFootnoteNodeViews(),
       ...getHighlightNodeViews(),
       ...getTagNodeViews(),
       ...getTaskStateNodeViews(),
@@ -145,6 +161,14 @@ export function getHighlights(editor: Editor): readonly EditorHighlight[] {
 
 export function getEmojiShortcodes(editor: Editor): readonly EditorEmojiShortcode[] {
   return getEmojiShortcodesFromMarkdown(editor.source);
+}
+
+export function getFootnotes(editor: Editor): readonly EditorFootnote[] {
+  return getFootnotesFromMarkdown(editor.source);
+}
+
+export function getComments(editor: Editor): readonly EditorComment[] {
+  return getCommentsFromMarkdown(editor.source);
 }
 
 export function setWikiLinkAlias(editor: Editor, index: number, alias?: string): Editor {

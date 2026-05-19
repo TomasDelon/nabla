@@ -92,8 +92,10 @@ test("no node views other than accepted task-state, wiki-link, tag, and highligh
   const mod = await loadEditor();
   const editor = mod.createEditor();
 
-  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["emoji", "highlight", "tag", "taskState", "wikiLink"]);
+  assert.deepEqual(Object.keys(editor.nodeViews).sort(), ["comment", "emoji", "footnote", "highlight", "tag", "taskState", "wikiLink"]);
+  assert.equal(editor.nodeViews.comment, "node-safe-adapter");
   assert.equal(editor.nodeViews.emoji, "node-safe-adapter");
+  assert.equal(editor.nodeViews.footnote, "node-safe-adapter");
   assert.equal(editor.nodeViews.highlight, "node-safe-adapter");
   assert.equal(editor.nodeViews.tag, "node-safe-adapter");
   assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
