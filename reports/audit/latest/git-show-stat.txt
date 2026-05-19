@@ -1,3 +1,6 @@
- reports/PHASE_1_VALIDATION.md   | 4 ++--
- scripts/create-audit-bundle.mjs | 9 +++++----
- 2 files changed, 7 insertions(+), 6 deletions(-)
+ package.json                     |  6 ++--
+ packages/workspace/package.json  | 24 +++++++++++++++
+ packages/workspace/src/index.ts  | 66 ++++++++++++++++++++++++++++++++++++++++
+ packages/workspace/tsconfig.json | 10 ++++++
+ pnpm-lock.yaml                   |  6 ++++
+ 5 files changed, 109 insertions(+), 3 deletions(-)

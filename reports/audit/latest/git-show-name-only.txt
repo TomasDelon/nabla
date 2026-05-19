@@ -1,2 +1,5 @@
-reports/PHASE_1_VALIDATION.md
-scripts/create-audit-bundle.mjs
+package.json
+packages/workspace/package.json
+packages/workspace/src/index.ts
+packages/workspace/tsconfig.json
+pnpm-lock.yaml

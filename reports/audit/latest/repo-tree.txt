@@ -39,6 +39,9 @@ packages/markup/tests/serializer.test.mjs
 packages/markup/tests/task-states.test.mjs
 packages/markup/tests/wiki-links.test.mjs
 packages/markup/tsconfig.json
+packages/workspace/package.json
+packages/workspace/src/index.ts
+packages/workspace/tsconfig.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
 reports/IMPLEMENTATION_PROGRESS.md
