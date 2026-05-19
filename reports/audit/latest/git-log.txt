@@ -1,1 +1,1 @@
-170e67c feat(editor): add position model helpers
+fa29842 feat(editor): add plain markdown block helpers

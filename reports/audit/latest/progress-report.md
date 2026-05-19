@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-005` — Editor Selection/Cursor Model
+`P3-006` — Editor Block Navigation Basics
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, and position model helpers created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, and basic Markdown block helpers created.
 
 ### Repairs Applied
 
@@ -65,6 +65,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No cursor UI or selection UI implemented.
 - No Nabla node views or DOM/browser runtime required for the position model helpers.
 
+### P3-006 Notes
+
+- Corrected wording drift: accepted backlog `P3-006` is `Editor Block Navigation Basics`.
+- Strengthened plain Markdown block support in `packages/editor/src/editor.ts` with source replacement, block insertion, and block-summary helpers.
+- Verified plain Markdown block roundtrip coverage for headings, paragraphs, bullet lists, ordered lists, blockquotes, and code blocks.
+- No dependencies added.
+- No Nabla-specific node views added.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -83,4 +91,4 @@ None.
 
 ## Next Recommended Task
 
-P3-006 (selection transaction integration) — connect the position model to editor transactions without adding cursor or selection UI.
+P3-007 (task states) — begin Nabla-specific editor rendering with task-state support.

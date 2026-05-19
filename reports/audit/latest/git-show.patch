@@ -1,177 +1,253 @@
+diff --git a/packages/editor/src/editor.ts b/packages/editor/src/editor.ts
+index bbbc45e..731162a 100644
+--- a/packages/editor/src/editor.ts
++++ b/packages/editor/src/editor.ts
+@@ -6,6 +6,28 @@ export interface Editor {
+   readonly nodeViews: Readonly<Record<string, never>>;
+ }
+ 
++export interface EditorBlockSummary {
++  readonly type:
++    | "heading"
++    | "paragraph"
++    | "bullet_list"
++    | "ordered_list"
++    | "list_item"
++    | "code_block"
++    | "blockquote";
++  readonly level?: number;
++}
++
++type SummaryNode = {
++  readonly type: {
++    readonly name: string;
++  };
++  readonly attrs: {
++    readonly level?: number;
++  };
++  forEach(callback: (child: SummaryNode) => void): void;
++};
++
+ function createState(markdown: string) {
+   return ProseMirrorEditorState.create({
+     schema: defaultMarkdownParser.schema,
+@@ -25,6 +47,48 @@ export function loadSource(editor: Editor, markdown: string): Editor {
+   return editor;
+ }
+ 
++export function replaceSource(editor: Editor, markdown: string): Editor {
++  return loadSource(editor, markdown);
++}
++
++export function insertMarkdownBlock(editor: Editor, markdown: string): Editor {
++  const current = getSource(editor);
++  const nextSource = current === "" ? markdown : `${current}\n\n${markdown}`;
++  return loadSource(editor, nextSource);
++}
++
+ export function getSource(editor: Editor): string {
+   return defaultMarkdownSerializer.serialize(editor.state.doc);
+ }
++
++function appendBlockSummaries(node: SummaryNode, summary: EditorBlockSummary[]): void {
++  switch (node.type.name) {
++    case "heading":
++      summary.push({ type: "heading", level: node.attrs.level });
++      break;
++    case "paragraph":
++    case "bullet_list":
++    case "ordered_list":
++    case "list_item":
++    case "code_block":
++    case "blockquote":
++      summary.push({ type: node.type.name });
++      break;
++    default:
++      break;
++  }
++
++  node.forEach((child) => {
++    appendBlockSummaries(child, summary);
++  });
++}
++
++export function getDocumentBlockSummary(editor: Editor): readonly EditorBlockSummary[] {
++  const summary: EditorBlockSummary[] = [];
++
++  editor.state.doc.forEach((child) => {
++    appendBlockSummaries(child as SummaryNode, summary);
++  });
++
++  return summary;
++}
 diff --git a/packages/editor/src/index.ts b/packages/editor/src/index.ts
-index 4a25741..0a5ded7 100644
+index 0a5ded7..0059dbb 100644
 --- a/packages/editor/src/index.ts
 +++ b/packages/editor/src/index.ts
-@@ -1,6 +1,14 @@
+@@ -1,6 +1,13 @@
  export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
  
- export { createEditor, getSource, loadSource } from "./editor.js";
+-export { createEditor, getSource, loadSource } from "./editor.js";
 +export {
-+  clampOffset,
-+  createEditorPosition,
-+  createSourcePosition,
-+  editorToSourcePosition,
-+  isValidOffset,
-+  sourceToEditorPosition,
-+} from "./position.js";
++  createEditor,
++  getDocumentBlockSummary,
++  getSource,
++  insertMarkdownBlock,
++  loadSource,
++  replaceSource,
++} from "./editor.js";
  export {
-   NABLA_EDITOR_CANONICAL_SAVE_PATH,
-   NABLA_EDITOR_SOURCE_OF_TRUTH,
-@@ -9,6 +17,7 @@ export {
+   clampOffset,
+   createEditorPosition,
+@@ -16,7 +23,7 @@ export {
+ 
  export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
  
- export type { Editor } from "./editor.js";
-+export type { EditorPosition, SourcePosition } from "./position.js";
+-export type { Editor } from "./editor.js";
++export type { Editor, EditorBlockSummary } from "./editor.js";
+ export type { EditorPosition, SourcePosition } from "./position.js";
  export type {
    EditorAdapter,
-   EditorDiagnostic,
-diff --git a/packages/editor/src/position.ts b/packages/editor/src/position.ts
-new file mode 100644
-index 0000000..2e26a68
---- /dev/null
-+++ b/packages/editor/src/position.ts
-@@ -0,0 +1,55 @@
-+export interface SourcePosition {
-+  readonly offset: number;
+diff --git a/packages/editor/tests/editor.test.mjs b/packages/editor/tests/editor.test.mjs
+index ad10f6b..11c1625 100644
+--- a/packages/editor/tests/editor.test.mjs
++++ b/packages/editor/tests/editor.test.mjs
+@@ -5,23 +5,109 @@ async function load() {
+   return import(new URL("../dist/editor.js", import.meta.url));
+ }
+ 
++function withoutTrailingNewline(value) {
++  return value.replace(/\n$/, "");
 +}
 +
-+export interface EditorPosition {
-+  readonly offset: number;
-+}
-+
-+export function isValidOffset(offset: number): boolean {
-+  return Number.isInteger(offset) && offset >= 0;
-+}
-+
-+export function clampOffset(offset: number, maxOffset: number): number {
-+  if (!isValidOffset(maxOffset)) {
-+    throw new RangeError("Offset maximum must be a non-negative integer.");
-+  }
-+
-+  if (!Number.isFinite(offset)) {
-+    throw new RangeError("Offset must be a finite number.");
-+  }
-+
-+  if (offset <= 0) {
-+    return 0;
-+  }
-+
-+  if (offset >= maxOffset) {
-+    return maxOffset;
-+  }
-+
-+  return Math.trunc(offset);
-+}
-+
-+export function createSourcePosition(offset: number): SourcePosition {
-+  if (!isValidOffset(offset)) {
-+    throw new RangeError("Source offset must be a non-negative integer.");
-+  }
-+
-+  return { offset };
-+}
-+
-+export function createEditorPosition(offset: number): EditorPosition {
-+  if (!isValidOffset(offset)) {
-+    throw new RangeError("Editor offset must be a non-negative integer.");
-+  }
-+
-+  return { offset };
-+}
-+
-+export function sourceToEditorPosition(position: SourcePosition): EditorPosition {
-+  return createEditorPosition(position.offset);
-+}
-+
-+export function editorToSourcePosition(position: EditorPosition): SourcePosition {
-+  return createSourcePosition(position.offset);
-+}
-diff --git a/packages/editor/tests/position.test.mjs b/packages/editor/tests/position.test.mjs
-new file mode 100644
-index 0000000..b59a166
---- /dev/null
-+++ b/packages/editor/tests/position.test.mjs
-@@ -0,0 +1,51 @@
-+import test from "node:test";
-+import assert from "node:assert/strict";
-+
-+async function load() {
-+  return import(new URL("../dist/position.js", import.meta.url));
-+}
-+
-+test("valid offsets are accepted", async () => {
-+  const mod = await load();
-+
-+  assert.equal(mod.isValidOffset(0), true);
-+  assert.equal(mod.isValidOffset(7), true);
-+  assert.deepEqual(mod.createSourcePosition(3), { offset: 3 });
-+  assert.deepEqual(mod.createEditorPosition(5), { offset: 5 });
-+});
-+
-+test("invalid offsets are rejected", async () => {
-+  const mod = await load();
-+
-+  assert.equal(mod.isValidOffset(-1), false);
-+  assert.equal(mod.isValidOffset(1.5), false);
-+  assert.equal(mod.isValidOffset(Number.NaN), false);
-+  assert.throws(() => mod.createSourcePosition(-1), RangeError);
-+  assert.throws(() => mod.createEditorPosition(1.5), RangeError);
-+});
-+
-+test("clamp behavior works", async () => {
-+  const mod = await load();
-+
-+  assert.equal(mod.clampOffset(-5, 10), 0);
-+  assert.equal(mod.clampOffset(4, 10), 4);
-+  assert.equal(mod.clampOffset(99, 10), 10);
-+  assert.equal(mod.clampOffset(4.8, 10), 4);
-+});
-+
-+test("source and editor position roundtrip preserves offsets", async () => {
-+  const mod = await load();
-+  const sourcePosition = mod.createSourcePosition(12);
-+  const editorPosition = mod.sourceToEditorPosition(sourcePosition);
-+  const roundTrip = mod.editorToSourcePosition(editorPosition);
-+
-+  assert.deepEqual(editorPosition, { offset: 12 });
-+  assert.deepEqual(roundTrip, { offset: 12 });
-+});
-+
-+test("position helpers do not require DOM or browser runtime", async () => {
-+  const mod = await load();
-+
-+  assert.equal(typeof globalThis.document, "undefined");
-+  assert.deepEqual(mod.editorToSourcePosition({ offset: 2 }), { offset: 2 });
-+});
-diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
-index de6aa14..4779543 100644
---- a/packages/editor/tests/public-api.test.mjs
-+++ b/packages/editor/tests/public-api.test.mjs
-@@ -34,3 +34,14 @@ test("editor runtime exports are wired", async () => {
+ test("public editor exports exist", async () => {
+   const mod = await load();
+ 
+   assert.equal(typeof mod.createEditor, "function");
++  assert.equal(typeof mod.replaceSource, "function");
++  assert.equal(typeof mod.insertMarkdownBlock, "function");
++  assert.equal(typeof mod.getDocumentBlockSummary, "function");
    assert.equal(typeof mod.loadSource, "function");
    assert.equal(typeof mod.getSource, "function");
  });
-+
-+test("position runtime exports are wired", async () => {
+ 
+-test("simple Markdown load and export works in Node", async () => {
++test("heading and paragraph load and export works in Node", async () => {
 +  const mod = await load();
++  const editor = mod.createEditor();
++  const source = "# Title\n\nParagraph text.\n";
 +
-+  assert.equal(typeof mod.createSourcePosition, "function");
-+  assert.equal(typeof mod.createEditorPosition, "function");
-+  assert.equal(typeof mod.isValidOffset, "function");
-+  assert.equal(typeof mod.clampOffset, "function");
-+  assert.equal(typeof mod.sourceToEditorPosition, "function");
-+  assert.equal(typeof mod.editorToSourcePosition, "function");
++  mod.loadSource(editor, source);
++
++  assert.equal(mod.getSource(editor), withoutTrailingNewline(source));
 +});
++
++test("bullet list load and export works", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++  const source = "- one\n- two\n";
++
++  mod.replaceSource(editor, source);
++
++  assert.equal(mod.getSource(editor), "* one\n* two");
++});
++
++test("ordered list load and export works", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++  const source = "1. one\n2. two\n";
++
++  mod.replaceSource(editor, source);
++
++  assert.equal(mod.getSource(editor), withoutTrailingNewline(source));
++});
++
++test("code block load and export works", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++  const source = "```\nconst x = 1;\n```\n";
++
++  mod.replaceSource(editor, source);
++
++  assert.equal(mod.getSource(editor), withoutTrailingNewline(source));
++});
++
++test("blockquote load and export works", async () => {
+   const mod = await load();
+   const editor = mod.createEditor();
++  const source = "> quoted\n";
+ 
+-  mod.loadSource(editor, "# Title\n\nParagraph text.\n");
++  mod.replaceSource(editor, source);
++
++  assert.equal(mod.getSource(editor), withoutTrailingNewline(source));
++});
++
++test("insertMarkdownBlock appends a plain markdown block", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  mod.replaceSource(editor, "# Title\n");
++  mod.insertMarkdownBlock(editor, "Paragraph text.\n");
+ 
+   assert.equal(mod.getSource(editor), "# Title\n\nParagraph text.");
+ });
+ 
++test("block summary identifies standard markdown block node types", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  mod.replaceSource(
++    editor,
++    "# Title\n\nParagraph text.\n\n- one\n- two\n\n1. first\n2. second\n\n> quoted\n\n```\nconst x = 1;\n```\n",
++  );
++
++  assert.deepEqual(mod.getDocumentBlockSummary(editor), [
++    { type: "heading", level: 1 },
++    { type: "paragraph" },
++    { type: "bullet_list" },
++    { type: "list_item" },
++    { type: "paragraph" },
++    { type: "list_item" },
++    { type: "paragraph" },
++    { type: "ordered_list" },
++    { type: "list_item" },
++    { type: "paragraph" },
++    { type: "list_item" },
++    { type: "paragraph" },
++    { type: "blockquote" },
++    { type: "paragraph" },
++    { type: "code_block" },
++  ]);
++});
++
+ test("no Nabla-specific node views are registered", async () => {
+   const mod = await load();
+   const editor = mod.createEditor();
+diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
+index 4779543..d81d205 100644
+--- a/packages/editor/tests/public-api.test.mjs
++++ b/packages/editor/tests/public-api.test.mjs
+@@ -31,6 +31,9 @@ test("editor runtime exports are wired", async () => {
+   const mod = await load();
+ 
+   assert.equal(typeof mod.createEditor, "function");
++  assert.equal(typeof mod.replaceSource, "function");
++  assert.equal(typeof mod.insertMarkdownBlock, "function");
++  assert.equal(typeof mod.getDocumentBlockSummary, "function");
+   assert.equal(typeof mod.loadSource, "function");
+   assert.equal(typeof mod.getSource, "function");
+ });
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index dea1a6d..e50f016 100644
+index e50f016..3ae6205 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
  
  ## Last Task
  
--`P3-004` — Editor Command/Transaction Skeleton
-+`P3-005` — Editor Selection/Cursor Model
+-`P3-005` — Editor Selection/Cursor Model
++`P3-006` — Editor Block Navigation Basics
  
  ## Branch
  
@@ -179,34 +255,34 @@ index dea1a6d..e50f016 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, and plain Markdown editor skeleton created.
-+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, and position model helpers created.
+-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, and position model helpers created.
++Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, and basic Markdown block helpers created.
  
  ### Repairs Applied
  
-@@ -57,6 +57,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
- - Plain Markdown only; no Nabla-specific node views, node specs, marks, or frontend integration.
- - Runtime strategy is Node-safe for basic load/export tests.
+@@ -65,6 +65,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
+ - No cursor UI or selection UI implemented.
+ - No Nabla node views or DOM/browser runtime required for the position model helpers.
  
-+### P3-005 Notes
++### P3-006 Notes
 +
-+- Corrected wording drift: accepted backlog `P3-005` is `Editor Selection/Cursor Model`.
-+- Added pure position helpers in `packages/editor/src/position.ts` for source/editor offset creation, validation, clamping, and roundtrip conversion.
++- Corrected wording drift: accepted backlog `P3-006` is `Editor Block Navigation Basics`.
++- Strengthened plain Markdown block support in `packages/editor/src/editor.ts` with source replacement, block insertion, and block-summary helpers.
++- Verified plain Markdown block roundtrip coverage for headings, paragraphs, bullet lists, ordered lists, blockquotes, and code blocks.
 +- No dependencies added.
-+- No cursor UI or selection UI implemented.
-+- No Nabla node views or DOM/browser runtime required for the position model helpers.
++- No Nabla-specific node views added.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -75,4 +83,4 @@ None.
+@@ -83,4 +91,4 @@ None.
  
  ## Next Recommended Task
  
--P3-005 (editor schema boundary expansion) — extend the plain editor skeleton toward richer document support while keeping Nabla-specific behavior scoped.
-+P3-006 (selection transaction integration) — connect the position model to editor transactions without adding cursor or selection UI.
+-P3-006 (selection transaction integration) — connect the position model to editor transactions without adding cursor or selection UI.
++P3-007 (task states) — begin Nabla-specific editor rendering with task-state support.

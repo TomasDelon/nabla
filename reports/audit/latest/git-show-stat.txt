@@ -1,6 +1,6 @@
- packages/editor/src/index.ts              |  9 +++++
- packages/editor/src/position.ts           | 55 +++++++++++++++++++++++++++++++
- packages/editor/tests/position.test.mjs   | 51 ++++++++++++++++++++++++++++
- packages/editor/tests/public-api.test.mjs | 11 +++++++
- reports/IMPLEMENTATION_PROGRESS.md        | 16 ++++++---
- 5 files changed, 138 insertions(+), 4 deletions(-)
+ packages/editor/src/editor.ts             | 64 ++++++++++++++++++++++
+ packages/editor/src/index.ts              | 11 +++-
+ packages/editor/tests/editor.test.mjs     | 90 ++++++++++++++++++++++++++++++-
+ packages/editor/tests/public-api.test.mjs |  3 ++
+ reports/IMPLEMENTATION_PROGRESS.md        | 16 ++++--
+ 5 files changed, 176 insertions(+), 8 deletions(-)
