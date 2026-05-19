@@ -4,14 +4,14 @@
   "private": true,
   "packageManager": "pnpm@11.1.3",
   "scripts": {
-    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json",
+    "build": "tsc -b packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json",
     "audit:bundle": "node scripts/create-audit-bundle.mjs",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "lint": "node scripts/report-unavailable.mjs lint --silent \"Lint tooling is not bootstrapped in P1-001\"",
     "test": "node --test packages/markup/tests/**/*.test.mjs",
     "test:markup": "node --test packages/markup/tests/**/*.test.mjs",
     "test:workspace": "node -e \"const fs=require('fs');const p=require('path');const d=p.join(process.cwd(),'packages/workspace/tests');if(fs.existsSync(d)){require('child_process').execSync('node --test '+d+'/**/*.test.mjs',{cwd:process.cwd(),stdio:'inherit',shell:true})}else{console.log('test:workspace: no tests yet');process.exit(0)}\"",
-    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json",
+    "typecheck": "tsc -b --pretty false packages/markup/tsconfig.json packages/workspace/tsconfig.json packages/editor/tsconfig.json",
     "validate:fixtures": "node scripts/validate-fixtures.mjs",
     "validate:spec-version": "node scripts/validate-spec-version.mjs"
   },
