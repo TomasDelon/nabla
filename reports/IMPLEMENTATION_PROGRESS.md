@@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
 
 ## Last Task
 
-`P4-003` — Visual Design Tokens and Minimal Styling Boundary
+`P4-004` — Task State Visual Component
 
 ## Branch
 
@@ -14,7 +14,7 @@ Phase 4 — `@nabla/components`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
@@ -211,6 +211,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package 
 - No visual components implemented.
 - No editor/markup/workspace source changes.
 
+### P4-004 Notes
+
+- Created `packages/components/src/task-state.tsx` with `TaskStateCheckbox` component.
+- Pure helpers: `getNextTaskState`, `TASK_STATE_ORDER`, `TASK_STATE_MARKERS`, `TASK_STATE_LABELS`.
+- Created `packages/components/src/task-state.css` using `--nabla-*` token variables.
+- Added React 18 as dependency in `packages/components/package.json`.
+- Updated `packages/components/tsconfig.json` to support TSX with `jsx: "react-jsx"`.
+- Created tests: `tests/task-state.test.mjs` (7 tests) and `tests/public-api.test.mjs` (5 tests).
+- Public API consistency: only task-state component exported; no other visual components leak.
+- Browser DOM rendering tests deferred to P4-014 (no DOM/jsdom setup in repo).
+- No editor/markup/workspace source changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -229,4 +241,4 @@ None.
 
 ## Next Recommended Task
 
-P4-004 — Task State Visual Component — implement a React component for task state list items.
+P4-005 — Wiki Link Visual Component — implement a React component for wiki links.

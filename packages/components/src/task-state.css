@@ -1,0 +1,41 @@
+.nabla-task-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nabla-spacing-xs);
+  cursor: pointer;
+  line-height: var(--nabla-line-height);
+  font-family: var(--nabla-font-family);
+  font-size: var(--nabla-font-size-md);
+}
+
+.nabla-task-state__input {
+  width: 1.125rem;
+  height: 1.125rem;
+  cursor: pointer;
+  accent-color: var(--nabla-color-primary);
+}
+
+.nabla-task-state__input[data-task-state="unchecked"] {
+  opacity: 0.6;
+}
+
+.nabla-task-state__input[data-task-state="checked"] {
+  accent-color: var(--nabla-color-success);
+}
+
+.nabla-task-state__input[data-task-state="cancelled"] {
+  accent-color: var(--nabla-color-text-muted);
+}
+
+.nabla-task-state__input[data-task-state="important"] {
+  accent-color: var(--nabla-color-danger);
+}
+
+.nabla-task-state__text {
+  user-select: none;
+}
+
+.nabla-task-state__input[data-task-state="cancelled"] ~ .nabla-task-state__text {
+  text-decoration: line-through;
+  color: var(--nabla-color-text-muted);
+}

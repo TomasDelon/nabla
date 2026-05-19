@@ -19,6 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@nabla/markup": "workspace:*"
+    "@nabla/markup": "workspace:*",
+    "react": "^18.3.1",
+    "@types/react": "^18.3.0"
   }
 }
