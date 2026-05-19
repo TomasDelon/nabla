@@ -1,1 +1,3 @@
+17f4615 fix(task-state): rename cancelled state to in progress
+cf9391b docs: add audit bundle for MVP runtime repair
 1d7a452 fix(app): repair component CSS runtime exports

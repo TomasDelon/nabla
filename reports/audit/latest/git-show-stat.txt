@@ -1,4 +1,24 @@
- packages/app/tests/runtime-css-exports.test.mjs | 32 +++++++++++++++++++++++++
- packages/components/package.json                | 16 +++++++++++--
- reports/IMPLEMENTATION_PROGRESS.md              |  8 +++----
- 3 files changed, 50 insertions(+), 6 deletions(-)
+ packages/app/src/component-rendering.ts            |   2 +-
+ packages/app/src/sample-document.ts                |   2 +-
+ packages/app/tests/component-rendering.test.mjs    |  14 ++
+ packages/app/tests/runtime-css-exports.test.mjs    |  32 ++++
+ packages/app/tests/sample-document.test.mjs        |   7 +
+ .../fixtures/task-state-cancelled/expected.json    |   1 -
+ .../fixtures/task-state-checked/expected.json      |   2 +-
+ .../fixtures/task-state-in-progress/expected.json  |   1 +
+ .../input.json                                     |   2 +-
+ packages/components/package.json                   |  16 +-
+ packages/components/src/task-state.css             |   9 +-
+ packages/components/src/task-state.tsx             |   6 +-
+ packages/components/src/types.ts                   |   2 +-
+ packages/components/tests/task-state.test.mjs      |  17 +-
+ reports/IMPLEMENTATION_PROGRESS.md                 |   8 +-
+ reports/audit/latest/AUDIT_INDEX.md                |   4 +-
+ reports/audit/latest/audit.json                    |  45 ++---
+ reports/audit/latest/git-log.txt                   |   2 +-
+ reports/audit/latest/git-show-name-only.txt        |   3 +-
+ reports/audit/latest/git-show-stat.txt             |   7 +-
+ reports/audit/latest/git-show.patch                | 193 +++++++++------------
+ reports/audit/latest/progress-report.md            |   8 +-
+ reports/audit/latest/repo-tree.txt                 |   1 +
+ 23 files changed, 211 insertions(+), 173 deletions(-)

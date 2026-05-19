@@ -73,12 +73,12 @@ packages/components/fixtures/tag-nested/expected.json
 packages/components/fixtures/tag-nested/input.json
 packages/components/fixtures/tag-simple/expected.json
 packages/components/fixtures/tag-simple/input.json
-packages/components/fixtures/task-state-cancelled/expected.json
-packages/components/fixtures/task-state-cancelled/input.json
 packages/components/fixtures/task-state-checked/expected.json
 packages/components/fixtures/task-state-checked/input.json
 packages/components/fixtures/task-state-important/expected.json
 packages/components/fixtures/task-state-important/input.json
+packages/components/fixtures/task-state-in-progress/expected.json
+packages/components/fixtures/task-state-in-progress/input.json
 packages/components/fixtures/task-state-unchecked/expected.json
 packages/components/fixtures/task-state-unchecked/input.json
 packages/components/fixtures/toggle-closed/expected.json
