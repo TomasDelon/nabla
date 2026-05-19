@@ -1,7 +1,5 @@
- packages/workspace/src/file-index.ts               |  42 ++++
- packages/workspace/src/index.ts                    |   9 +
- packages/workspace/src/wiki-link-resolver.ts       | 232 +++++++++++++++++++
- packages/workspace/src/workspace.ts                |  37 ++++
- packages/workspace/tests/file-index.test.mjs       | 111 ++++++++++
- .../workspace/tests/wiki-link-resolver.test.mjs    | 246 +++++++++++++++++++++
- 6 files changed, 677 insertions(+)
+ packages/workspace/src/index.ts                    |   3 +
+ packages/workspace/src/transclusion-resolver.ts    | 257 +++++++++++++++++++++
+ packages/workspace/src/workspace.ts                |  12 +-
+ .../workspace/tests/transclusion-resolver.test.mjs | 236 +++++++++++++++++++
+ 4 files changed, 507 insertions(+), 1 deletion(-)
