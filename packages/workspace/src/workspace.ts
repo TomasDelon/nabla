@@ -3,6 +3,7 @@ import { buildFileIndex } from "./file-index.js";
 import type { FileIndexInput, FileIndexResult } from "./file-index.js";
 import { resolveWikiLinks } from "./wiki-link-resolver.js";
 import type { WikiLinkResolverResult } from "./wiki-link-resolver.js";
+import { buildBacklinkIndex } from "./backlink-index.js";
 import type { Workspace, WorkspaceOptions, WorkspaceIndex } from "./index.js";
 
 export type WorkspaceResult = {
@@ -25,7 +26,7 @@ export function createWorkspace(files: FileIndexInput[], options: WorkspaceOptio
     files: fileIndexResult.entries,
     headings: fileIndexResult.headings,
     blocks: fileIndexResult.blocks,
-    backlinks: [],
+    backlinks: buildBacklinkIndex(wikiLinkResult.resolutions),
   };
 
   return {

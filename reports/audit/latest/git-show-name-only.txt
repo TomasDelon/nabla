@@ -1,6 +1,4 @@
-packages/workspace/src/file-index.ts
+packages/workspace/src/backlink-index.ts
 packages/workspace/src/index.ts
-packages/workspace/src/wiki-link-resolver.ts
 packages/workspace/src/workspace.ts
-packages/workspace/tests/file-index.test.mjs
-packages/workspace/tests/wiki-link-resolver.test.mjs
+packages/workspace/tests/backlink-index.test.mjs

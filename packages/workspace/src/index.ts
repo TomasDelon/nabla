@@ -12,6 +12,8 @@ export type { WikiLinkResolution, WikiLinkResolverResult } from "./wiki-link-res
 export { createWorkspace } from "./workspace.js";
 export type { WorkspaceResult } from "./workspace.js";
 
+export { buildBacklinkIndex } from "./backlink-index.js";
+
 export type WorkspaceFile = {
   path: string;
 };
