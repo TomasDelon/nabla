@@ -1,2 +1,3 @@
+reports/IMPLEMENTATION_PROGRESS.md
 reports/PHASE_3_KICKOFF.md
 reports/PHASE_3_TASK_BACKLOG.md
