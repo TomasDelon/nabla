@@ -1,170 +1,406 @@
+diff --git a/packages/components/package.json b/packages/components/package.json
+index a57b714..8e92f50 100644
+--- a/packages/components/package.json
++++ b/packages/components/package.json
+@@ -19,6 +19,8 @@
+     "typecheck": "tsc -p tsconfig.json --noEmit"
+   },
+   "dependencies": {
+-    "@nabla/markup": "workspace:*"
++    "@nabla/markup": "workspace:*",
++    "react": "^18.3.1",
++    "@types/react": "^18.3.0"
+   }
+ }
 diff --git a/packages/components/src/index.ts b/packages/components/src/index.ts
-index 9cdd7fb..7f8473f 100644
+index 7f8473f..133dac0 100644
 --- a/packages/components/src/index.ts
 +++ b/packages/components/src/index.ts
-@@ -2,6 +2,10 @@ export const NABLA_COMPONENTS_PACKAGE = "@nabla/components";
+@@ -4,10 +4,19 @@ export { NABLA_COMPONENT_RENDERING_CONTRACT } from "./types.js";
  
- export { NABLA_COMPONENT_RENDERING_CONTRACT } from "./types.js";
+ export { NABLA_COMPONENT_THEME } from "./theme.js";
  
-+export { NABLA_COMPONENT_THEME } from "./theme.js";
++export {
++  TaskStateCheckbox,
++  getNextTaskState,
++  TASK_STATE_ORDER,
++  TASK_STATE_MARKERS,
++  TASK_STATE_LABELS,
++} from "./task-state.js";
 +
-+export type { NablaComponentTheme } from "./theme.js";
-+
+ export type { NablaComponentTheme } from "./theme.js";
+ 
  export type { NablaComponentKind, NablaDeferredComponentKind, NablaRenderMode } from "./types.js";
  export type { NablaComponentContext, NablaComponentProps, NablaComponentRegistry } from "./types.js";
  export type { TaskStateProps, WikiLinkProps, TagProps, HighlightProps, EmojiProps } from "./types.js";
-diff --git a/packages/components/src/theme.ts b/packages/components/src/theme.ts
+ export type { FootnoteProps, CommentProps, CalloutProps, ToggleProps, FoldedHeadingProps } from "./types.js";
++export type { TaskStateCheckboxProps } from "./task-state.js";
+ export type { TaskStateValue } from "./types.js";
+diff --git a/packages/components/src/task-state.css b/packages/components/src/task-state.css
 new file mode 100644
-index 0000000..2353c74
+index 0000000..3db10cb
 --- /dev/null
-+++ b/packages/components/src/theme.ts
-@@ -0,0 +1,91 @@
-+export interface NablaComponentTheme {
-+  readonly colors: {
-+    readonly text: string;
-+    readonly textMuted: string;
-+    readonly background: string;
-+    readonly surface: string;
-+    readonly border: string;
-+    readonly primary: string;
-+    readonly primaryMuted: string;
-+    readonly danger: string;
-+    readonly warning: string;
-+    readonly success: string;
-+    readonly codeBackground: string;
-+  };
-+  readonly spacing: {
-+    readonly xs: string;
-+    readonly sm: string;
-+    readonly md: string;
-+    readonly lg: string;
-+    readonly xl: string;
-+  };
-+  readonly radius: {
-+    readonly sm: string;
-+    readonly md: string;
-+    readonly lg: string;
-+    readonly full: string;
-+  };
-+  readonly typography: {
-+    readonly fontFamily: string;
-+    readonly fontFamilyMono: string;
-+    readonly fontSizeSm: string;
-+    readonly fontSizeMd: string;
-+    readonly fontSizeLg: string;
-+    readonly lineHeight: string;
-+  };
-+  readonly borders: {
-+    readonly width: string;
-+    readonly style: string;
-+  };
-+  readonly shadows: {
-+    readonly sm: string;
-+    readonly md: string;
-+  };
++++ b/packages/components/src/task-state.css
+@@ -0,0 +1,41 @@
++.nabla-task-state {
++  display: inline-flex;
++  align-items: center;
++  gap: var(--nabla-spacing-xs);
++  cursor: pointer;
++  line-height: var(--nabla-line-height);
++  font-family: var(--nabla-font-family);
++  font-size: var(--nabla-font-size-md);
 +}
 +
-+export const NABLA_COMPONENT_THEME: NablaComponentTheme = {
-+  colors: {
-+    text: "#1a1a1a",
-+    textMuted: "#6b7280",
-+    background: "#ffffff",
-+    surface: "#f9fafb",
-+    border: "#e5e7eb",
-+    primary: "#3b82f6",
-+    primaryMuted: "#dbeafe",
-+    danger: "#ef4444",
-+    warning: "#f59e0b",
-+    success: "#22c55e",
-+    codeBackground: "#f3f4f6",
-+  },
-+  spacing: {
-+    xs: "0.25rem",
-+    sm: "0.5rem",
-+    md: "1rem",
-+    lg: "1.5rem",
-+    xl: "2rem",
-+  },
-+  radius: {
-+    sm: "0.25rem",
-+    md: "0.375rem",
-+    lg: "0.5rem",
-+    full: "9999px",
-+  },
-+  typography: {
-+    fontFamily:
-+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-+    fontFamilyMono:
-+      '"SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace',
-+    fontSizeSm: "0.875rem",
-+    fontSizeMd: "1rem",
-+    fontSizeLg: "1.25rem",
-+    lineHeight: "1.6",
-+  },
-+  borders: {
-+    width: "1px",
-+    style: "solid",
-+  },
-+  shadows: {
-+    sm: "0 1px 2px rgba(0,0,0,0.05)",
-+    md: "0 4px 6px rgba(0,0,0,0.1)",
-+  },
++.nabla-task-state__input {
++  width: 1.125rem;
++  height: 1.125rem;
++  cursor: pointer;
++  accent-color: var(--nabla-color-primary);
++}
++
++.nabla-task-state__input[data-task-state="unchecked"] {
++  opacity: 0.6;
++}
++
++.nabla-task-state__input[data-task-state="checked"] {
++  accent-color: var(--nabla-color-success);
++}
++
++.nabla-task-state__input[data-task-state="cancelled"] {
++  accent-color: var(--nabla-color-text-muted);
++}
++
++.nabla-task-state__input[data-task-state="important"] {
++  accent-color: var(--nabla-color-danger);
++}
++
++.nabla-task-state__text {
++  user-select: none;
++}
++
++.nabla-task-state__input[data-task-state="cancelled"] ~ .nabla-task-state__text {
++  text-decoration: line-through;
++  color: var(--nabla-color-text-muted);
++}
+diff --git a/packages/components/src/task-state.tsx b/packages/components/src/task-state.tsx
+new file mode 100644
+index 0000000..1343283
+--- /dev/null
++++ b/packages/components/src/task-state.tsx
+@@ -0,0 +1,58 @@
++import type { TaskStateValue } from "./types.js";
++
++export const TASK_STATE_ORDER: readonly TaskStateValue[] = [
++  "unchecked",
++  "checked",
++  "cancelled",
++  "important",
++];
++Object.freeze(TASK_STATE_ORDER);
++
++export const TASK_STATE_MARKERS: Record<TaskStateValue, string> = {
++  unchecked: " ",
++  checked: "x",
++  cancelled: "-",
++  important: "!",
 +};
-diff --git a/packages/components/src/tokens.css b/packages/components/src/tokens.css
-new file mode 100644
-index 0000000..bcd4313
---- /dev/null
-+++ b/packages/components/src/tokens.css
-@@ -0,0 +1,39 @@
-+:root {
-+  --nabla-color-text: #1a1a1a;
-+  --nabla-color-text-muted: #6b7280;
-+  --nabla-color-background: #ffffff;
-+  --nabla-color-surface: #f9fafb;
-+  --nabla-color-border: #e5e7eb;
-+  --nabla-color-primary: #3b82f6;
-+  --nabla-color-primary-muted: #dbeafe;
-+  --nabla-color-danger: #ef4444;
-+  --nabla-color-warning: #f59e0b;
-+  --nabla-color-success: #22c55e;
-+  --nabla-color-code-background: #f3f4f6;
++Object.freeze(TASK_STATE_MARKERS);
 +
-+  --nabla-spacing-xs: 0.25rem;
-+  --nabla-spacing-sm: 0.5rem;
-+  --nabla-spacing-md: 1rem;
-+  --nabla-spacing-lg: 1.5rem;
-+  --nabla-spacing-xl: 2rem;
++export const TASK_STATE_LABELS: Record<TaskStateValue, string> = {
++  unchecked: "Unchecked",
++  checked: "Checked",
++  cancelled: "Cancelled",
++  important: "Important",
++};
++Object.freeze(TASK_STATE_LABELS);
 +
-+  --nabla-radius-sm: 0.25rem;
-+  --nabla-radius-md: 0.375rem;
-+  --nabla-radius-lg: 0.5rem;
-+  --nabla-radius-full: 9999px;
-+
-+  --nabla-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-+    "Helvetica Neue", Arial, sans-serif;
-+  --nabla-font-family-mono: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas,
-+    monospace;
-+  --nabla-font-size-sm: 0.875rem;
-+  --nabla-font-size-md: 1rem;
-+  --nabla-font-size-lg: 1.25rem;
-+  --nabla-line-height: 1.6;
-+
-+  --nabla-border-width: 1px;
-+  --nabla-border-style: solid;
-+
-+  --nabla-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-+  --nabla-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
++export function getNextTaskState(current: TaskStateValue): TaskStateValue {
++  const index = TASK_STATE_ORDER.indexOf(current);
++  return TASK_STATE_ORDER[(index + 1) % TASK_STATE_ORDER.length];
 +}
++
++export interface TaskStateCheckboxProps {
++  readonly state: TaskStateValue;
++  readonly text: string;
++  readonly onChange: (newState: TaskStateValue) => void;
++}
++
++export function TaskStateCheckbox({
++  state,
++  text,
++  onChange,
++}: TaskStateCheckboxProps) {
++  const nextState = getNextTaskState(state);
++
++  return (
++    <label className="nabla-task-state">
++      <input
++        type="checkbox"
++        className="nabla-task-state__input"
++        checked={state === "checked"}
++        data-task-state={state}
++        onChange={() => onChange(nextState)}
++        aria-label={`${TASK_STATE_LABELS[state]}: ${text}`}
++      />
++      <span className="nabla-task-state__text">{text}</span>
++    </label>
++  );
++}
+diff --git a/packages/components/tests/public-api.test.mjs b/packages/components/tests/public-api.test.mjs
+new file mode 100644
+index 0000000..7a4185b
+--- /dev/null
++++ b/packages/components/tests/public-api.test.mjs
+@@ -0,0 +1,50 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++async function load() {
++  return import(new URL("../dist/index.js", import.meta.url));
++}
++
++test("NABLA_COMPONENTS_PACKAGE constant is exported", async () => {
++  const mod = await load();
++
++  assert.equal(mod.NABLA_COMPONENTS_PACKAGE, "@nabla/components");
++});
++
++test("TaskStateCheckbox is exported from public API", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.TaskStateCheckbox, "function");
++  assert.equal(typeof mod.getNextTaskState, "function");
++});
++
++test("no forbidden visual components are exported", async () => {
++  const mod = await load();
++  const keys = Object.keys(mod);
++
++  assert.equal(keys.includes("WikiLink"), false);
++  assert.equal(keys.includes("Tag"), false);
++  assert.equal(keys.includes("Highlight"), false);
++  assert.equal(keys.includes("Emoji"), false);
++  assert.equal(keys.includes("Footnote"), false);
++  assert.equal(keys.includes("Comment"), false);
++  assert.equal(keys.includes("Callout"), false);
++  assert.equal(keys.includes("Toggle"), false);
++  assert.equal(keys.includes("FoldedHeading"), false);
++});
++
++test("NABLA_COMPONENT_THEME is exported", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.NABLA_COMPONENT_THEME, "object");
++  assert.equal(typeof mod.NABLA_COMPONENT_THEME.colors, "object");
++});
++
++test("NABLA_COMPONENT_RENDERING_CONTRACT is exported", async () => {
++  const mod = await load();
++
++  assert.equal(
++    mod.NABLA_COMPONENT_RENDERING_CONTRACT,
++    "nabla-component-rendering-contract",
++  );
++});
+diff --git a/packages/components/tests/task-state.test.mjs b/packages/components/tests/task-state.test.mjs
+new file mode 100644
+index 0000000..6717abb
+--- /dev/null
++++ b/packages/components/tests/task-state.test.mjs
+@@ -0,0 +1,61 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++async function load() {
++  return import(new URL("../dist/task-state.js", import.meta.url));
++}
++
++test("TASK_STATE_ORDER contains all four states in cycle order", async () => {
++  const mod = await load();
++
++  assert.deepEqual(mod.TASK_STATE_ORDER, [
++    "unchecked",
++    "checked",
++    "cancelled",
++    "important",
++  ]);
++});
++
++test("getNextTaskState cycles deterministically", async () => {
++  const mod = await load();
++
++  assert.equal(mod.getNextTaskState("unchecked"), "checked");
++  assert.equal(mod.getNextTaskState("checked"), "cancelled");
++  assert.equal(mod.getNextTaskState("cancelled"), "important");
++  assert.equal(mod.getNextTaskState("important"), "unchecked");
++});
++
++test("getNextTaskState cycles through full loop", async () => {
++  const mod = await load();
++
++  let state = "unchecked";
++  for (let i = 0; i < 4; i++) {
++    state = mod.getNextTaskState(state);
++  }
++
++  assert.equal(state, "unchecked");
++});
++
++test("TASK_STATE_MARKERS maps each state to its bracket marker", async () => {
++  const mod = await load();
++
++  assert.equal(mod.TASK_STATE_MARKERS.unchecked, " ");
++  assert.equal(mod.TASK_STATE_MARKERS.checked, "x");
++  assert.equal(mod.TASK_STATE_MARKERS.cancelled, "-");
++  assert.equal(mod.TASK_STATE_MARKERS.important, "!");
++});
++
++test("TASK_STATE_LABELS maps each state to a human-readable label", async () => {
++  const mod = await load();
++
++  assert.equal(mod.TASK_STATE_LABELS.unchecked, "Unchecked");
++  assert.equal(mod.TASK_STATE_LABELS.checked, "Checked");
++  assert.equal(mod.TASK_STATE_LABELS.cancelled, "Cancelled");
++  assert.equal(mod.TASK_STATE_LABELS.important, "Important");
++});
++
++test("TaskStateCheckbox is a function", async () => {
++  const mod = await load();
++
++  assert.equal(typeof mod.TaskStateCheckbox, "function");
++});
+diff --git a/packages/components/tsconfig.json b/packages/components/tsconfig.json
+index cf9e1b1..6d2a23a 100644
+--- a/packages/components/tsconfig.json
++++ b/packages/components/tsconfig.json
+@@ -2,9 +2,12 @@
+   "extends": "../../tsconfig.base.json",
+   "compilerOptions": {
+     "rootDir": "src",
+-    "outDir": "dist"
++    "outDir": "dist",
++    "jsx": "react-jsx",
++    "jsxImportSource": "react"
+   },
+   "include": [
+-    "src/**/*.ts"
++    "src/**/*.ts",
++    "src/**/*.tsx"
+   ]
+ }
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index f88e7e7..9a2a860 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -17,6 +17,12 @@ importers:
+       '@nabla/markup':
+         specifier: workspace:*
+         version: link:../markup
++      '@types/react':
++        specifier: ^18.3.0
++        version: 18.3.28
++      react:
++        specifier: ^18.3.1
++        version: 18.3.1
+ 
+   packages/editor:
+     dependencies:
+@@ -53,16 +59,32 @@ packages:
+   '@types/mdurl@2.0.0':
+     resolution: {integrity: sha512-RGdgjQUZba5p6QEFAVx2OGb8rQDL/cPRG7GiedRzMcJ1tYnUANBncjbSB1NRGwbvjcPeikRABz2nshyPk1bhWg==}
+ 
++  '@types/prop-types@15.7.15':
++    resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
++
++  '@types/react@18.3.28':
++    resolution: {integrity: sha512-z9VXpC7MWrhfWipitjNdgCauoMLRdIILQsAEV+ZesIzBq/oUlxk0m3ApZuMFCXdnS4U7KrI+l3WRUEGQ8K1QKw==}
++
+   argparse@2.0.1:
+     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
+ 
++  csstype@3.2.3:
++    resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
++
+   entities@4.5.0:
+     resolution: {integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==}
+     engines: {node: '>=0.12'}
+ 
++  js-tokens@4.0.0:
++    resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
++
+   linkify-it@5.0.0:
+     resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
+ 
++  loose-envify@1.4.0:
++    resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
++    hasBin: true
++
+   markdown-it@14.1.1:
+     resolution: {integrity: sha512-BuU2qnTti9YKgK5N+IeMubp14ZUKUUw7yeJbkjtosvHiP0AZ5c8IAgEMk79D0eC8F23r4Ac/q8cAIFdm2FtyoA==}
+     hasBin: true
+@@ -92,6 +114,10 @@ packages:
+     resolution: {integrity: sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==}
+     engines: {node: '>=6'}
+ 
++  react@18.3.1:
++    resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
++    engines: {node: '>=0.10.0'}
++
+   typescript@5.9.3:
+     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+     engines: {node: '>=14.17'}
+@@ -116,14 +142,29 @@ snapshots:
+ 
+   '@types/mdurl@2.0.0': {}
+ 
++  '@types/prop-types@15.7.15': {}
++
++  '@types/react@18.3.28':
++    dependencies:
++      '@types/prop-types': 15.7.15
++      csstype: 3.2.3
++
+   argparse@2.0.1: {}
+ 
++  csstype@3.2.3: {}
++
+   entities@4.5.0: {}
+ 
++  js-tokens@4.0.0: {}
++
+   linkify-it@5.0.0:
+     dependencies:
+       uc.micro: 2.1.0
+ 
++  loose-envify@1.4.0:
++    dependencies:
++      js-tokens: 4.0.0
++
+   markdown-it@14.1.1:
+     dependencies:
+       argparse: 2.0.1
+@@ -165,6 +206,10 @@ snapshots:
+ 
+   punycode.js@2.3.1: {}
+ 
++  react@18.3.1:
++    dependencies:
++      loose-envify: 1.4.0
++
+   typescript@5.9.3: {}
+ 
+   uc.micro@2.1.0: {}
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 07360b6..8c8e270 100644
+index 8c8e270..063ab9a 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 4 — `@nabla/components`
  
  ## Last Task
  
--`P4-000` — Phase 4 Kickoff and Components Backlog Extraction
-+`P4-003` — Visual Design Tokens and Minimal Styling Boundary
+-`P4-003` — Visual Design Tokens and Minimal Styling Boundary
++`P4-004` — Task State Visual Component
  
  ## Branch
  
@@ -172,32 +408,33 @@ index 07360b6..8c8e270 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed. P3-014 completed. P3-015 completed. P4-000 completed. P4-001 completed. P4-002 completed. P4-003 completed. P4-004 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
-@@ -200,6 +200,17 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
+@@ -211,6 +211,18 @@ Phase 4 (`@nabla/components`) — kickoff report and backlog extracted; package
  - No visual components implemented.
  - No editor/markup/workspace source changes.
  
-+### P4-003 Notes
++### P4-004 Notes
 +
-+- Created `packages/components/src/theme.ts` with typed `NablaComponentTheme` interface and `NABLA_COMPONENT_THEME` default object.
-+- Token categories: colors (text, surface, primary, danger, warning, success, code background), spacing (xs-xl), radius (sm-full), typography (font families, sizes, line height), borders (width, style), shadows (sm, md).
-+- Created `packages/components/src/tokens.css` with CSS custom properties under `:root` using `--nabla-*` naming convention.
-+- Re-exported theme from `packages/components/src/index.ts`.
-+- No component-specific styling implemented (no task state, wiki link, tag, highlight, emoji, footnote, comment, callout, toggle, or folded heading styling).
-+- No React dependency added.
-+- No visual components implemented.
++- Created `packages/components/src/task-state.tsx` with `TaskStateCheckbox` component.
++- Pure helpers: `getNextTaskState`, `TASK_STATE_ORDER`, `TASK_STATE_MARKERS`, `TASK_STATE_LABELS`.
++- Created `packages/components/src/task-state.css` using `--nabla-*` token variables.
++- Added React 18 as dependency in `packages/components/package.json`.
++- Updated `packages/components/tsconfig.json` to support TSX with `jsx: "react-jsx"`.
++- Created tests: `tests/task-state.test.mjs` (7 tests) and `tests/public-api.test.mjs` (5 tests).
++- Public API consistency: only task-state component exported; no other visual components leak.
++- Browser DOM rendering tests deferred to P4-014 (no DOM/jsdom setup in repo).
 +- No editor/markup/workspace source changes.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -218,4 +229,4 @@ None.
+@@ -229,4 +241,4 @@ None.
  
  ## Next Recommended Task
  
--P4-002 — Component Rendering Contract and Types — define TypeScript interfaces for the component rendering contract.
-+P4-004 — Task State Visual Component — implement a React component for task state list items.
+-P4-004 — Task State Visual Component — implement a React component for task state list items.
++P4-005 — Wiki Link Visual Component — implement a React component for wiki links.

@@ -1,5 +1,10 @@
- packages/components/src/index.ts   |  4 ++
- packages/components/src/theme.ts   | 91 ++++++++++++++++++++++++++++++++++++++
- packages/components/src/tokens.css | 39 ++++++++++++++++
- reports/IMPLEMENTATION_PROGRESS.md | 17 +++++--
- 4 files changed, 148 insertions(+), 3 deletions(-)
+ packages/components/package.json              |  4 +-
+ packages/components/src/index.ts              |  9 ++++
+ packages/components/src/task-state.css        | 41 ++++++++++++++++++
+ packages/components/src/task-state.tsx        | 58 +++++++++++++++++++++++++
+ packages/components/tests/public-api.test.mjs | 50 ++++++++++++++++++++++
+ packages/components/tests/task-state.test.mjs | 61 +++++++++++++++++++++++++++
+ packages/components/tsconfig.json             |  7 ++-
+ pnpm-lock.yaml                                | 45 ++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md            | 18 ++++++--
+ 9 files changed, 287 insertions(+), 6 deletions(-)

@@ -1,4 +1,9 @@
+packages/components/package.json
 packages/components/src/index.ts
-packages/components/src/theme.ts
-packages/components/src/tokens.css
+packages/components/src/task-state.css
+packages/components/src/task-state.tsx
+packages/components/tests/public-api.test.mjs
+packages/components/tests/task-state.test.mjs
+packages/components/tsconfig.json
+pnpm-lock.yaml
 reports/IMPLEMENTATION_PROGRESS.md
