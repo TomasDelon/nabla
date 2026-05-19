@@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
 
 ## Last Task
 
-`P3-012` — Fold State Commands
+`P3-013` — Editor Validation/API Consistency
 
 ## Branch
 
@@ -14,11 +14,11 @@ Phase 3 — `@nabla/editor`
 
 ## Status
 
-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed.
+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed.
 
 Phase 1 (`@nabla/markup`) — ACCEPTED.
 Phase 2 (`@nabla/workspace`) — ACCEPTED.
-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, and fold state commands created.
+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, and API consistency validation.
 
 ### Repairs Applied
 
@@ -123,6 +123,19 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, 
 - No visual rendering for callouts, toggles, or folded headings was added.
 - No dependencies added.
 
+### P3-013 Notes
+
+- Audited public API surface of `@nabla/editor`.
+- Added API consistency tests in `packages/editor/tests/api-consistency.test.mjs`.
+- Verified all intended runtime exports exist and are grouped logically.
+- Verified no forbidden runtime exports exist (callout visual, toggle visual, folded heading visual, transclusion, tooltip, block ID editing, components/app integration).
+- Verified `NABLA_EDITOR_EXPORT_LOSS` is emitted only under explicit controlled conditions, not generic canonical-vs-original divergence.
+- Verified source preservation for all accepted syntax surfaces: task states, wiki links, tags, highlights, emoji shortcodes, footnotes, comments, and fold markers.
+- No new editor features implemented.
+- No dependencies added.
+- No parser/serializer changes.
+- No workspace changes.
+
 ## Verification Summary
 
 - `pnpm test` — PASS
@@ -141,4 +154,4 @@ None.
 
 ## Next Recommended Task
 
-P3-013 (block id editing) — add the next accepted editor-side source manipulation behavior without broadening into unrelated node views.
+P3-014 — Editor Fixture/Regression Plan — create editor-level regression fixtures and tests covering all features implemented in P3-007 through P3-012.

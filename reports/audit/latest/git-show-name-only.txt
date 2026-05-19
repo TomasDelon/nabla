@@ -1,6 +1,2 @@
-packages/editor/src/commands/fold.ts
-packages/editor/src/editor.ts
-packages/editor/src/index.ts
-packages/editor/tests/fold.test.mjs
-packages/editor/tests/public-api.test.mjs
+packages/editor/tests/api-consistency.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

@@ -17,6 +17,7 @@ packages/editor/src/nodes/task-state.ts
 packages/editor/src/nodes/wiki-link.ts
 packages/editor/src/position.ts
 packages/editor/src/save-pipeline.ts
+packages/editor/tests/api-consistency.test.mjs
 packages/editor/tests/editor.test.mjs
 packages/editor/tests/emoji.test.mjs
 packages/editor/tests/fold.test.mjs

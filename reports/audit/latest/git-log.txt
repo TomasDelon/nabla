@@ -1,1 +1,1 @@
-d91fbf7 feat(editor): add fold state commands
+c64c6d3 test(editor): add API consistency coverage

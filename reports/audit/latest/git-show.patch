@@ -1,134 +1,9 @@
-diff --git a/packages/editor/src/commands/fold.ts b/packages/editor/src/commands/fold.ts
+diff --git a/packages/editor/tests/api-consistency.test.mjs b/packages/editor/tests/api-consistency.test.mjs
 new file mode 100644
-index 0000000..75b7c8c
+index 0000000..c252451
 --- /dev/null
-+++ b/packages/editor/src/commands/fold.ts
-@@ -0,0 +1,79 @@
-+import { loadSource } from "../editor.js";
-+
-+import type { Editor } from "../editor.js";
-+
-+type FoldMatch = {
-+  readonly lineIndex: number;
-+};
-+
-+const CALLOUT_RE = /^(\[![A-Za-z][A-Za-z0-9_-]*])(>|v)([ \t]*.*)$/;
-+const TOGGLE_RE = /^(])(>|v)([ \t]*.*)$/;
-+const FOLDED_HEADING_RE = /^(#{1,6})(>|v)( .+)$/;
-+
-+function toggleMarker(marker: string): ">" | "v" {
-+  return marker === ">" ? "v" : ">";
-+}
-+
-+function toggleMatchedLine(
-+  markdown: string,
-+  matches: readonly FoldMatch[],
-+  index: number,
-+  rewriter: (line: string) => string,
-+): string {
-+  const match = matches[index];
-+  if (!match) {
-+    throw new RangeError(`Fold index out of range: ${index}`);
-+  }
-+
-+  const lines = markdown.split("\n");
-+  lines[match.lineIndex] = rewriter(lines[match.lineIndex]);
-+  return lines.join("\n");
-+}
-+
-+function getCalloutFoldMatches(markdown: string): readonly FoldMatch[] {
-+  return markdown
-+    .split("\n")
-+    .flatMap((line, lineIndex) => (CALLOUT_RE.test(line) ? [{ lineIndex }] : []));
-+}
-+
-+function getToggleFoldMatches(markdown: string): readonly FoldMatch[] {
-+  return markdown
-+    .split("\n")
-+    .flatMap((line, lineIndex) => (TOGGLE_RE.test(line) ? [{ lineIndex }] : []));
-+}
-+
-+function getFoldedHeadingMatches(markdown: string): readonly FoldMatch[] {
-+  return markdown
-+    .split("\n")
-+    .flatMap((line, lineIndex) => (FOLDED_HEADING_RE.test(line) ? [{ lineIndex }] : []));
-+}
-+
-+export function toggleCalloutFoldInMarkdown(markdown: string, index: number): string {
-+  return toggleMatchedLine(markdown, getCalloutFoldMatches(markdown), index, (line) =>
-+    line.replace(CALLOUT_RE, (_, prefix: string, marker: string, suffix: string) => `${prefix}${toggleMarker(marker)}${suffix}`),
-+  );
-+}
-+
-+export function toggleToggleFoldInMarkdown(markdown: string, index: number): string {
-+  return toggleMatchedLine(markdown, getToggleFoldMatches(markdown), index, (line) =>
-+    line.replace(TOGGLE_RE, (_, prefix: string, marker: string, suffix: string) => `${prefix}${toggleMarker(marker)}${suffix}`),
-+  );
-+}
-+
-+export function toggleFoldedHeadingFoldInMarkdown(markdown: string, index: number): string {
-+  return toggleMatchedLine(markdown, getFoldedHeadingMatches(markdown), index, (line) =>
-+    line.replace(FOLDED_HEADING_RE, (_, hashes: string, marker: string, suffix: string) => `${hashes}${toggleMarker(marker)}${suffix}`),
-+  );
-+}
-+
-+export function toggleCalloutFold(editor: Editor, index: number): Editor {
-+  return loadSource(editor, toggleCalloutFoldInMarkdown(editor.source, index));
-+}
-+
-+export function toggleToggleFold(editor: Editor, index: number): Editor {
-+  return loadSource(editor, toggleToggleFoldInMarkdown(editor.source, index));
-+}
-+
-+export function toggleFoldedHeadingFold(editor: Editor, index: number): Editor {
-+  return loadSource(editor, toggleFoldedHeadingFoldInMarkdown(editor.source, index));
-+}
-diff --git a/packages/editor/src/editor.ts b/packages/editor/src/editor.ts
-index da06217..b56deca 100644
---- a/packages/editor/src/editor.ts
-+++ b/packages/editor/src/editor.ts
-@@ -72,6 +72,8 @@ type SummaryNode = {
-   forEach(callback: (child: SummaryNode) => void): void;
- };
- 
-+const SOURCE_FOLD_MARKER_RE = /^(#{1,6}(?:>|v) |\[![A-Za-z][A-Za-z0-9_-]*](?:>|v)|](?:>|v))/m;
-+
- function createState(markdown: string) {
-   return ProseMirrorEditorState.create({
-     schema: defaultMarkdownParser.schema,
-@@ -85,6 +87,7 @@ function normalizeExportedMarkdown(markdown: string): string {
- 
- function shouldPreserveSource(editor: Editor): boolean {
-   return (
-+    SOURCE_FOLD_MARKER_RE.test(editor.source) ||
-     getCommentsFromMarkdown(editor.source).length > 0 ||
-     getEmojiShortcodesFromMarkdown(editor.source).length > 0 ||
-     getFootnotesFromMarkdown(editor.source).length > 0 ||
-diff --git a/packages/editor/src/index.ts b/packages/editor/src/index.ts
-index d9e13c3..996420b 100644
---- a/packages/editor/src/index.ts
-+++ b/packages/editor/src/index.ts
-@@ -18,6 +18,14 @@ export {
-   setWikiLinkAlias,
-   toggleTaskState,
- } from "./editor.js";
-+export {
-+  toggleCalloutFold,
-+  toggleCalloutFoldInMarkdown,
-+  toggleFoldedHeadingFold,
-+  toggleFoldedHeadingFoldInMarkdown,
-+  toggleToggleFold,
-+  toggleToggleFoldInMarkdown,
-+} from "./commands/fold.js";
- export {
-   getCommentNodeViews,
-   getCommentsFromMarkdown,
-diff --git a/packages/editor/tests/fold.test.mjs b/packages/editor/tests/fold.test.mjs
-new file mode 100644
-index 0000000..2e44f21
---- /dev/null
-+++ b/packages/editor/tests/fold.test.mjs
-@@ -0,0 +1,52 @@
++++ b/packages/editor/tests/api-consistency.test.mjs
+@@ -0,0 +1,192 @@
 +import test from "node:test";
 +import assert from "node:assert/strict";
 +
@@ -136,88 +11,201 @@ index 0000000..2e44f21
 +  return import(new URL("../dist/index.js", import.meta.url));
 +}
 +
-+test("toggles a callout fold marker", async () => {
++test("all intended runtime exports exist", async () => {
 +  const mod = await load();
 +
-+  assert.equal(mod.toggleCalloutFoldInMarkdown("[!note]> Title\n", 0), "[!note]v Title\n");
-+});
++  assert.equal(mod.NABLA_EDITOR_PACKAGE, "@nabla/editor");
 +
-+test("toggles a toggle open closed marker", async () => {
-+  const mod = await load();
++  assert.equal(typeof mod.createEditor, "function");
++  assert.equal(typeof mod.loadSource, "function");
++  assert.equal(typeof mod.getSource, "function");
++  assert.equal(typeof mod.replaceSource, "function");
++  assert.equal(typeof mod.insertMarkdownBlock, "function");
++  assert.equal(typeof mod.getDocumentBlockSummary, "function");
++  assert.equal(typeof mod.getComments, "function");
++  assert.equal(typeof mod.getEmojiShortcodes, "function");
++  assert.equal(typeof mod.getFootnotes, "function");
++  assert.equal(typeof mod.getHighlights, "function");
++  assert.equal(typeof mod.getTags, "function");
++  assert.equal(typeof mod.getTaskStates, "function");
++  assert.equal(typeof mod.getWikiLinks, "function");
++  assert.equal(typeof mod.setTaskState, "function");
++  assert.equal(typeof mod.toggleTaskState, "function");
++  assert.equal(typeof mod.setWikiLinkAlias, "function");
 +
-+  assert.equal(mod.toggleToggleFoldInMarkdown("]> Title\n", 0), "]v Title\n");
-+});
-+
-+test("toggles a folded heading marker", async () => {
-+  const mod = await load();
-+
-+  assert.equal(mod.toggleFoldedHeadingFoldInMarkdown("##> Title\n", 0), "##v Title\n");
-+  assert.equal(mod.toggleFoldedHeadingFoldInMarkdown("##v Title\n", 0), "##> Title\n");
-+});
-+
-+test("load toggle fold export produces updated markdown", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+
-+  mod.loadSource(editor, "[!note]> Title\n");
-+  mod.toggleCalloutFold(editor, 0);
-+
-+  assert.equal(mod.getSource(editor), "[!note]v Title");
-+});
-+
-+test("out of range index throws deterministic RangeError", async () => {
-+  const mod = await load();
-+
-+  assert.throws(() => mod.toggleCalloutFoldInMarkdown("[!note]> Title\n", 1), RangeError);
-+  assert.throws(() => mod.toggleToggleFoldInMarkdown("]> Title\n", 1), RangeError);
-+  assert.throws(() => mod.toggleFoldedHeadingFoldInMarkdown("#> Title\n", 1), RangeError);
-+});
-+
-+test("no visual callout toggle folded heading node views are registered", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+
-+  assert.equal("callout" in editor.nodeViews, false);
-+  assert.equal("toggle" in editor.nodeViews, false);
-+  assert.equal("foldedHeading" in editor.nodeViews, false);
-+});
-diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
-index 279e84a..201d45b 100644
---- a/packages/editor/tests/public-api.test.mjs
-+++ b/packages/editor/tests/public-api.test.mjs
-@@ -43,11 +43,22 @@ test("editor runtime exports are wired", async () => {
-   assert.equal(typeof mod.getWikiLinks, "function");
-   assert.equal(typeof mod.setTaskState, "function");
-   assert.equal(typeof mod.setWikiLinkAlias, "function");
 +  assert.equal(typeof mod.toggleCalloutFold, "function");
-+  assert.equal(typeof mod.toggleToggleFold, "function");
-+  assert.equal(typeof mod.toggleFoldedHeadingFold, "function");
-   assert.equal(typeof mod.toggleTaskState, "function");
-   assert.equal(typeof mod.loadSource, "function");
-   assert.equal(typeof mod.getSource, "function");
- });
- 
-+test("fold command runtime exports are wired", async () => {
-+  const mod = await load();
-+
 +  assert.equal(typeof mod.toggleCalloutFoldInMarkdown, "function");
++  assert.equal(typeof mod.toggleToggleFold, "function");
 +  assert.equal(typeof mod.toggleToggleFoldInMarkdown, "function");
++  assert.equal(typeof mod.toggleFoldedHeadingFold, "function");
 +  assert.equal(typeof mod.toggleFoldedHeadingFoldInMarkdown, "function");
++
++  assert.equal(mod.NABLA_TASK_STATE_NODE_VIEW, "node-safe-adapter");
++  assert.equal(mod.NABLA_WIKI_LINK_NODE_VIEW, "node-safe-adapter");
++  assert.equal(mod.NABLA_TAG_NODE_VIEW, "node-safe-adapter");
++  assert.equal(mod.NABLA_HIGHLIGHT_NODE_VIEW, "node-safe-adapter");
++  assert.equal(mod.NABLA_EMOJI_NODE_VIEW, "node-safe-adapter");
++  assert.equal(mod.NABLA_FOOTNOTE_NODE_VIEW, "node-safe-adapter");
++  assert.equal(mod.NABLA_COMMENT_NODE_VIEW, "node-safe-adapter");
++
++  assert.equal(typeof mod.getTaskStateNodeViews, "function");
++  assert.equal(typeof mod.getWikiLinkNodeViews, "function");
++  assert.equal(typeof mod.getTagNodeViews, "function");
++  assert.equal(typeof mod.getHighlightNodeViews, "function");
++  assert.equal(typeof mod.getEmojiNodeViews, "function");
++  assert.equal(typeof mod.getFootnoteNodeViews, "function");
++  assert.equal(typeof mod.getCommentNodeViews, "function");
++
++  assert.equal(typeof mod.getTaskStatesFromMarkdown, "function");
++  assert.equal(typeof mod.getWikiLinksFromMarkdown, "function");
++  assert.equal(typeof mod.getTagsFromMarkdown, "function");
++  assert.equal(typeof mod.getHighlightsFromMarkdown, "function");
++  assert.equal(typeof mod.getEmojiShortcodesFromMarkdown, "function");
++  assert.equal(typeof mod.getFootnotesFromMarkdown, "function");
++  assert.equal(typeof mod.getCommentsFromMarkdown, "function");
++
++  assert.equal(typeof mod.setTaskStateInMarkdown, "function");
++  assert.equal(typeof mod.toggleTaskStateInMarkdown, "function");
++  assert.equal(typeof mod.cycleTaskState, "function");
++  assert.equal(typeof mod.setWikiLinkAliasInMarkdown, "function");
++
++  assert.equal(typeof mod.clampOffset, "function");
++  assert.equal(typeof mod.createEditorPosition, "function");
++  assert.equal(typeof mod.createSourcePosition, "function");
++  assert.equal(typeof mod.editorToSourcePosition, "function");
++  assert.equal(typeof mod.isValidOffset, "function");
++  assert.equal(typeof mod.sourceToEditorPosition, "function");
++
++  assert.equal(mod.NABLA_EDITOR_SOURCE_OF_TRUTH, "markdown");
++  assert.equal(typeof mod.NABLA_EDITOR_CANONICAL_SAVE_PATH, "string");
++
++  assert.equal(typeof mod.canonicalize, "function");
++  assert.equal(mod.NABLA_EDITOR_EXPORT_LOSS, "NABLA_EDITOR_EXPORT_LOSS");
 +});
 +
- test("task state runtime exports are wired", async () => {
-   const mod = await load();
- 
++test("no forbidden runtime exports exist", async () => {
++  const mod = await load();
++  const keys = Object.keys(mod);
++
++  assert.equal(keys.includes("NABLA_CALLOUT_NODE_VIEW"), false);
++  assert.equal(keys.includes("getCalloutNodeViews"), false);
++  assert.equal(keys.includes("getCalloutsFromMarkdown"), false);
++
++  assert.equal(keys.includes("NABLA_TOGGLE_NODE_VIEW"), false);
++  assert.equal(keys.includes("getToggleNodeViews"), false);
++  assert.equal(keys.includes("getTogglesFromMarkdown"), false);
++
++  assert.equal(keys.includes("NABLA_FOLDED_HEADING_NODE_VIEW"), false);
++  assert.equal(keys.includes("getFoldedHeadingNodeViews"), false);
++  assert.equal(keys.includes("getFoldedHeadingsFromMarkdown"), false);
++
++  assert.equal(keys.includes("NABLA_TRANSCLUSION_NODE_VIEW"), false);
++  assert.equal(keys.includes("getTransclusionNodeViews"), false);
++
++  assert.equal(keys.includes("NABLA_TOOLTIP_NODE_VIEW"), false);
++  assert.equal(keys.includes("getTooltipNodeViews"), false);
++
++  assert.equal(keys.includes("insertBlockId"), false);
++  assert.equal(keys.includes("removeBlockId"), false);
++  assert.equal(keys.includes("setBlockId"), false);
++  assert.equal(keys.includes("getBlockIds"), false);
++
++  assert.equal(keys.includes("renderEditor"), false);
++  assert.equal(keys.includes("EditorComponent"), false);
++  assert.equal(keys.includes("mountEditor"), false);
++});
++
++test("NABLA_EDITOR_EXPORT_LOSS is not emitted for canonical-vs-original divergence", async () => {
++  const mod = await load();
++
++  const a = mod.canonicalize("Alpha\n");
++  const b = mod.canonicalize("Beta\n");
++
++  assert.equal(
++    a.diagnostics.some(d => d.code === mod.NABLA_EDITOR_EXPORT_LOSS),
++    false,
++    "valid divergent content must not trigger export loss",
++  );
++  assert.equal(
++    b.diagnostics.some(d => d.code === mod.NABLA_EDITOR_EXPORT_LOSS),
++    false,
++  );
++});
++
++test("NABLA_EDITOR_EXPORT_LOSS is emitted under explicit controlled conditions", async () => {
++  const mod = await load();
++
++  const result = mod.canonicalize("Paragraph text.\n", {
++    preservation: {
++      message: "Preservation contract failed.",
++      verify: () => false,
++    },
++  });
++
++  assert.equal(
++    result.diagnostics.some(d => d.code === mod.NABLA_EDITOR_EXPORT_LOSS),
++    true,
++    "explicit preservation contract failure must emit export loss",
++  );
++});
++
++test("source preservation: task states roundtrip", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  mod.loadSource(editor, "- [ ] a\n- [x] b\n- [-] c\n- [!] d\n");
++  assert.equal(mod.getSource(editor), "- [ ] a\n- [x] b\n- [-] c\n- [!] d");
++});
++
++test("source preservation: wiki link roundtrip", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  mod.loadSource(editor, "[[Target]] [[Target|Alias]]\n");
++  assert.equal(mod.getSource(editor), "[[Target]] [[Target|Alias]]");
++});
++
++test("source preservation: tag and highlight roundtrip", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  mod.loadSource(editor, "#tag ==hl== =={#ff0}c==\n");
++  assert.equal(mod.getSource(editor), "#tag ==hl== =={#ff0}c==");
++});
++
++test("source preservation: emoji shortcode roundtrip", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  mod.loadSource(editor, ":check:\n");
++  assert.equal(mod.getSource(editor), ":check:");
++});
++
++test("source preservation: footnote and comment roundtrip", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  mod.loadSource(editor, "a[^b]\n\n[^b]: text\n%%c%%\n");
++  assert.equal(mod.getSource(editor), "a[^b]\n\n[^b]: text\n%%c%%");
++});
++
++test("source preservation: fold markers roundtrip", async () => {
++  const mod = await load();
++  const editor = mod.createEditor();
++
++  mod.loadSource(editor, "[!note]> callout\n");
++  assert.equal(mod.getSource(editor), "[!note]> callout");
++});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index 05c0bc8..d7602fd 100644
+index d7602fd..459130e 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
  
  ## Last Task
  
--`P3-011` — Footnotes and Comments Node Views
-+`P3-012` — Fold State Commands
+-`P3-012` — Fold State Commands
++`P3-013` — Editor Validation/API Consistency
  
  ## Branch
  
@@ -225,33 +213,39 @@ index 05c0bc8..d7602fd 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed. P3-008 completed. P3-009 completed. P3-010 completed. P3-011 completed. P3-012 completed. P3-013 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, and footnote/comment helpers created.
-+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, and fold state commands created.
+-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, and fold state commands created.
++Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, task-state helpers, wiki-link helpers, tag/highlight helpers, emoji shortcode helpers, footnote/comment helpers, fold state commands, and API consistency validation.
  
  ### Repairs Applied
  
-@@ -116,6 +116,13 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
- - No other Nabla node views added.
+@@ -123,6 +123,19 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
+ - No visual rendering for callouts, toggles, or folded headings was added.
  - No dependencies added.
  
-+### P3-012 Notes
++### P3-013 Notes
 +
-+- Added fold state commands only in `packages/editor/src/commands/fold.ts`.
-+- Supported source markers: callouts `[!Type]>`/`[!Type]v`, toggles `]>`/`]v`, and folded headings `#>`/`#v`.
-+- No visual rendering for callouts, toggles, or folded headings was added.
++- Audited public API surface of `@nabla/editor`.
++- Added API consistency tests in `packages/editor/tests/api-consistency.test.mjs`.
++- Verified all intended runtime exports exist and are grouped logically.
++- Verified no forbidden runtime exports exist (callout visual, toggle visual, folded heading visual, transclusion, tooltip, block ID editing, components/app integration).
++- Verified `NABLA_EDITOR_EXPORT_LOSS` is emitted only under explicit controlled conditions, not generic canonical-vs-original divergence.
++- Verified source preservation for all accepted syntax surfaces: task states, wiki links, tags, highlights, emoji shortcodes, footnotes, comments, and fold markers.
++- No new editor features implemented.
 +- No dependencies added.
++- No parser/serializer changes.
++- No workspace changes.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -134,4 +141,4 @@ None.
+@@ -141,4 +154,4 @@ None.
  
  ## Next Recommended Task
  
--P3-012 (fold state commands) — add the next accepted editor-side behavior without broadening into unrelated node views.
-+P3-013 (block id editing) — add the next accepted editor-side source manipulation behavior without broadening into unrelated node views.
+-P3-013 (block id editing) — add the next accepted editor-side source manipulation behavior without broadening into unrelated node views.
++P3-014 — Editor Fixture/Regression Plan — create editor-level regression fixtures and tests covering all features implemented in P3-007 through P3-012.

@@ -1,7 +1,3 @@
- packages/editor/src/commands/fold.ts      | 79 +++++++++++++++++++++++++++++++
- packages/editor/src/editor.ts             |  3 ++
- packages/editor/src/index.ts              |  8 ++++
- packages/editor/tests/fold.test.mjs       | 52 ++++++++++++++++++++
- packages/editor/tests/public-api.test.mjs | 11 +++++
- reports/IMPLEMENTATION_PROGRESS.md        | 15 ++++--
- 6 files changed, 164 insertions(+), 4 deletions(-)
+ packages/editor/tests/api-consistency.test.mjs | 192 +++++++++++++++++++++++++
+ reports/IMPLEMENTATION_PROGRESS.md             |  21 ++-
+ 2 files changed, 209 insertions(+), 4 deletions(-)
