@@ -593,10 +593,34 @@ Phase 5 (`@nabla/app`) — kickoff report and backlog extracted; package not yet
 - No component/editor/workspace/markup source changes.
 - Tooltip and transclusion confirmed excluded from component descriptor kinds.
 
+### P5-010 Notes
+
+- Audited public API surface of `@nabla/app`.
+- Added app-level re-exports to `packages/app/src/index.ts`:
+  - `NABLA_APP_PACKAGE`, `SAMPLE_DOCUMENT_SOURCE`
+  - `canonicalizeSampleSource`, `getRenderPipelineSummary`
+  - `createSampleComponentDescriptors`, `getComponentRenderingSummary`
+  - `createSourceEditor`, `getEditableSource`, `exportCanonicalSource`, `getEditorIntegrationSummary`
+  - `createSampleWorkspaceIndex`, `getWorkspaceIntegrationSummary`
+  - Type exports: `RenderPipelineSummary`, `ComponentRenderingSummary`, `EditorIntegrationSummary`, `WorkspaceIntegrationSummary`
+- No forbidden low-level internals re-exported: no `parse`, `serialize`, `createWorkspace`, `createEditor`, `loadSource`, `getSource`, no React component classes, no bridge internals.
+- Created `packages/app/tests/api-consistency.test.mjs` with 22 tests covering:
+  - All intended exports present and functional
+  - No forbidden parser/serializer/workspace/editor/component/bridge internals leaked
+  - No source-of-truth violation keys (html, innerHTML, editorState, jsonState, serializedState) in summary objects or component props
+  - Tooltip/transclusion renderers not exported
+  - Node-safe import verification from built `dist/index.js`
+- No app runtime behavior changed.
+- No app UI changed.
+- No app helper implementations modified.
+- No Phase 1–4 source package changes.
+- No dependencies added.
+- No final validation report created (P5-011 deferred).
+
 ## Active Blockers
 
 None.
 
 ## Next Recommended Task
 
-P5-010 — API Consistency Audit & Final Validation — audit the app package public API surface for consistency, completeness, and scope adherence.
+P5-011 — Phase 5 Validation Report
