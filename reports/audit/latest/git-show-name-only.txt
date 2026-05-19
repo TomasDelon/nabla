@@ -1,5 +1,7 @@
 packages/editor/src/editor.ts
 packages/editor/src/index.ts
+packages/editor/src/nodes/task-state.ts
 packages/editor/tests/editor.test.mjs
 packages/editor/tests/public-api.test.mjs
+packages/editor/tests/task-state.test.mjs
 reports/IMPLEMENTATION_PROGRESS.md

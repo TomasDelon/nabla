@@ -1,253 +1,398 @@
 diff --git a/packages/editor/src/editor.ts b/packages/editor/src/editor.ts
-index bbbc45e..731162a 100644
+index 731162a..18b036e 100644
 --- a/packages/editor/src/editor.ts
 +++ b/packages/editor/src/editor.ts
-@@ -6,6 +6,28 @@ export interface Editor {
-   readonly nodeViews: Readonly<Record<string, never>>;
+@@ -1,9 +1,22 @@
+ import { defaultMarkdownParser, defaultMarkdownSerializer } from "prosemirror-markdown";
+ import { EditorState as ProseMirrorEditorState } from "prosemirror-state";
+ 
++import {
++  getTaskStateNodeViews,
++  getTaskStatesFromMarkdown,
++  setTaskStateInMarkdown,
++  toggleTaskStateInMarkdown,
++} from "./nodes/task-state.js";
++
++import type { TaskState } from "@nabla/markup";
++import type { EditorTaskState } from "./nodes/task-state.js";
++
+ export interface Editor {
+   state: ProseMirrorEditorState;
+-  readonly nodeViews: Readonly<Record<string, never>>;
++  source: string;
++  readonly nodeViews: Readonly<{
++    readonly taskState: string;
++  }>;
  }
  
-+export interface EditorBlockSummary {
-+  readonly type:
-+    | "heading"
-+    | "paragraph"
-+    | "bullet_list"
-+    | "ordered_list"
-+    | "list_item"
-+    | "code_block"
-+    | "blockquote";
-+  readonly level?: number;
+ export interface EditorBlockSummary {
+@@ -35,15 +48,21 @@ function createState(markdown: string) {
+   });
+ }
+ 
++function normalizeExportedMarkdown(markdown: string): string {
++  return markdown.replace(/\n$/, "");
 +}
 +
-+type SummaryNode = {
-+  readonly type: {
-+    readonly name: string;
-+  };
-+  readonly attrs: {
-+    readonly level?: number;
-+  };
-+  forEach(callback: (child: SummaryNode) => void): void;
-+};
-+
- function createState(markdown: string) {
-   return ProseMirrorEditorState.create({
-     schema: defaultMarkdownParser.schema,
-@@ -25,6 +47,48 @@ export function loadSource(editor: Editor, markdown: string): Editor {
+ export function createEditor(): Editor {
+   return {
+     state: createState(""),
+-    nodeViews: Object.freeze({}),
++    source: "",
++    nodeViews: getTaskStateNodeViews(),
+   };
+ }
+ 
+ export function loadSource(editor: Editor, markdown: string): Editor {
+   editor.state = createState(markdown);
++  editor.source = markdown;
    return editor;
  }
  
-+export function replaceSource(editor: Editor, markdown: string): Editor {
-+  return loadSource(editor, markdown);
-+}
-+
-+export function insertMarkdownBlock(editor: Editor, markdown: string): Editor {
-+  const current = getSource(editor);
-+  const nextSource = current === "" ? markdown : `${current}\n\n${markdown}`;
-+  return loadSource(editor, nextSource);
-+}
-+
- export function getSource(editor: Editor): string {
-   return defaultMarkdownSerializer.serialize(editor.state.doc);
+@@ -58,9 +77,25 @@ export function insertMarkdownBlock(editor: Editor, markdown: string): Editor {
  }
-+
-+function appendBlockSummaries(node: SummaryNode, summary: EditorBlockSummary[]): void {
-+  switch (node.type.name) {
-+    case "heading":
-+      summary.push({ type: "heading", level: node.attrs.level });
-+      break;
-+    case "paragraph":
-+    case "bullet_list":
-+    case "ordered_list":
-+    case "list_item":
-+    case "code_block":
-+    case "blockquote":
-+      summary.push({ type: node.type.name });
-+      break;
-+    default:
-+      break;
+ 
+ export function getSource(editor: Editor): string {
++  if (getTaskStatesFromMarkdown(editor.source).length > 0) {
++    return normalizeExportedMarkdown(editor.source);
 +  }
 +
-+  node.forEach((child) => {
-+    appendBlockSummaries(child, summary);
-+  });
+   return defaultMarkdownSerializer.serialize(editor.state.doc);
+ }
+ 
++export function getTaskStates(editor: Editor): readonly EditorTaskState[] {
++  return getTaskStatesFromMarkdown(editor.source);
 +}
 +
-+export function getDocumentBlockSummary(editor: Editor): readonly EditorBlockSummary[] {
-+  const summary: EditorBlockSummary[] = [];
-+
-+  editor.state.doc.forEach((child) => {
-+    appendBlockSummaries(child as SummaryNode, summary);
-+  });
-+
-+  return summary;
++export function setTaskState(editor: Editor, index: number, state: TaskState): Editor {
++  return loadSource(editor, setTaskStateInMarkdown(editor.source, index, state));
 +}
++
++export function toggleTaskState(editor: Editor, index: number): Editor {
++  return loadSource(editor, toggleTaskStateInMarkdown(editor.source, index));
++}
++
+ function appendBlockSummaries(node: SummaryNode, summary: EditorBlockSummary[]): void {
+   switch (node.type.name) {
+     case "heading":
 diff --git a/packages/editor/src/index.ts b/packages/editor/src/index.ts
-index 0a5ded7..0059dbb 100644
+index 0059dbb..ba6da27 100644
 --- a/packages/editor/src/index.ts
 +++ b/packages/editor/src/index.ts
-@@ -1,6 +1,13 @@
- export const NABLA_EDITOR_PACKAGE = "@nabla/editor";
- 
--export { createEditor, getSource, loadSource } from "./editor.js";
+@@ -4,10 +4,21 @@ export {
+   createEditor,
+   getDocumentBlockSummary,
+   getSource,
++  getTaskStates,
+   insertMarkdownBlock,
+   loadSource,
+   replaceSource,
++  setTaskState,
++  toggleTaskState,
+ } from "./editor.js";
 +export {
-+  createEditor,
-+  getDocumentBlockSummary,
-+  getSource,
-+  insertMarkdownBlock,
-+  loadSource,
-+  replaceSource,
-+} from "./editor.js";
++  cycleTaskState,
++  getTaskStateNodeViews,
++  getTaskStatesFromMarkdown,
++  NABLA_TASK_STATE_NODE_VIEW,
++  setTaskStateInMarkdown,
++  toggleTaskStateInMarkdown,
++} from "./nodes/task-state.js";
  export {
    clampOffset,
    createEditorPosition,
-@@ -16,7 +23,7 @@ export {
- 
+@@ -24,6 +35,7 @@ export {
  export { NABLA_EDITOR_EXPORT_LOSS, canonicalize } from "./save-pipeline.js";
  
--export type { Editor } from "./editor.js";
-+export type { Editor, EditorBlockSummary } from "./editor.js";
+ export type { Editor, EditorBlockSummary } from "./editor.js";
++export type { EditorTaskState } from "./nodes/task-state.js";
  export type { EditorPosition, SourcePosition } from "./position.js";
  export type {
    EditorAdapter,
-diff --git a/packages/editor/tests/editor.test.mjs b/packages/editor/tests/editor.test.mjs
-index ad10f6b..11c1625 100644
---- a/packages/editor/tests/editor.test.mjs
-+++ b/packages/editor/tests/editor.test.mjs
-@@ -5,23 +5,109 @@ async function load() {
-   return import(new URL("../dist/editor.js", import.meta.url));
- }
- 
-+function withoutTrailingNewline(value) {
-+  return value.replace(/\n$/, "");
+diff --git a/packages/editor/src/nodes/task-state.ts b/packages/editor/src/nodes/task-state.ts
+new file mode 100644
+index 0000000..e39b853
+--- /dev/null
++++ b/packages/editor/src/nodes/task-state.ts
+@@ -0,0 +1,127 @@
++import type { TaskState } from "@nabla/markup";
++
++export const NABLA_TASK_STATE_NODE_VIEW = "node-safe-adapter";
++
++export interface EditorTaskState {
++  readonly index: number;
++  readonly line: number;
++  readonly state: TaskState;
++  readonly text: string;
 +}
 +
- test("public editor exports exist", async () => {
-   const mod = await load();
++const TASK_STATE_ORDER: readonly TaskState[] = [
++  "unchecked",
++  "checked",
++  "cancelled",
++  "important",
++];
++
++const TASK_STATE_MARKERS: Readonly<Record<TaskState, string>> = Object.freeze({
++  unchecked: " ",
++  checked: "x",
++  cancelled: "-",
++  important: "!",
++});
++
++const MARKER_TO_TASK_STATE: Readonly<Record<string, TaskState>> = Object.freeze({
++  " ": "unchecked",
++  x: "checked",
++  "-": "cancelled",
++  "!": "important",
++});
++
++const TASK_STATE_LINE_PATTERN = /^(?<indent>\s*)(?<bullet>(?:[-*+])|(?:\d+\.)) \[(?<marker>[ x\-!])\] (?<text>.*)$/;
++
++type TaskStateMatch = {
++  readonly indent: string;
++  readonly bullet: string;
++  readonly marker: string;
++  readonly text: string;
++};
++
++function parseTaskStateLine(line: string): TaskStateMatch | null {
++  const match = line.match(TASK_STATE_LINE_PATTERN);
++  if (!match?.groups) {
++    return null;
++  }
++
++  const marker = match.groups.marker;
++  if (!(marker in MARKER_TO_TASK_STATE)) {
++    return null;
++  }
++
++  return {
++    indent: match.groups.indent,
++    bullet: match.groups.bullet,
++    marker,
++    text: match.groups.text,
++  };
++}
++
++export function getTaskStatesFromMarkdown(markdown: string): readonly EditorTaskState[] {
++  const lines = markdown.split("\n");
++  const tasks: EditorTaskState[] = [];
++
++  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
++    const parsed = parseTaskStateLine(lines[lineIndex]);
++    if (!parsed) {
++      continue;
++    }
++
++    tasks.push({
++      index: tasks.length,
++      line: lineIndex,
++      state: MARKER_TO_TASK_STATE[parsed.marker],
++      text: parsed.text,
++    });
++  }
++
++  return tasks;
++}
++
++export function cycleTaskState(state: TaskState): TaskState {
++  const currentIndex = TASK_STATE_ORDER.indexOf(state);
++  const nextIndex = (currentIndex + 1) % TASK_STATE_ORDER.length;
++  return TASK_STATE_ORDER[nextIndex];
++}
++
++export function setTaskStateInMarkdown(
++  markdown: string,
++  index: number,
++  state: TaskState,
++): string {
++  const lines = markdown.split("\n");
++  let taskIndex = 0;
++
++  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
++    const parsed = parseTaskStateLine(lines[lineIndex]);
++    if (!parsed) {
++      continue;
++    }
++
++    if (taskIndex === index) {
++      lines[lineIndex] = `${parsed.indent}${parsed.bullet} [${TASK_STATE_MARKERS[state]}] ${parsed.text}`;
++      return lines.join("\n");
++    }
++
++    taskIndex += 1;
++  }
++
++  throw new RangeError(`Task state index out of range: ${index}`);
++}
++
++export function toggleTaskStateInMarkdown(markdown: string, index: number): string {
++  const tasks = getTaskStatesFromMarkdown(markdown);
++  const task = tasks[index];
++  if (!task) {
++    throw new RangeError(`Task state index out of range: ${index}`);
++  }
++
++  return setTaskStateInMarkdown(markdown, index, cycleTaskState(task.state));
++}
++
++export function getTaskStateNodeViews() {
++  return Object.freeze({
++    taskState: NABLA_TASK_STATE_NODE_VIEW,
++  });
++}
+diff --git a/packages/editor/tests/editor.test.mjs b/packages/editor/tests/editor.test.mjs
+index 11c1625..99c452d 100644
+--- a/packages/editor/tests/editor.test.mjs
++++ b/packages/editor/tests/editor.test.mjs
+@@ -16,6 +16,9 @@ test("public editor exports exist", async () => {
+   assert.equal(typeof mod.replaceSource, "function");
+   assert.equal(typeof mod.insertMarkdownBlock, "function");
+   assert.equal(typeof mod.getDocumentBlockSummary, "function");
++  assert.equal(typeof mod.getTaskStates, "function");
++  assert.equal(typeof mod.setTaskState, "function");
++  assert.equal(typeof mod.toggleTaskState, "function");
+   assert.equal(typeof mod.loadSource, "function");
+   assert.equal(typeof mod.getSource, "function");
+ });
+@@ -108,9 +111,9 @@ test("block summary identifies standard markdown block node types", async () =>
+   ]);
+ });
  
-   assert.equal(typeof mod.createEditor, "function");
-+  assert.equal(typeof mod.replaceSource, "function");
-+  assert.equal(typeof mod.insertMarkdownBlock, "function");
-+  assert.equal(typeof mod.getDocumentBlockSummary, "function");
+-test("no Nabla-specific node views are registered", async () => {
++test("only task-state Nabla node view adapter is registered", async () => {
+   const mod = await load();
+   const editor = mod.createEditor();
+ 
+-  assert.deepEqual(editor.nodeViews, {});
++  assert.deepEqual(editor.nodeViews, { taskState: "node-safe-adapter" });
+ });
+diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
+index d81d205..bdfe14f 100644
+--- a/packages/editor/tests/public-api.test.mjs
++++ b/packages/editor/tests/public-api.test.mjs
+@@ -34,10 +34,24 @@ test("editor runtime exports are wired", async () => {
+   assert.equal(typeof mod.replaceSource, "function");
+   assert.equal(typeof mod.insertMarkdownBlock, "function");
+   assert.equal(typeof mod.getDocumentBlockSummary, "function");
++  assert.equal(typeof mod.getTaskStates, "function");
++  assert.equal(typeof mod.setTaskState, "function");
++  assert.equal(typeof mod.toggleTaskState, "function");
    assert.equal(typeof mod.loadSource, "function");
    assert.equal(typeof mod.getSource, "function");
  });
  
--test("simple Markdown load and export works in Node", async () => {
-+test("heading and paragraph load and export works in Node", async () => {
++test("task state runtime exports are wired", async () => {
 +  const mod = await load();
-+  const editor = mod.createEditor();
-+  const source = "# Title\n\nParagraph text.\n";
 +
-+  mod.loadSource(editor, source);
-+
-+  assert.equal(mod.getSource(editor), withoutTrailingNewline(source));
++  assert.equal(mod.NABLA_TASK_STATE_NODE_VIEW, "node-safe-adapter");
++  assert.equal(typeof mod.getTaskStateNodeViews, "function");
++  assert.equal(typeof mod.getTaskStatesFromMarkdown, "function");
++  assert.equal(typeof mod.setTaskStateInMarkdown, "function");
++  assert.equal(typeof mod.toggleTaskStateInMarkdown, "function");
++  assert.equal(typeof mod.cycleTaskState, "function");
 +});
 +
-+test("bullet list load and export works", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+  const source = "- one\n- two\n";
-+
-+  mod.replaceSource(editor, source);
-+
-+  assert.equal(mod.getSource(editor), "* one\n* two");
-+});
-+
-+test("ordered list load and export works", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+  const source = "1. one\n2. two\n";
-+
-+  mod.replaceSource(editor, source);
-+
-+  assert.equal(mod.getSource(editor), withoutTrailingNewline(source));
-+});
-+
-+test("code block load and export works", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
-+  const source = "```\nconst x = 1;\n```\n";
-+
-+  mod.replaceSource(editor, source);
-+
-+  assert.equal(mod.getSource(editor), withoutTrailingNewline(source));
-+});
-+
-+test("blockquote load and export works", async () => {
+ test("position runtime exports are wired", async () => {
    const mod = await load();
-   const editor = mod.createEditor();
-+  const source = "> quoted\n";
  
--  mod.loadSource(editor, "# Title\n\nParagraph text.\n");
-+  mod.replaceSource(editor, source);
+diff --git a/packages/editor/tests/task-state.test.mjs b/packages/editor/tests/task-state.test.mjs
+new file mode 100644
+index 0000000..f6649f3
+--- /dev/null
++++ b/packages/editor/tests/task-state.test.mjs
+@@ -0,0 +1,80 @@
++import test from "node:test";
++import assert from "node:assert/strict";
 +
-+  assert.equal(mod.getSource(editor), withoutTrailingNewline(source));
-+});
++async function loadEditor() {
++  return import(new URL("../dist/editor.js", import.meta.url));
++}
 +
-+test("insertMarkdownBlock appends a plain markdown block", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
++async function loadTaskState() {
++  return import(new URL("../dist/nodes/task-state.js", import.meta.url));
++}
 +
-+  mod.replaceSource(editor, "# Title\n");
-+  mod.insertMarkdownBlock(editor, "Paragraph text.\n");
- 
-   assert.equal(mod.getSource(editor), "# Title\n\nParagraph text.");
- });
- 
-+test("block summary identifies standard markdown block node types", async () => {
-+  const mod = await load();
-+  const editor = mod.createEditor();
++test("detects unchecked task state", async () => {
++  const mod = await loadTaskState();
 +
-+  mod.replaceSource(
-+    editor,
-+    "# Title\n\nParagraph text.\n\n- one\n- two\n\n1. first\n2. second\n\n> quoted\n\n```\nconst x = 1;\n```\n",
-+  );
-+
-+  assert.deepEqual(mod.getDocumentBlockSummary(editor), [
-+    { type: "heading", level: 1 },
-+    { type: "paragraph" },
-+    { type: "bullet_list" },
-+    { type: "list_item" },
-+    { type: "paragraph" },
-+    { type: "list_item" },
-+    { type: "paragraph" },
-+    { type: "ordered_list" },
-+    { type: "list_item" },
-+    { type: "paragraph" },
-+    { type: "list_item" },
-+    { type: "paragraph" },
-+    { type: "blockquote" },
-+    { type: "paragraph" },
-+    { type: "code_block" },
++  assert.deepEqual(mod.getTaskStatesFromMarkdown("- [ ] one\n"), [
++    { index: 0, line: 0, state: "unchecked", text: "one" },
 +  ]);
 +});
 +
- test("no Nabla-specific node views are registered", async () => {
-   const mod = await load();
-   const editor = mod.createEditor();
-diff --git a/packages/editor/tests/public-api.test.mjs b/packages/editor/tests/public-api.test.mjs
-index 4779543..d81d205 100644
---- a/packages/editor/tests/public-api.test.mjs
-+++ b/packages/editor/tests/public-api.test.mjs
-@@ -31,6 +31,9 @@ test("editor runtime exports are wired", async () => {
-   const mod = await load();
- 
-   assert.equal(typeof mod.createEditor, "function");
-+  assert.equal(typeof mod.replaceSource, "function");
-+  assert.equal(typeof mod.insertMarkdownBlock, "function");
-+  assert.equal(typeof mod.getDocumentBlockSummary, "function");
-   assert.equal(typeof mod.loadSource, "function");
-   assert.equal(typeof mod.getSource, "function");
- });
++test("detects checked task state", async () => {
++  const mod = await loadTaskState();
++
++  assert.deepEqual(mod.getTaskStatesFromMarkdown("- [x] one\n"), [
++    { index: 0, line: 0, state: "checked", text: "one" },
++  ]);
++});
++
++test("detects cancelled task state", async () => {
++  const mod = await loadTaskState();
++
++  assert.deepEqual(mod.getTaskStatesFromMarkdown("- [-] one\n"), [
++    { index: 0, line: 0, state: "cancelled", text: "one" },
++  ]);
++});
++
++test("detects important task state", async () => {
++  const mod = await loadTaskState();
++
++  assert.deepEqual(mod.getTaskStatesFromMarkdown("- [!] one\n"), [
++    { index: 0, line: 0, state: "important", text: "one" },
++  ]);
++});
++
++test("toggling cycles task states deterministically", async () => {
++  const mod = await loadTaskState();
++
++  const checked = mod.toggleTaskStateInMarkdown("- [ ] one\n", 0);
++  const cancelled = mod.toggleTaskStateInMarkdown(checked, 0);
++  const important = mod.toggleTaskStateInMarkdown(cancelled, 0);
++  const unchecked = mod.toggleTaskStateInMarkdown(important, 0);
++
++  assert.equal(checked, "- [x] one\n");
++  assert.equal(cancelled, "- [-] one\n");
++  assert.equal(important, "- [!] one\n");
++  assert.equal(unchecked, "- [ ] one\n");
++});
++
++test("load toggle export produces correct markdown", async () => {
++  const mod = await loadEditor();
++  const editor = mod.createEditor();
++
++  mod.loadSource(editor, "- [ ] one\n");
++  mod.toggleTaskState(editor, 0);
++
++  assert.equal(mod.getSource(editor), "- [x] one");
++});
++
++test("non-task list items are ignored", async () => {
++  const mod = await loadTaskState();
++
++  assert.deepEqual(mod.getTaskStatesFromMarkdown("- one\n* two\n"), []);
++});
++
++test("no other Nabla node views are registered", async () => {
++  const mod = await loadEditor();
++  const editor = mod.createEditor();
++
++  assert.deepEqual(Object.keys(editor.nodeViews), ["taskState"]);
++  assert.equal(editor.nodeViews.taskState, "node-safe-adapter");
++});
 diff --git a/reports/IMPLEMENTATION_PROGRESS.md b/reports/IMPLEMENTATION_PROGRESS.md
-index e50f016..3ae6205 100644
+index 3ae6205..2c01fda 100644
 --- a/reports/IMPLEMENTATION_PROGRESS.md
 +++ b/reports/IMPLEMENTATION_PROGRESS.md
 @@ -6,7 +6,7 @@ Phase 3 — `@nabla/editor`
  
  ## Last Task
  
--`P3-005` — Editor Selection/Cursor Model
-+`P3-006` — Editor Block Navigation Basics
+-`P3-006` — Editor Block Navigation Basics
++`P3-007` — Task State Node View
  
  ## Branch
  
@@ -255,34 +400,34 @@ index e50f016..3ae6205 100644
  
  ## Status
  
--P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed.
-+P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed.
+-P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed.
++P3-000 completed. P3-000-REPAIR completed. P3-001 completed. P3-002 completed. P3-003 completed. P3-004 completed. P3-005 completed. P3-006 completed. P3-007 completed.
  
  Phase 1 (`@nabla/markup`) — ACCEPTED.
  Phase 2 (`@nabla/workspace`) — ACCEPTED.
--Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, and position model helpers created.
-+Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, and basic Markdown block helpers created.
+-Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, and basic Markdown block helpers created.
++Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts, save canonicalization contract, plain Markdown editor skeleton, position model helpers, basic Markdown block helpers, and task-state helpers created.
  
  ### Repairs Applied
  
-@@ -65,6 +65,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
- - No cursor UI or selection UI implemented.
- - No Nabla node views or DOM/browser runtime required for the position model helpers.
+@@ -73,6 +73,14 @@ Phase 3 (`@nabla/editor`) — editor package skeleton, adapter model contracts,
+ - No dependencies added.
+ - No Nabla-specific node views added.
  
-+### P3-006 Notes
++### P3-007 Notes
 +
-+- Corrected wording drift: accepted backlog `P3-006` is `Editor Block Navigation Basics`.
-+- Strengthened plain Markdown block support in `packages/editor/src/editor.ts` with source replacement, block insertion, and block-summary helpers.
-+- Verified plain Markdown block roundtrip coverage for headings, paragraphs, bullet lists, ordered lists, blockquotes, and code blocks.
++- Added task-state support only in `packages/editor/src/nodes/task-state.ts` and editor integration helpers.
++- Supported task markers: `[ ]`, `[x]`, `[-]`, `[!]`.
++- Runtime strategy remains a Node-safe adapter boundary; no browser DOM node view rendering was added.
++- No other Nabla node views added.
 +- No dependencies added.
-+- No Nabla-specific node views added.
 +
  ## Verification Summary
  
  - `pnpm test` — PASS
-@@ -83,4 +91,4 @@ None.
+@@ -91,4 +99,4 @@ None.
  
  ## Next Recommended Task
  
--P3-006 (selection transaction integration) — connect the position model to editor transactions without adding cursor or selection UI.
-+P3-007 (task states) — begin Nabla-specific editor rendering with task-state support.
+-P3-007 (task states) — begin Nabla-specific editor rendering with task-state support.
++P3-008 (wiki links) — extend editor-specific behavior to wiki-link handling without broadening into other Nabla nodes.
