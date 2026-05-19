@@ -53,6 +53,12 @@ const toggleFixtureIds = [
   "toggles/nested-child"
 ];
 
+const foldedHeadingFixtureIds = [
+  "folded-headings/basic",
+  "folded-headings/levels",
+  "folded-headings/tag-conflict"
+];
+
 let parserModulePromise;
 let serializerModulePromise;
 let fixturesModulePromise;
@@ -362,6 +368,26 @@ test("tag and wiki link interop work correctly", async () => {
     ],
     diagnostics: []
   });
+});
+
+test("folded heading fixtures parse and serialize according to the checked-in contracts", async () => {
+  const { parse } = await loadParserModule();
+  const { serialize } = await loadSerializerModule();
+  const {
+    compareFixtureAst,
+    compareFixtureDiagnostics,
+    compareFixtureOutput,
+    loadParserFixture
+  } = await loadFixturesModule();
+
+  for (const fixtureId of foldedHeadingFixtureIds) {
+    const fixture = await loadParserFixture(fixtureId);
+    const parsed = parse(fixture.input);
+
+    compareFixtureAst(parsed, fixture.ast);
+    compareFixtureDiagnostics(parsed.diagnostics, fixture.diagnostics);
+    compareFixtureOutput(serialize(parsed), fixture.output);
+  }
 });
 
 test("wiki link fixtures parse and serialize according to the checked-in contracts", async () => {

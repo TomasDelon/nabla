@@ -10,6 +10,7 @@ import { parseFrontmatterBlock } from "./extensions/frontmatter.js";
 import { parseFootnoteReference, parseFootnoteDefinitionLine, buildFootnoteDefinition, collectFootnoteIds, collectFootnoteDiagnostics } from "./extensions/footnotes.js";
 import { parseCalloutMarker, collectTabIndentedChildren, collectCompatibleChildren } from "./extensions/callouts.js";
 import { parseToggleMarker } from "./extensions/toggles.js";
+import { parseFoldedHeadingMarker } from "./extensions/folded-headings.js";
 
 export type ParseOptions = {
   mode?: ParseMode;
@@ -18,7 +19,6 @@ export type ParseOptions = {
 const DOCUMENT_NODE_TYPE: NablaDocument["type"] = `doc${"ument"}`;
 
 const HEADING_PATTERN = /^(#{1,6}) (.+)/;
-const FOLDABLE_HEADING_PATTERN = /^#v (.+)/;
 const FENCE_PATTERN = /^( {0,3})(`{3,}|~{3,})(.*)$/;
 const FENCE_CLOSE_PATTERN = /^( {0,3})(`{3,}|~{3,})[ \t]*$/;
 
@@ -44,19 +44,19 @@ function createHeading(depth: number, content: string): MarkdownNode {
   };
 }
 
-function createFoldableHeading(content: string): NablaBlockNode {
+function createFoldableHeading(depth: number, foldState: FoldState, content: string, rawMarker: string): NablaBlockNode {
   return {
     type: "foldableHeading",
-    depth: 1,
-    foldState: "open",
+    depth: depth as 1 | 2 | 3 | 4 | 5 | 6,
+    foldState,
     title: [createTextNode(content)],
-    rawMarker: "#v"
+    rawMarker
   } as unknown as FoldableHeadingNode;
 }
 
 type BlockSpec =
   | { kind: "heading"; depth: number; content: string }
-  | { kind: "foldableHeading"; content: string }
+  | { kind: "foldableHeading"; depth: number; foldState: FoldState; title: string; rawMarker: string }
   | { kind: "code"; lang: string; value: string }
   | { kind: "paragraph"; text: string }
   | { kind: "privateComment"; value: string; raw: string }
@@ -141,10 +141,16 @@ function parseBlocks(source: string): BlockSpec[] {
       continue;
     }
 
-    const foldMatch = line.match(FOLDABLE_HEADING_PATTERN);
-    if (foldMatch) {
+    const foldHeadingMarker = parseFoldedHeadingMarker(line);
+    if (foldHeadingMarker) {
       flushParagraph();
-      blocks.push({ kind: "foldableHeading", content: foldMatch[1] });
+      blocks.push({
+        kind: "foldableHeading",
+        depth: foldHeadingMarker.depth,
+        foldState: foldHeadingMarker.foldState,
+        title: foldHeadingMarker.title,
+        rawMarker: foldHeadingMarker.rawMarker
+      });
       continue;
     }
 
@@ -466,7 +472,7 @@ export function parse(markdown: string, options: ParseOptions = {}): NablaDocume
     } else if (block.kind === "heading") {
       docChildren.push(createHeading(block.depth, block.content));
     } else if (block.kind === "foldableHeading") {
-      docChildren.push(createFoldableHeading(block.content));
+      docChildren.push(createFoldableHeading(block.depth, block.foldState, block.title, block.rawMarker));
     } else if (block.kind === "privateComment") {
       docChildren.push({
         type: "privateComment",

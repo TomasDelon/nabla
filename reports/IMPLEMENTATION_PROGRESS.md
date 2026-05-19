@@ -6,7 +6,7 @@ Phase 1 - `@nabla/markup`
 
 ## Task ID
 
-`P1-018 toggles`
+`P1-019 folded headings`
 
 ## Branch
 
@@ -14,16 +14,14 @@ Phase 1 - `@nabla/markup`
 
 ## Status
 
-Toggle parsing and serialization implemented against checked-in fixture contracts (P1-018).
+Folded heading parsing and serialization implemented against checked-in fixture contracts (P1-019).
 
-All 5 toggle fixture groups pass:
-- `toggles/basic` — `]>` closed and `]v` open toggles with tab-indented children
-- `toggles/empty` — toggle with no title text or children
-- `toggles/blank-child` — toggle with blank-line-separated children
-- `toggles/fenced-child` — fenced code block as a child inside a toggle
-- `toggles/nested-child` — callout as a child inside a toggle
+All 3 folded heading fixture groups pass:
+- `folded-headings/basic` — `#>` closed and `##v` open folded headings with following paragraphs
+- `folded-headings/levels` — all 6 heading levels with alternating fold states (`>` closed, `v` open)
+- `folded-headings/tag-conflict` — `#v Vocabulary` is a folded heading, `#vocabulary` is a tag
 
-Callout fixtures (P1-017) remain passing. `callouts/nested-child` now also passes since it depends on toggle child nesting.
+Toggle (P1-018), callout (P1-017) and all earlier fixture groups remain passing.
 
 ## Scope Guardrails
 
@@ -33,19 +31,18 @@ Callout fixtures (P1-017) remain passing. `callouts/nested-child` now also passe
 
 ## Files Created
 
-- `packages/markup/src/extensions/toggles.ts`
+- `packages/markup/src/extensions/folded-headings.ts`
 
 ## Files Modified
 
-- `packages/markup/src/extensions/callouts.ts` — added `serializeToggle` and toggle child handling in `serializeChildBlock`
-- `packages/markup/src/parser.ts` — `ToggleNode` import, `parseToggleMarker` import, `kind: "toggle"` BlockSpec, toggle detection in `parseBlocks`, `block.kind === "toggle"` handling in `parse()`
-- `packages/markup/src/serializer.ts` — `ToggleNode` import, `serializeToggle` import, `node.type === "toggle"` dispatch in `serializeBlockNode`
-- `packages/markup/tests/wiki-links.test.mjs` — 5 toggle fixture IDs and fixture-driven test; re-added `callouts/nested-child` to callout fixture IDs
+- `packages/markup/src/parser.ts` — `parseFoldedHeadingMarker` import, `FoldState` usage in BlockSpec, parameterized `createFoldableHeading`, all-level folded heading detection, updated block dispatch
+- `packages/markup/src/serializer.ts` — blank-line rule narrowed from paragraph→(heading|foldableHeading) to paragraph→foldableHeading only, fixing tags/basic conflict
+- `packages/markup/tests/wiki-links.test.mjs` — 3 folded heading fixture IDs and fixture-driven test
 - `reports/IMPLEMENTATION_PROGRESS.md` — this update
 
 ## Verification Summary
 
-- `node --test packages/markup/tests/**/*.test.mjs` — 62 tests pass (5 toggle + 7 callout fixture tests)
+- `node --test packages/markup/tests/**/*.test.mjs` — tests pass (including 3 folded heading fixture tests)
 - `tsc -b --pretty false packages/markup/tsconfig.json` — typecheck passed
 - `node scripts/validate-fixtures.mjs` — fixture validation passed
 - `node scripts/validate-spec-version.mjs` — spec version validation passed
@@ -59,4 +56,4 @@ None.
 
 ## Next Recommended Task
 
-P1-019 folded headings
+P1-020 block IDs

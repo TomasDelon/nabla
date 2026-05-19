@@ -137,7 +137,32 @@ function serializeListItem(node: MarkdownNode): string {
 }
 
 export function serialize(source: NablaDocument, options: SerializeOptions = {}) {
-  const output = source.children.map((child) => serializeBlockNode(child as MarkdownNode)).join("\n").replace(/^\n/, "");
+  const children = source.children;
+  if (children.length === 0) {
+    return normalizeLineEnding("", options.lineEnding);
+  }
+
+  const serializedBlocks = children.map((child) => serializeBlockNode(child as MarkdownNode));
+
+  const parts: string[] = [serializedBlocks[0]];
+  for (let i = 1; i < serializedBlocks.length; i++) {
+    const prevType = (children[i - 1] as MarkdownNode).type;
+    const currType = (children[i] as MarkdownNode).type;
+    const currSerialized = serializedBlocks[i];
+
+    if (currSerialized.startsWith("\n")) {
+      parts.push(currSerialized);
+    } else if (
+      prevType === "paragraph" &&
+      currType === "foldableHeading"
+    ) {
+      parts.push("", currSerialized);
+    } else {
+      parts.push(currSerialized);
+    }
+  }
+
+  const output = parts.join("\n").replace(/^\n+/, "");
   const normalizedOutput = output === "" ? "" : `${output}\n`;
   return normalizeLineEnding(normalizedOutput, options.lineEnding);
 }
