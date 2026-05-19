@@ -1,1 +1,1 @@
-ac7307a docs: record blocked MVP visual audit
+1d7a452 fix(app): repair component CSS runtime exports

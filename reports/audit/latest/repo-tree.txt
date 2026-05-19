@@ -34,6 +34,7 @@ packages/app/tests/app-fixtures.test.mjs
 packages/app/tests/component-rendering.test.mjs
 packages/app/tests/editor-integration.test.mjs
 packages/app/tests/render-pipeline.test.mjs
+packages/app/tests/runtime-css-exports.test.mjs
 packages/app/tests/sample-document.test.mjs
 packages/app/tests/workspace-integration.test.mjs
 packages/app/tsconfig.json
