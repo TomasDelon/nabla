@@ -9,6 +9,7 @@ import { FootnoteReference, FootnoteDefinition } from "../../src/footnote.tsx";
 import { Comment } from "../../src/comment.tsx";
 import { Callout } from "../../src/callout.tsx";
 import { Toggle } from "../../src/toggle.tsx";
+import { FoldedHeading } from "../../src/folded-heading.tsx";
 
 import "../../src/tokens.css";
 import "../../src/task-state.css";
@@ -20,6 +21,7 @@ import "../../src/footnote.css";
 import "../../src/comment.css";
 import "../../src/callout.css";
 import "../../src/toggle.css";
+import "../../src/folded-heading.css";
 import "./playground.css";
 
 type TaskState = "unchecked" | "checked" | "cancelled" | "important";
@@ -73,6 +75,18 @@ function App() {
 
   function handleToggle(key: string) {
     setToggleFoldStates((prev) => ({
+      ...prev,
+      [key]: prev[key] === "open" ? "closed" : "open",
+    }));
+  }
+
+  const [headingFoldStates, setHeadingFoldStates] = useState<Record<string, "open" | "closed">>({
+    h2: "open",
+    h3: "closed",
+  });
+
+  function toggleHeading(key: string) {
+    setHeadingFoldStates((prev) => ({
       ...prev,
       [key]: prev[key] === "open" ? "closed" : "open",
     }));
@@ -181,6 +195,19 @@ function App() {
           <Toggle foldState={toggleFoldStates.second} onToggleFold={() => handleToggle("second")}>
             <p style={{ margin: 0 }}>This toggle body is hidden when closed.</p>
           </Toggle>
+        </ExampleRow>
+      </Section>
+
+      <Section title="Folded Heading">
+        <ExampleRow label="Level-2 heading (open)">
+          <FoldedHeading level={2} text="Section Title" foldState={headingFoldStates.h2} onToggleFold={() => toggleHeading("h2")}>
+            <p style={{ margin: 0 }}>Content under a level-2 folded heading.</p>
+          </FoldedHeading>
+        </ExampleRow>
+        <ExampleRow label="Level-3 heading (closed)">
+          <FoldedHeading level={3} text="Sub Section" foldState={headingFoldStates.h3} onToggleFold={() => toggleHeading("h3")}>
+            <p style={{ margin: 0 }}>Content under a level-3 folded heading, hidden when closed.</p>
+          </FoldedHeading>
         </ExampleRow>
       </Section>
     </div>

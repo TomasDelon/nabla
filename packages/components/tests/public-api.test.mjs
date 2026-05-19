@@ -65,11 +65,19 @@ test("Toggle is exported from public API", async () => {
   assert.equal(typeof mod.getToggleDisplay, "function");
 });
 
+test("FoldedHeading is exported from public API", async () => {
+  const mod = await load();
+
+  assert.equal(typeof mod.FoldedHeading, "function");
+  assert.equal(typeof mod.getFoldedHeadingDisplay, "function");
+});
+
 test("no forbidden visual components are exported", async () => {
   const mod = await load();
   const keys = Object.keys(mod);
 
-  assert.equal(keys.includes("FoldedHeading"), false);
+  assert.equal(keys.includes("TooltipRenderer"), false);
+  assert.equal(keys.includes("TransclusionRenderer"), false);
 });
 
 test("NABLA_COMPONENT_THEME is exported", async () => {
