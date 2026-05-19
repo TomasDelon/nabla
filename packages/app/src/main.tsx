@@ -12,6 +12,9 @@ import {
   getEditorIntegrationSummary,
 } from "./editor-integration.js";
 import {
+  getWorkspaceIntegrationSummary,
+} from "./workspace-integration.js";
+import {
   TaskStateCheckbox,
   getNextTaskState,
   WikiLink,
@@ -35,6 +38,7 @@ function App() {
   const pipelineSummary = getRenderPipelineSummary(SAMPLE_DOCUMENT_SOURCE);
   const canonicalExport = exportCanonicalSource(editedSource);
   const editorSummary = getEditorIntegrationSummary(editedSource);
+  const workspaceSummary = getWorkspaceIntegrationSummary(editedSource);
 
   const componentSummary = getComponentRenderingSummary();
 
@@ -127,6 +131,19 @@ function App() {
             value={canonicalExport}
             rows={10}
           />
+        </div>
+
+        <div className="status-card">
+          <h2 className="status-card__title">Workspace</h2>
+          <p className="section-note">
+            MVP-level workspace index from in-memory document. No filesystem, no transclusion rendering.
+          </p>
+          <div className="status-card__stats">
+            <span>Documents: {workspaceSummary.documentCount}</span>
+            <span>Links: {workspaceSummary.linkCount}</span>
+            <span>Backlinks: {workspaceSummary.backlinkCount}</span>
+            <span>Diagnostics: {workspaceSummary.diagnosticCount}</span>
+          </div>
         </div>
 
         <section className="component-preview">
